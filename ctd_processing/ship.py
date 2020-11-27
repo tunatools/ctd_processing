@@ -5,7 +5,7 @@ class Ship:
     ship_id = ''
 
     def __init__(self, fstem=None, **kwargs):
-        self.fstem = fstem
+        self.fstem = fstem.upper()
 
     def __repr__(self):
         return f'Ship: {self.name}({self.short_name})'

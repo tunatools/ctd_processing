@@ -1,6 +1,8 @@
 import codecs
 import datetime
+import os
 from pathlib import Path
+import shutil
 
 import ctd_processing
 
@@ -12,10 +14,12 @@ from ctd_processing.ship import SHIPS
 class SeabirdRawFileBase:
     def __init__(self, file_path, **kwargs):
         self.file_suffix = ''
-        self.file_path = Path(file_path)
-        self.file_name = self.file_path.name
-        self.file_stem = self.file_path.stem
-        self.directory = self.file_path.parent
+
+        self.file_path = None
+        self.file_name = None
+        self.file_stem = None
+        self.directory = None
+        self._save_file_path_info(file_path)
 
         self.ship_id = None
         self.ctry = None
@@ -28,6 +32,12 @@ class SeabirdRawFileBase:
 
     def __repr__(self):
         return f'Seabird {self.file_suffix}-file: {self.file_path}'
+
+    def _save_file_path_info(self, file_path):
+        self.file_path = Path(file_path)
+        self.file_name = self.file_path.name
+        self.file_stem = self.file_path.stem
+        self.directory = self.file_path.parent
 
     def _check_validity(self):
         if self.file_path.suffix != self.file_suffix:
@@ -49,6 +59,28 @@ class SeabirdRawFileBase:
         self.ship_short_name = self.ship.short_name
         self.ship_id = self.ship.ship_id
         self.ctry, self.ship = self.ship.ship_id.split('_')
+
+    def rename(self, new_file_stem, overwrite=False):
+        if new_file_stem == self.file_stem:
+            return
+        new_file_path = Path(self.directory, new_file_stem + self.file_suffix)
+        if new_file_path.exists():
+            if not overwrite:
+                raise exceptions.FileExists(new_file_path)
+            else:
+                os.remove(new_file_path)
+        os.rename(self.file_path, new_file_path)
+        self._save_file_path_info(new_file_path)
+
+    def move_file(self, directory, overwrite=False):
+        new_file_path = Path(directory, self.file_name)
+        if new_file_path.exists():
+            if not overwrite:
+                raise exceptions.FileExists(new_file_path)
+            else:
+                os.remove(new_file_path)
+        shutil.move(str(self.file_path), str(directory))
+        self._save_file_path_info(new_file_path)
 
 
 class BlFile(SeabirdRawFileBase):
@@ -239,6 +271,21 @@ class SeabirdFiles:
         self.station_name = self.files['.hdr'].station_name
         self.number_of_bottles = self.files['.bl'].number_of_bottles
 
+    def rename_files(self, overwrite=False):
+        """
+        Renames the files to the new file stem.
+        :return:
+        """
+        for file in self.files.values():
+            file.rename(self.new_file_stem, overwrite=overwrite)
+
+    def move_files(self, directory, overwrite=False):
+        directory = Path(directory)
+        if not directory.exists():
+            os.makedirs(directory)
+        for file in self.files.values():
+            file.move_file(directory, overwrite=overwrite)
+        self.directory = directory
 
 
 if __name__ == '__main__':

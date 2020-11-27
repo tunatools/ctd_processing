@@ -6,8 +6,10 @@ from ctd_processing import exceptions
 class CnvSensorInfo(dict):
     def __init__(self, data):
         for key, value in data.items():
-            if key in ['ok', 'index']:
+            if key in ['active', 'index']:
                 value = int(value)
+            if key == 'active':
+                value = bool(value)
             self[key] = value
             setattr(self, key, value)
 
@@ -16,6 +18,10 @@ class CnvSensorInfo(dict):
         for key, value in self.items():
             return_list.append(f'    {key.ljust(10)}{value}')
         return '\n'.join(return_list)
+
+    @property
+    def name(self):
+        return self['parameter']
 
 
 class CnvInfoFile:
@@ -61,7 +67,7 @@ class CnvInfoFiles:
 
     @property
     def files(self):
-        return list(self._files)
+        return sorted(self._files)
 
     def get_info(self, ctd_nr):
         ctd_nr = str(ctd_nr)

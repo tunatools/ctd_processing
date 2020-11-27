@@ -23,6 +23,7 @@ def insert_station_name(station="", my_plot_psa_file=""):
         for lines in contents:
             #print lines
             if lines[0:15] == "  <Title value=":
-                lines = lines[:16] + station.encode('utf-8') + lines[-5:]
+                # lines = lines[:16] + station.encode('utf-8') + lines[-5:]
+                lines = lines[:16] + station + lines[-5:]
             f.write(lines)
         f.close()

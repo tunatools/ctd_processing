@@ -1,15 +1,15 @@
 import codecs
-import os
 import logging
 import logging.config
+import os
+import shutil
+import subprocess
 from pathlib import Path
 
-import subprocess
-
-from ctd_processing.read_ctd import readCNV
-from ctd_processing import seabird
-from ctd_processing import exceptions
+from ctd_processing import cnv
 from ctd_processing import cnv_column_info
+from ctd_processing import exceptions
+from ctd_processing import seabird
 
 try:
     from ctd_processing.stationnames_in_plot import insert_station_name
@@ -17,15 +17,24 @@ except:
     from stationnames_in_plot import insert_station_name
 
 
-
 class CtdProcessing:
-    def __init__(self, ctd_number=None, root_directory=None):
+    def __init__(self, root_directory=None, **kwargs):
 
-        self._surfacesoak = 'deep'
+        self._surfacesoak = kwargs.get('surfacesoak', '')
+        self.name = Path(__file__).stem
+        self.overwrite = kwargs.get('overwrite', False)
+        self.use_cnv_info_format = kwargs.get('use_cnv_info_format', False)
+
+        self.logger = kwargs.get('logger')
+        if not self.logger:
+            self.logging_level = 'WARNING'
+            self.logging_format = '%(asctime)s [%(levelname)10s]    %(pathname)s [%(lineno)d] => %(funcName)s():    %(message)s'
+            self._setup_logger(**kwargs)
 
         # Directories
         self.paths = Paths(root_directory)
-        self.cnv_column_info_directory = Path('cnv_column_info')
+        self.cnv_column_info_directory = Path(Path(__file__).parent, 'cnv_column_info')
+        self.cnv_info_files = cnv_column_info.CnvInfoFiles(self.cnv_column_info_directory)
 
         # Välj CTD
         self._ctd_number = None
@@ -42,12 +51,40 @@ class CtdProcessing:
         self.number_of_bottles = None
         self.year = None
 
-        self.setup_file_object = None
-        self.batch_file_object = None
+        self.setup_file_object = SetupFile(parent=self)
+        self.batch_file_object = BatchFile(parent=self)
 
-        self.ctd_number = ctd_number
+        self.ctd_number = None
+        self.cnv_info_object = None
+        self.modify_cnv_file_object = None
 
-        self.cnv_info_object = cnv_column_info.CnvInfoFiles(self.cnv_column_info_directory).get_info(self.ctd_number)
+        self.ctd_number = kwargs.get('ctd_number', None)
+
+    @property
+    def options(self):
+        return {'root_directory': str,
+                'surfacesoak': self.surfacesoak_options,
+                'ctd_number': self.ctd_number_options,
+                'use_cnv_info_format': bool,
+                'overwrite': bool}
+
+    def _setup_logger(self, **kwargs):
+        self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(self.logging_level)
+        file_path = kwargs.get('logging_file_path')
+        if not file_path:
+            directory = Path(__file__).absolute().parent
+            if not directory.exists():
+                os.makedirs(directory)
+            file_path = Path(directory, f'{self.name}.log')
+        handler = logging.FileHandler(str(file_path))
+        # handler = TimedRotatingFileHandler(str(file_path), when='D', interval=1, backupCount=7)
+        formatter = logging.Formatter(self.logging_format)
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+
+    def _load_cnv_info_object(self):
+        self.cnv_info_object = self.cnv_info_files.get_info(self.ctd_number)
 
     @property
     def root_directory(self):
@@ -56,6 +93,7 @@ class CtdProcessing:
     @root_directory.setter
     def root_directory(self, directory):
         self.paths.root_directory = directory
+        self._copy_setup_files()
 
     @property
     def ctd_number(self):
@@ -70,6 +108,7 @@ class CtdProcessing:
             self.ctd_config_suffix = '.CON'
         else:
             self.ctd_config_suffix = '.XMLCON'
+        self._load_cnv_info_object()
 
     @property
     def surfacesoak_options(self):
@@ -84,6 +123,10 @@ class CtdProcessing:
         self._surfacesoak = value
         self.setup_file_object.surfacesoak = self._surfacesoak
 
+    @property
+    def ctd_number_options(self):
+        return self.cnv_info_files.files
+
     def _save_info_from_seabird_files(self):
         self.serial_number = self.seabird_files.serial_number
         self.ship_short_name = self.seabird_files.ship_short_name
@@ -94,412 +137,154 @@ class CtdProcessing:
         self.station_name = self.seabird_files.station_name
         self.number_of_bottles = self.seabird_files.number_of_bottles
         self.year = self.seabird_files.date.year
+        
+    def _copy_setup_files(self):
+        source_dir = Path(Path(__file__).parent, 'setup')
+        target_dir = self.paths.get_directory('setup')
+        for source_path in source_dir.iterdir():
+            target_path = Path(target_dir, source_path.name)
+            if target_path.exists():
+                if not self.overwrite:
+                    self.logger.debug(f'Not overwriting file: {target_path}')
+                    continue
+                os.remove(target_path)
+            shutil.copy2(source_path, target_path)
+
+    def _copy_seabird_files(self, file_path):
+        """
+        Copies seabird files if not already in temp directory.
+        :param file_path: any seabird file with or without suffix.
+        :return:
+        """
+        file_path = Path(file_path)
+        if file_path.parent == self.paths.get_directory('temp'):
+            return
+
+        temp_path = self.paths.get_directory('working')
+        file_stem = file_path.stem
+        for f in file_path.parent.iterdir():
+            if f.stem == file_stem:
+                new_path = Path(temp_path, f.name)
+                if new_path.exists() and not self.overwrite:
+                    raise exceptions.FileExists(new_path)
+                shutil.copy2(f, new_path)
+        return new_path
+
+    def run_process(self, server_path=None):
+        self.create_setup_and_batch_files()
+        self.run_seabird()
+        self.modify_cnv_file()
+        self.save_modified_ctd_file()
+        self.move_raw_files()
+        self.remove_files()
+        self.copy_files_to_server(server_path)
 
     def load_seabird_files(self, file_path):
-        # File path can be any seabird raw file. Even without suffix
+        # File path can be any seabird raw file. Even without suffix.
+
         if not self.ctd_number:
             raise exceptions.InvalidInstrumentSerialNumber('No CTD number set')
-        self.seabird_files = seabird.SeabirdFiles(file_path, self.ctd_number)
+
+        new_path = self._copy_seabird_files(file_path)
+
+        self.seabird_files = seabird.SeabirdFiles(new_path, self.ctd_number)
+        self.seabird_files.rename_files(overwrite=self.overwrite)
         self._save_info_from_seabird_files()
 
-        self.setup_file_object = SetupFile(parent=self, surfacesoak=self.surfacesoak)
-        self.batch_file_object = BatchFile(parent=self)
-
-        # self.get_file()
-        # self.load_options()
-        # self.check_bl()
-        # self.create_batch_file()
-        # self.run_seabird()
-        # self.modify_cnv_file()
-
-    def create_batch_file(self):
+    def create_setup_and_batch_files(self):
         """
-        Create a textfile that will be called by the bat-file.
+        Create a text file that will be called by the bat-file.
         The file runs the SEB-programs
         """
+        self.setup_file_object.parent = self
+        self.setup_file_object.surfacesoak = self.surfacesoak
         self.setup_file_object.create_file()
         self.batch_file_object.create_file()
 
     def run_seabird(self):
         self.batch_file_object.run_file()
-
-    def _cnv_(self):
-        pass
+        cnv_down_file_path = self.setup_file_object.paths['cnv_down']
+        self.modify_cnv_file_object = cnv.CNVfile(cnv_down_file_path, ctd_processing_object=self)
 
     def modify_cnv_file(self):
-        # Read "down"-file
-        cnv_down_file_path = self.setup_file_object.paths['cnv']
-        self.ctd_data = readCNV(cnv_down_file_path)
+        self.modify_cnv_file_object.modify()
 
-        for index_str, info in self.cnv_info_object.items():
-            index = info.index
-            ok = info.ok
-            text = info.parameter
-            if 'true depth' in text.lower():
-                pass
+    def save_modified_ctd_file(self):
+        file_name = str(self.modify_cnv_file_object.file_path.name)[1:]
+        directory = self.paths.get_directory('data')
+        # directory = Path(self.paths.get_directory('data'), str(self.year))
+        file_path = Path(directory, file_name)
+        self.modify_cnv_file_object.save_file(file_path, overwrite=self.overwrite)
 
+    def remove_files(self):
+        os.remove(self.setup_file_object.paths.get('cnv_down'))
+        os.remove(self.setup_file_object.paths.get('cnv'))
 
-        # Här borde man kunna definiera sensor_index, dvs första kolumnen i self.cnv_column_info
-        # den kommer automatiskt efter så som DatCnv.psa är inställd
-        # Börjar med att kolla så det iaf är korrekt
-        for sensor_row in self.cnv_column_info:
-            sensor_index = sensor_row[0]
-            sensor_text = sensor_row[2]
-            if sensor_text == 'depFM: Depth [true depth, m], lat ':
-                # kolla inte True Depth, det läggs till senare
-                pass
+    def move_raw_files(self):
+        year = str(self.year)
+        # upcast_dir = Path(self.paths.get_directory('data'), year, 'up_cast')
+        upcast_dir = Path(self.paths.get_directory('data'), 'up_cast')
+        if not upcast_dir.exists():
+            os.makedirs(upcast_dir)
+        # raw_files_dir = Path(self.paths.get_directory('raw'), year)
+        raw_files_dir = self.paths.get_directory('raw')
+        upcast_file_path = self.setup_file_object.paths.get('cnv_up')
+        new_upcast_file_path = Path(upcast_dir, upcast_file_path.name)
+        if new_upcast_file_path.exists():
+            if not self.overwrite:
+                raise exceptions.FileExists
             else:
-                for ctd_header_row in self.ctd_data[1]:
-                    if sensor_text in ctd_header_row:
-                        sensor_index_cnv_header = int(ctd_header_row[7:9])
-                        break
-                    else:
-                        sensor_index_cnv_header = 'not found'
+                os.remove(new_upcast_file_path)
+        shutil.move(upcast_file_path, new_upcast_file_path)
+        self.seabird_files.move_files(raw_files_dir, overwrite=self.overwrite)
 
-                if sensor_index == sensor_index_cnv_header:
-                    pass
+    def copy_files_to_server(self, server_path=None):
+        if not server_path:
+            self.logger.warning('No server path given')
+            return
+        year = str(self.year)
+        server_path = Path(server_path)
 
-                else:
-                    print(
-                        'WARNING!!! sensor column index in self.cnv_column_info (%s) is not the same as in the cnv header (%s), stopping script!!!' % (
-                        sensor_index, sensor_index_cnv_header))
-                    print
-                    'FIX THIS NOW!!!'
-                    print
-                    sensor_index_cnv_header
-                    print
-                    sensor_text
-                    smurf
+        server_directories = {}
+        for d in ['data', 'plots', 'raw']:
+            path = Path(server_path, d, year)
+            server_directories[d] = path
+            if not path.exists():
+                os.makedirs(path)
 
-        sh = [];
-        for rows in self.ctd_data[1]:
-            sh.append(split(':\s', str.rstrip(rows)).pop())
+        file_id_string = str(self.modify_cnv_file_object.file_path.stem).split('_', 1)[-1]
 
-        # get rid of the last column of sh (flags)
-        sh.pop()
-
-        # Extract the pressure, sigmaT and FW depth:
-        # depFM: Depth [fresh water, m], lat = 0
-        for cols in self.ctd_data[1]:
-            if 'prDM: Pressure, Digiquartz [db]' in cols:
-                col_pres = int(cols[7:9])
-            if 'sigma-t00: Density [sigma-t' in cols:
-                col_dens = int(cols[7:9])
-            if 'sigma-t11: Density, 2 [sigma-t' in cols:
-                col_dens2 = int(cols[7:9])
-            if 'depFM: Depth [fresh water, m]' in cols:
-                col_depth = int(cols[7:9])
-            if 'svCM: Sound Velocity [Chen-Millero, m/s]' in cols:
-                col_sv = int(cols[7:9])
-
-        prdM = [row[col_pres] for row in self.ctd_data[2]]
-
-        if self.cnv_column_info[col_dens][3] == 1:
-            sigT = [row[col_dens] for row in self.ctd_data[2]]
-        elif self.cnv_column_info[col_dens2][3] == 1:  # use secondary sigT
-            sigT = [row[col_dens2] for row in self.ctd_data[2]]
-        else:
-            sigT = [-9.990e-29 for i in range(len(self.ctd_data[2]))]
-
-        depFM = [row[col_depth] for row in self.ctd_data[2]]
-        svCM = [row[col_sv] for row in self.ctd_data[2]]
-
-        # Beräkning från Arnes CTrueDepth.bas program
-        # ' Plockar pressure från cnv-filen
-        #        dblPres = Mid$(strDataline, ((strPresWhere * 11) + 1), 11)
-        # ' decibar till bar
-        #        dblRPres = dblPres * 10
-        # ' Plockar sigmaT från cnv-filen
-        #        dblSig = Mid$(strDataline, ((strSigmaTWhere * 11) + 1), 11)
-        # ' Beräknar densitet
-        #        dblDens = (dblSig + 1000) / 1000#
-        # ' Beräknar delta djup
-        #        dblDDjup = (dblRPres - dblP0) / (dblDens * dblg)
-        # ' Summerar alla djup och använd framräknande trycket i nästa iteration
-        #        dblDepth = dblDepth + dblDDjup
-        #        dblP0 = dblRPres
-
-        # Beräkning av truedepth #Ersätt depFM med true depth i headern
-        # Start params
-        g = 9.818  # ' g vid 60 gr nord (dblg)
-        P0 = 0  # ' starttrycket (vid ytan) (dblP0)
-        Dens0 = (sigT[0] + 1000.) / 1000.  # ' start densitet
-        Depth = 0  # ' start summadjup (dblDepth)
-        # Nya variabler
-        RPres = []
-        Dens = []
-        DDepth = []
-        TrueDepth = []
-
-        for q in range(0, len(prdM)):
-
-            if sigT[q] != -9.990e-29:
-                # decibar till bar (dblRPres)
-                RPres = prdM[q] * 10.
-                # Beräknar densitet (dblDens)
-                Dens = (sigT[q] + 1000.) / 1000.
-                # Beräknar delta djup (dblDDjup)
-                DDepth = (RPres - P0) / ((Dens + Dens0) / 2. * g)
-                # Summerar alla djup och använd framräknande trycket i nästa loop
-                # Om det är första (ej helt relevant kanske) eller sista värdet dela med två enl. trappetsmetoden
-                Dens0 = Dens
-                #    if q == 0 or q == (len(prdM)-1):
-                #        Depth = Depth + DDepth / 2.
-                #    else:
-                #        Depth = Depth + DDepth
-                # Ändrad av Örjan 2015-02-10 /2. första och sista djupet borttaget.
-                Depth = Depth + DDepth
-                # Spara framräknat djup för nästa loop
-                P0 = RPres
-                # Sparar undan TrueDepth
-                TrueDepth.append(Depth)
+        # Data files
+        paths = get_paths_in_directory(Path(self.paths.get_directory('data'), year), match_string=file_id_string, walk=True)
+        for file_name, path in paths.items():
+            print('file_name', file_name)
+            if file_name.startswith('u'):
+                target_path = Path(server_directories['data'], 'up_cast', file_name)
             else:
-                TrueDepth.append(-9.990e-29)
-
-        # Header
-        # Lägg till tid för true depth beräkning i header & average sound velocity
-        # xx = [i for i,x in enumerate(self.ctd_data[0]) if x == '** Primary sensors\n']
-        xx = [i for i, x in enumerate(self.ctd_data[0]) if '** Ship' in x]
-        print
-        xx
-        tid = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
-        svMean = sum(svCM) / len(svCM)
-        self.ctd_data[0].insert(xx[0] + 1, '** Average sound velocity: ' + str('%6.2f' % svMean) + ' m/s\n')
-        self.ctd_data[0].insert(xx[0] + 2, '** True-depth calculation ' + tid + '\n')
-        self.ctd_data[0].insert(xx[0] + 3, '** CTD Python Module SMHI /ver 3-12/ feb 2012 \n')
-        # self.ctd_data[0].insert(xx[0]+4,'** LIMS Job: 20' + self.year + self.cnty + self.ship + '-' + self.serie + '_SYNC\n')
-        self.ctd_data[0].insert(xx[0] + 4,
-                                '** LIMS Job: 20' + self.year + self.cnty + self.ship + '-' + self.serie + '\n')
-
-        # Ersätter depFM: Depth [fresh water, m], lat = 0
-        # med depFM: Depth [true depth, m], lat = 0
-        # xx = [i for i,x in enumerate(self.ctd_data[0]) if 'depFM: Depth [fresh water, m]' in x]
-        # xx = [i for i,x in enumerate(self.ctd_data[0]) if x == '# name 21 = depFM: Depth [fresh water, m], lat = 0\n']
-        # self.ctd_data[0][xx[0]] = self.ctd_data[0][xx[0]].replace('fresh water','true depth')
-
-        index_true_depth = '99'
-
-        for i, x in enumerate(self.ctd_data[0]):
-
-            # Lägger till enhet till PAR/Irradiance
-
-            if 'par: PAR/Irradiance' in x:
-                self.ctd_data[0][i] = self.ctd_data[0][i][:-2] + ' [µE/(cm^2*s)]\n'
-            # Lägger till Chl-a på de fluorometrar som har beteckning som börjar på FLNTURT
-            if 'Fluorescence, WET Labs ECO-AFL/FL [mg/m^3]' in x:
-                Fluo_index = i
-            if 'Fluorometer, WET Labs ECO-AFL/FL -->' in x and '<SerialNumber>FLNTURT' in self.ctd_data[0][i + 2]:
-                self.ctd_data[0][i] = self.ctd_data[0][i].replace('Fluorometer', 'Chl-a Fluorometer')
-                self.ctd_data[0][Fluo_index] = self.ctd_data[0][Fluo_index].replace('Fluorescence',
-                                                                                    'Chl-a Fluorescence')
-                # Lägger till Phycocyanin på den fluorometer som har serialnumber som börjar på FLPCRTD
-            if 'Fluorescence, WET Labs ECO-AFL/FL, 2 [mg/m^3]' in x:
-                Fluo_index_2 = i
-            if 'Fluorometer, WET Labs ECO-AFL/FL, 2 -->' in x and '<SerialNumber>FLPCRTD' in self.ctd_data[0][
-                i + 2]:
-                self.ctd_data[0][i] = self.ctd_data[0][i].replace('Fluorometer', 'Phycocyanin Fluorometer')
-                self.ctd_data[0][Fluo_index_2] = self.ctd_data[0][Fluo_index_2].replace('Fluorescence',
-                                                                                        'Phycocyanin Fluorescence')
-            if 'depFM: Depth [fresh water, m]' in x:
-                self.ctd_data[0][i] = self.ctd_data[0][i].replace('fresh water', 'true depth')
-                index_true_depth = x[7:9].strip()
-            if '# span ' + index_true_depth + ' =' in x:
-                if int(index_true_depth) < 10:
-                    self.ctd_data[0][i] = ('# span %s =%11.3f,%11.3f%7s\n' % (
-                    index_true_depth, min(TrueDepth), max(TrueDepth), ''))
-                else:
-                    self.ctd_data[0][i] = ('# span %s =%11.3f,%11.3f%6s\n' % (
-                    index_true_depth, min(TrueDepth), max(TrueDepth), ''))
-
-        # Ersätt data i fresh water kolumnen med true depth avrundar true depth till tre decimaler
-        for row in range(0, len(prdM)):
-            if TrueDepth[row] == -9.990e-29:
-                self.ctd_data[2][row][col_depth] = -9.990e-29
-            else:
-                self.ctd_data[2][row][col_depth] = round(TrueDepth[row], 3)
-
-        # justera span för de parametrar som har sensor_flag = 0
-        for sensor_row in self.cnv_column_info:
-            if sensor_row[-1] == 0:  # entire sensro marked as bad, set span to -9.990e-29, -9.990e-29
-                sensor_text = sensor_row[2]
-                index_sensor = '99'
-                for i, x in enumerate(self.ctd_data[0]):
-                    if sensor_text in x:
-                        index_sensor = x[7:9].strip()
-                    if '# span ' + index_sensor + ' =' in x:
-                        if int(index_sensor) < 10:
-                            self.ctd_data[0][i] = ('# span %s = -9.990e-29, -9.990e-29%7s\n' % (index_sensor, ''))
-                        else:
-                            self.ctd_data[0][i] = ('# span %s = -9.990e-29, -9.990e-29%6s\n' % (index_sensor, ''))
-
-        # TODO: Lägg till if sats som skapar kataloger vid nytt år. /MHAN
-        if not os.path.exists(self.data_directory + '20' + self.year + '\\'):  # hoppas denna funkar /OBac
-            os.mkdir(self.data_directory + '20' + self.year + '\\')
-
-        filelist = os.walk(self.data_directory + '20' + self.year + '\\').next()[2]
-
-        # print filelist
-        # print self.data_directory +'20' + self.year + '\\'
-
-        if not self.new_fname + '.cnv' in filelist:
-            # Skriver tillbaka header self.ctd_data[0],
-            test_file = open(self.data_directory + '20' + self.year + '\\' + self.new_fname + '.cnv', 'w')
-            test_file.writelines(self.ctd_data[0])
-            test_file.close()
-
-            # och lägger tillbaka data self.ctd_data[2] till samma fil
-            test_file = open(self.data_directory + '20' + self.year + '\\' + self.new_fname + '.cnv', "a")
-            for row in self.ctd_data[2]:
-                row_to_write, bad_flag = self.get_string_for_data_file(row)
-
-                if bad_flag:
-                    print
-                    'Bad flag detected at %s db, in %s' % (row[1], self.new_fname)
-                # else: # can activate this to not write this depth to the data file
-                test_file.write(row_to_write)
-                test_file.write('\n')
-            test_file.close()
-
-            # TODO: copy cnv and plots to file server
-            # C:\ctd\plots\\' + '20' + self.year + ' /f' + self.new_fname
-            # /a_' + self.stationname
-            # /a_TS_diff_' + self.stationname
-            # /a_oxygen_diff_' + self.stationname
-            # /a_fluor_turb_par_' + self.stationname
-
-            #            if os.path.exists(self.shark_file_directory):
-            #                self.write_shark_file(self.shark_file_directory)
-            #
-            #            else: #Om det saknas nätverk läggs filen lokalt.
-            #                self.write_shark_file(self.shark_file_directory_lokal)
-            #                print 'Network is missing...'
-            #                print 'SHARK import file are available here %s' % self.shark_file_directory_lokal
-            #
-            # Rensa och flytta filer
-            # os.remove('C:\\ctd\\temp\\u' + new_fname + '.cnv')
-            os.remove(self.working_directory + 'd' + self.new_fname + '.cnv')
-            os.remove(self.working_directory + self.new_fname + '.cnv')
-
-            shutil.move(self.working_directory + 'u' + self.new_fname + '.cnv',
-                        self.data_directory + '20' + self.year + '\\up_cast')
-            shutil.move(self.working_directory + self.new_fname + self.ctdconfig,
-                        self.raw_files_directory + '20' + self.year)
-            shutil.move(self.working_directory + self.new_fname + '.hex',
-                        self.raw_files_directory + '20' + self.year)
-            shutil.move(self.working_directory + self.new_fname + '.hdr',
-                        self.raw_files_directory + '20' + self.year)
-            shutil.move(self.working_directory + self.new_fname + '.bl',
-                        self.raw_files_directory + '20' + self.year)
+                target_path = Path(server_directories['data'], file_name)
+            if not target_path.parent.exists():
+                os.makedirs(target_path.parent)
             try:
-                shutil.move(self.working_directory + self.new_fname + '.btl',
-                            self.raw_files_directory + '20' + self.year)
+                shutil.copy2(path, target_path)
             except:
-                print('No .btl file to move')
+                self.logger.warning(f'Could not copy file to server: {path} => {target_path}')
+
+        # Raw files
+        for file in self.seabird_files.files.values():
+            target_path = Path(server_directories['raw'], file.file_name)
             try:
-                shutil.move(self.working_directory + self.new_fname + '.ros',
-                            self.raw_files_directory + '20' + self.year)
+                shutil.copy2(file.file_path, target_path)
             except:
-                print('No .ros file to move')
+                self.logger.warning(f'Could not copy file to server: {file.file_path} => {target_path}')
 
-
-        else:  # filen finns redan
-
-            q = raw_input('Files do already exist. Overwrite? Y or N?')
-            # q = 'Y'
-            if q.upper() == 'Y':  # om Y; skriv över filen
-                # Skriver tillbaka header self.ctd_data[0],
-                test_file = open(self.data_directory + '20' + self.year + '\\' + self.new_fname + '.cnv', 'w')
-                test_file.writelines(self.ctd_data[0])
-                test_file.close()
-
-                # och lägger tillbaka data self.ctd_data[2] till samma fil
-                test_file = open(self.data_directory + '20' + self.year + '\\' + self.new_fname + '.cnv', "a")
-                for row in self.ctd_data[2]:
-                    row_to_write, bad_flag = self.get_string_for_data_file(row)
-
-                    if bad_flag:
-                        print
-                        'Bad flag detected at %s db, in %s' % (row[1], self.new_fname)
-                    # else: # can activate this to not write this depth to the data file
-                    test_file.write(row_to_write)
-                    test_file.write('\n')
-
-                test_file.close()
-
-                # TODO:
-                # TODO: copy cnv and plots to file server
-                # C:\ctd\plots\\' + '20' + self.year + ' /f' + self.new_fname
-                # /a_' + self.stationname
-                # /a_TS_diff_' + self.stationname
-                # /a_oxygen_diff_' + self.stationname
-                # /a_fluor_turb_par_' + self.stationname
-
-                # Rensa och flytta filer
-                # os.remove('C:\\ctd\\temp\\u' + new_fname + '.cnv')
-                os.remove(self.working_directory + 'd' + self.new_fname + '.cnv')
-                os.remove(self.working_directory + self.new_fname + '.cnv')
-
-                # ta bort äldre filer och kopiera över det nya
-                try:
-                    os.remove(self.data_directory + '20' + self.year + '\\up_cast\\u' + self.new_fname + '.cnv')
-                except:
-                    print('No old up_cast file to delete')
-                try:
-                    os.remove(self.raw_files_directory + '20' + self.year + '\\' + self.new_fname + self.ctdconfig)
-                except:
-                    pass
-
-                try:
-                    os.remove(self.raw_files_directory + '20' + self.year + '\\' + self.new_fname + '.hex')
-                except:
-                    pass
-
-                try:
-                    os.remove(self.raw_files_directory + '20' + self.year + '\\' + self.new_fname + '.hdr')
-                except:
-                    pass
-
-                try:
-                    os.remove(self.raw_files_directory + '20' + self.year + '\\' + self.new_fname + '.bl')
-                except:
-                    pass
-
-                try:
-                    os.remove(self.raw_files_directory + '20' + self.year + '\\' + self.new_fname + '.btl')
-                except:
-                    print('No old .btl file to delete')
-                try:
-                    os.remove(self.raw_files_directory + '20' + self.year + '\\' + self.new_fname + '.ros')
-                except:
-                    print('No old .ros file to delete')
-
-                print
-                'work', self.working_directory + 'u' + self.new_fname + '.cnv'
-                print
-                'data', self.data_directory + '20' + self.year + '\\up_cast'
-
-                # TODO
-                # copy up-cast
-                shutil.move(self.working_directory + 'u' + self.new_fname + '.cnv',
-                            self.data_directory + '20' + self.year + '\\up_cast')
-                shutil.move(self.working_directory + self.new_fname + self.ctdconfig,
-                            self.raw_files_directory + '20' + self.year)
-                shutil.move(self.working_directory + self.new_fname + '.hex',
-                            self.raw_files_directory + '20' + self.year)
-                shutil.move(self.working_directory + self.new_fname + '.hdr',
-                            self.raw_files_directory + '20' + self.year)
-                shutil.move(self.working_directory + self.new_fname + '.bl',
-                            self.raw_files_directory + '20' + self.year)
-                try:
-                    shutil.move(self.working_directory + self.new_fname + '.btl',
-                                self.raw_files_directory + '20' + self.year)
-                except:
-                    print('No .btl file to move')
-                try:
-                    shutil.move(self.working_directory + self.new_fname + '.ros',
-                                self.raw_files_directory + '20' + self.year)
-                except:
-                    print('No .ros file to move')
+        # Plots
+        paths = get_paths_in_directory(Path(self.paths.get_directory('plot'), year), match_string=file_id_string)
+        for path in paths.values():
+            target_path = Path(server_directories['plots'], path.name)
+            try:
+                shutil.copy2(path, target_path)
+            except:
+                self.logger.warning(f'Could not copy file to server: {path} => {target_path}')
 
 
 class Paths:
@@ -508,7 +293,7 @@ class Paths:
         self.directories = {}
         self.files = {}
 
-        for d in ['root', 'working', 'setup', 'data', 'raw_files', 'plot']:
+        for d in ['root', 'working', 'setup', 'data', 'raw', 'plot']:
             self.directories[d] = None
 
         for f in ['ctdmodule', 'batch']:
@@ -541,8 +326,8 @@ class Paths:
         self.directories['root'] = root
         self.directories['working'] = Path(root, 'temp')
         self.directories['setup'] = Path(root, 'setup')
-        self.directories['data'] = Path(root, 'data')
-        self.directories['raw_files'] = Path(root, 'raw_files')
+        self.directories['data'] = Path(root, 'cnv')
+        self.directories['raw'] = Path(root, 'raw_files')
         self.directories['plot'] = Path(root, 'plot')
 
         # Create folders if non existing 
@@ -557,7 +342,7 @@ class Paths:
         return self.files.get(file_id)
 
     def get_directory(self, dir_id):
-        return self.directories.get(dir_id)
+        return self.directories.get(dir_id, None)
 
 
 class BatchFile:
@@ -576,26 +361,32 @@ class BatchFile:
         if not self.batch_file_path.exists():
             raise exceptions.PathError(f'Batch file not found: {self.batch_file_path}')
         # os.system(self.batch_file_path)
-        subprocess.run(self.batch_file_path)
+        subprocess.run(str(self.batch_file_path))
 
 
 class SetupFile:
-    def __init__(self,
-                 parent,
-                 surfacesoak=None,
-                 **kwargs):
+    def __init__(self, parent):
 
-        self.parent = parent
+        self._parent = None
 
-        self._save_variables()
-
-        self.surfacesoak_options = ['deep', 'manual', '0.3', '0.5']
+        self.surfacesoak_options = ['', 'deep', 'manual', '0.3', '0.5']
         self._surfacesoak = None
-        if surfacesoak:
-            self.surfacesoak = surfacesoak
 
         self.paths = {}
 
+        try:
+            self.parent = parent
+        except:
+            pass
+
+    @property
+    def parent(self):
+        return self._parent
+
+    @parent.setter
+    def parent(self, parent):
+        self._parent = parent
+        self._save_variables()
         self._set_ship_id_str()
         self._set_paths()
 
@@ -625,9 +416,9 @@ class SetupFile:
 
     @surfacesoak.setter
     def surfacesoak(self, value):
-        value = str(value)
         if value not in self.surfacesoak_options:
-            raise exceptions.InvalidSurfacesoak
+            raise exceptions.InvalidSurfacesoak(value)
+        value = str(value)
         self._surfacesoak = value
 
     def _set_paths(self):
@@ -635,7 +426,9 @@ class SetupFile:
         self.paths['ctd_config'] = Path(self.working_directory, self.new_file_stem + self.ctd_config_suffix)
         self.paths['hex'] = Path(self.working_directory, f'{self.new_file_stem}.hex')
         self.paths['ros'] = Path(self.working_directory, f'{self.new_file_stem}.ros')
-        self.paths['cnv'] = Path(self.working_directory, f'd{self.new_file_stem}.cnv')
+        self.paths['cnv'] = Path(self.working_directory, f'{self.new_file_stem}.cnv')
+        self.paths['cnv_down'] = Path(self.working_directory, f'd{self.new_file_stem}.cnv')
+        self.paths['cnv_up'] = Path(self.working_directory, f'u{self.new_file_stem}.cnv')
 
         self.paths['psa_datacnv'] = Path(self.setup_directory, f'DatCnv{self.ship_id_str}.psa')
         self.paths['psa_filter'] = Path(self.setup_directory, f'Filter{self.ship_id_str}.psa')
@@ -685,8 +478,6 @@ class SetupFile:
             self.ship_id_str = '_Svea'
 
     def _create_lines(self):
-        if not self.surfacesoak:
-            raise exceptions.InvalidSurfacesoak('Surfacesoak not set!')
 
         self.lines = dict()
 
@@ -713,10 +504,13 @@ class SetupFile:
 
         # Use a modified cnv file path here
         cnv_file_path = Path(self.working_directory, f'd{self.new_file_stem}.cnv')
-        self.lines['plot1'] = f'seaplot /p{self.paths["psa_plot1"]} /i{cnv_file_path} /a_{self.station_name} /o{self.plot_directory}{self.year} /f{self.new_file_stem}'
-        self.lines['plot2'] = f'seaplot /p{self.paths["psa_plot2"]} /i{cnv_file_path} /a_TS_diff_{self.station_name} /o{self.plot_directory}{self.year} /f{self.new_file_stem}'
-        self.lines['plot3'] = f'seaplot /p{self.paths["psa_plot3"]} /i{cnv_file_path} /a_oxygen_diff_{self.station_name} /o{self.plot_directory}{self.year} /f{self.new_file_stem}'
-        self.lines['plot4'] = f'seaplot /p{self.paths["psa_plot4"]} /i{cnv_file_path} /a_fluor_turb_par_{self.station_name} /o{self.plot_directory}{self.year} /f{self.new_file_stem}'
+        plot_directory = Path(self.plot_directory, str(self.year))
+        if not plot_directory.exists():
+            os.makedirs(plot_directory)
+        self.lines['plot1'] = f'seaplot /p{self.paths["psa_plot1"]} /i{cnv_file_path} /a_{self.station_name} /o{plot_directory} /f{self.new_file_stem}'
+        self.lines['plot2'] = f'seaplot /p{self.paths["psa_plot2"]} /i{cnv_file_path} /a_TS_diff_{self.station_name} /o{plot_directory} /f{self.new_file_stem}'
+        self.lines['plot3'] = f'seaplot /p{self.paths["psa_plot3"]} /i{cnv_file_path} /a_oxygen_diff_{self.station_name} /o{plot_directory} /f{self.new_file_stem}'
+        self.lines['plot4'] = f'seaplot /p{self.paths["psa_plot4"]} /i{cnv_file_path} /a_fluor_turb_par_{self.station_name} /o{plot_directory} /f{self.new_file_stem}'
 
     def _get_bottle_sum_line(self):
         bottlesum = ''
@@ -743,6 +537,20 @@ class SetupFile:
         insert_station_name(self.station_name, str(self.paths['psa_plot4']))
 
 
+def get_paths_in_directory(directory, match_string='', walk=False):
+    paths = {}
+    if walk:
+        for root, dirs, files in os.walk(directory, topdown=True):
+            for file_name in files:
+                if match_string in file_name:
+                    paths[file_name] = Path(root, file_name)
+    else:
+        for file_name in os.listdir(directory):
+            if match_string in file_name:
+                paths[file_name] = Path(directory, file_name)
+    return paths
+
+
 def get_logger(existing_logger=None):
     if not os.path.exists('log'):
         os.makedirs('log')
@@ -754,10 +562,38 @@ def get_logger(existing_logger=None):
 
 
 if __name__ == '__main__':
-    c = CtdProcessing(root_directory=r'C:\mw\temp_ctd_processing', ctd_number=1387)
-    c.load_seabird_files(r'C:\mw\data\sbe_raw_files\SBE09_1387_20200816_1055_77_10_0496')
-    print(c.paths)
+    ctdp = CtdProcessing()
+    ctdp.root_directory = r'C:\mw\temp_ctd_processing'
+    ctdp.ctd_number = 1387
+    ctdp.overwrite = True
+    ctdp.use_cnv_info_format = True
+    ctdp.surfacesoak = ''
+    # ctdp.load_seabird_files(r'C:\mw\data\sbe_raw_files\SBE09_1387_20200816_1055_77_10_0496')
+    ctdp.load_seabird_files(r'C:\mw\temp_ctd_processing\_input_files\sv20d0651')
+    ctdp.run_process(server_path=r'C:\mw\temp_svea_server')
 
-    cnv_file = r'C:\mw\temp_svea\cnv/SBE09_1387_20200508_0610_77_10_0383.cnv'
-    cnv = readCNV(cnv_file)
+    # ctdp.create_setup_and_batch_files()
+    # ctdp.run_seabird()
+    # ctdp.modify_cnv_file()
+    # ctdp.save_modified_ctd_file()
+    # ctdp.move_raw_files()
+    # ctdp.remove_files()
+    server_path = r'\\\\scifi01\\scifi\\Processed\\mcseabirdchem'
+
+    # # c.modify_cnv_file()
+    # print(ctdp.paths)
+    #
+    # info = ctdp.cnv_info_object
+    #
+    # # cnv_file = r'C:\mw\temp_svea\cnv/SBE09_1387_20200508_0610_77_10_0383.cnv'
+    # cnv_file = r'C:\mw\temp_svea\cnv/SBE09_1387_20200707_1013_77_10_0469.cnv'
+    # cnv = cnv.CNVfile(cnv_file, ctdp)
+    #
+    # cnv2 = readCNV(cnv_file)
+    #
+    #
+    # cnv.modify()
+    #
+    # save_path = cnv_file + 'v'
+    # cnv.save_file(save_path)
 

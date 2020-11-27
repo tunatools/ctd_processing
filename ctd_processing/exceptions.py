@@ -3,6 +3,10 @@ class CTDException(Exception):
     pass
 
 
+class MissingAttribute(CTDException):
+    pass
+
+
 class UnrecognizedFileName(CTDException):
     pass
 
@@ -38,6 +42,15 @@ class InvalidFileNameFormat(CTDException):
 class PathError(CTDException):
     pass
 
+
 class InvalidSurfacesoak(CTDException):
+    pass
+
+
+class InvalidParameterIndex(CTDException):
+    pass
+
+
+class FileExists(CTDException):
     pass
 
