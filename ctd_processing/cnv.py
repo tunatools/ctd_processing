@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from time import gmtime, strftime
 from ctd_processing import exceptions
+from ctd_processing import utils
 
 
 class CNVparameter:
@@ -362,7 +363,8 @@ class CNVfile:
         after_str = '** Ship'
         rows_to_insert = [f'** Average sound velocity: {str("%6.2f" % svMean)} m/s',
                           f'** True-depth calculation {now}',
-                          f'** CTD Python Module SMHI /ver 3-12/ feb 2012',
+                          # f'** CTD Python Module SMHI /ver 3-12/ feb 2012',
+                          f'** Python Module: ctd_processing, nov 2020',
                           f'** LIMS Job: {self.year}{self.ctry}{self.ship}-{self.serie}'
         ]
         for row in rows_to_insert:

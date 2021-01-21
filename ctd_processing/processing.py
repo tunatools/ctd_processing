@@ -92,6 +92,7 @@ class CtdProcessing:
     
     @root_directory.setter
     def root_directory(self, directory):
+        self.logger.debug(f'Setting root_directory to: {directory}')
         self.paths.root_directory = directory
         self._copy_setup_files()
 
@@ -104,6 +105,7 @@ class CtdProcessing:
         if not number:
             return
         self._ctd_number = str(number)
+        self.logger.debug(f'Setting ctd_number to: {self._ctd_number}')
         if self._ctd_number == '0817':
             self.ctd_config_suffix = '.CON'
         else:
@@ -121,6 +123,7 @@ class CtdProcessing:
     @surfacesoak.setter
     def surfacesoak(self, value):
         self._surfacesoak = value
+        self.logger.debug(f'Setting surfacesoak to: {self._surfacesoak}')
         self.setup_file_object.surfacesoak = self._surfacesoak
 
     @property
@@ -171,6 +174,7 @@ class CtdProcessing:
         return new_path
 
     def run_process(self, server_path=None):
+        self.logger.debug('Running')
         self.create_setup_and_batch_files()
         self.run_seabird()
         self.modify_cnv_file()
@@ -181,7 +185,7 @@ class CtdProcessing:
 
     def load_seabird_files(self, file_path):
         # File path can be any seabird raw file. Even without suffix.
-
+        self.logger.debug(f'Loading file: {file_path}')
         if not self.ctd_number:
             raise exceptions.InvalidInstrumentSerialNumber('No CTD number set')
 
@@ -196,20 +200,24 @@ class CtdProcessing:
         Create a text file that will be called by the bat-file.
         The file runs the SEB-programs
         """
+        self.logger.debug('Running')
         self.setup_file_object.parent = self
         self.setup_file_object.surfacesoak = self.surfacesoak
         self.setup_file_object.create_file()
         self.batch_file_object.create_file()
 
     def run_seabird(self):
+        self.logger.debug('Running')
         self.batch_file_object.run_file()
         cnv_down_file_path = self.setup_file_object.paths['cnv_down']
         self.modify_cnv_file_object = cnv.CNVfile(cnv_down_file_path, ctd_processing_object=self)
 
     def modify_cnv_file(self):
+        self.logger.debug('Running')
         self.modify_cnv_file_object.modify()
 
     def save_modified_ctd_file(self):
+        self.logger.debug('Running')
         file_name = str(self.modify_cnv_file_object.file_path.name)[1:]
         directory = self.paths.get_directory('data')
         # directory = Path(self.paths.get_directory('data'), str(self.year))
@@ -221,6 +229,7 @@ class CtdProcessing:
         os.remove(self.setup_file_object.paths.get('cnv'))
 
     def move_raw_files(self):
+        self.logger.debug('Running')
         year = str(self.year)
         # upcast_dir = Path(self.paths.get_directory('data'), year, 'up_cast')
         upcast_dir = Path(self.paths.get_directory('data'), 'up_cast')
@@ -239,6 +248,7 @@ class CtdProcessing:
         self.seabird_files.move_files(raw_files_dir, overwrite=self.overwrite)
 
     def copy_files_to_server(self, server_path=None):
+        self.logger.debug(f'Copying files to server: {server_path}')
         if not server_path:
             self.logger.warning('No server path given')
             return
@@ -257,7 +267,7 @@ class CtdProcessing:
         # Data files
         paths = get_paths_in_directory(Path(self.paths.get_directory('data'), year), match_string=file_id_string, walk=True)
         for file_name, path in paths.items():
-            print('file_name', file_name)
+            self.logger.debug(f'Copying file to server: {path}')
             if file_name.startswith('u'):
                 target_path = Path(server_directories['data'], 'up_cast', file_name)
             else:
@@ -549,16 +559,6 @@ def get_paths_in_directory(directory, match_string='', walk=False):
             if match_string in file_name:
                 paths[file_name] = Path(directory, file_name)
     return paths
-
-
-def get_logger(existing_logger=None):
-    if not os.path.exists('log'):
-        os.makedirs('log')
-    if existing_logger:
-        return existing_logger
-    logging.config.fileConfig('logging.conf')
-    logger = logging.getLogger('timedrotating')
-    return logger
 
 
 if __name__ == '__main__':
