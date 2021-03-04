@@ -82,6 +82,10 @@ class CNVparameter:
     def data(self):
         return self._data
 
+    @data.setter
+    def data(self, data):
+        self._data = data
+
     def change_name(self, new_name):
         self.info['name'] = new_name
         self.name = new_name
@@ -424,7 +428,7 @@ class CNVfile:
                 new_depth_data.append(self.missing_value_str)
             else:
                 new_depth_data.append(round(value, 3))
-        # self.parameters[self.col_depth].data = new_depth_data
+        self.parameters[self.col_depth].data = new_depth_data
 
     def _modify_span(self):
         # Justera span för de parametrar som har flaggats som bad
