@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 
 
-class ShlInstrumentFile:
+class InstrumentFile:
     def __init__(self, file_path):
         self.file_path = Path(file_path)
 
@@ -25,14 +25,13 @@ class ShlInstrumentFile:
             df = pd.read_excel(self.file_path, sheet_name=sheet, engine='openpyxl')
             for model, serial_nr in zip(df['Model'], df['Serial number']):
                 model = str(model).replace(' ', '')
-                if str(serial_nr) == 'nan':
+                serial_nr = str(serial_nr)
+                if serial_nr == 'nan':
                     continue
                 self.sbe_instrument_info.setdefault(serial_nr, {})
                 self.sbe_instrument_info[serial_nr] = {'model': model,
-                                                       'serial_nr': serial_nr,
+                                                       'sensor_id': serial_nr,
                                                        'parameter': model}
-
-
 
 
 if __name__ == '__main__':
@@ -41,4 +40,4 @@ if __name__ == '__main__':
     # e = openpyxl.load_workbook(file_path)
     # df = pd.read_excel(file_path, sheet_name='SBE Dissolved Oxygen Sensors', engine='openpyxl')
 
-    ii = ShlInstrumentFile(file_path)
+    ii = InstrumentFile(file_path)
