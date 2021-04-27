@@ -11,14 +11,86 @@ class PSAfile:
         self.file_path = Path(file_path)
         self.tree = ET.parse(self.file_path)
 
+    def _has_condition(self, element, tag_list, condition):
+        for tag in tag_list:
+            element = element.find(tag)
+        key, value = [item.strip() for item in condition.split('==')]
+        if element.get(key) == value:
+            return True
+
+    def _get_element_from_tag_list(self, tag_list):
+        element = self.tree
+        for tag in tag_list:
+            if '{{' in tag:
+                condition_found = False
+                tag, condition = tag.split('{{')
+                condition = condition.strip('}}')
+                condition_tag_list = [item.strip() for item in condition.split(';')]
+                key_value = condition_tag_list.pop(-1)
+                for sub_element in element.findall(tag):
+                    if self._has_condition(sub_element, condition_tag_list, key_value):
+                        condition_found = True
+                        element = sub_element
+                        break
+                if not condition_found:
+                    raise Exception('Could not find condition!')
+            else:
+                element = element.find(tag)
+        return element
+
+    def _get_from_tag_list(self, tag_list, key='value'):
+        element = self._get_element_from_tag_list(tag_list)
+        return element.get(key)
+
+    def _set_from_tag_list(self, tag_list, key='value', value=None):
+        if value is None:
+            raise Exception(f'No value given to set for key "{key}"!')
+        element = self._get_element_from_tag_list(tag_list)
+        element.set(key, value)
+
+    def _get_value_list(self, tag_list, values_from_tags):
+        single_list = False
+        if type(values_from_tags) == str:
+            values_from_tags = [values_from_tags]
+            single_list = True
+
+        find_all_tag = tag_list.pop(-1)
+        element = psa.tree
+        for tag in tag_list:
+            element = element.find(tag)
+        elements = element.findall(find_all_tag)
+        return_list = []
+        for element in elements:
+            value_list = []
+            for item in values_from_tags:
+                sub_tag_list = [t.strip() for t in item.split(':')]
+                sub_element = element
+                for sub_tag in sub_tag_list:
+                    sub_element = sub_element.find(sub_tag)
+                value_list.append(sub_element.get('value'))
+            if single_list:
+                return_list.append(value_list[0])
+            else:
+                return_list.append(tuple(value_list))
+        return return_list
+
     def list_all(self):
         for item in self.tree.iter():
             print(item)
+
+    def save(self):
+        self.tree.write(self.file_path)
 
 
 class SeasavePSAfile(PSAfile):
     def __init__(self, file_path):
         super().__init__(file_path)
+
+        self.display_depth_tags = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes',
+                    'Axis{{Calc;FullName;value==Scan Count}}', 'MaximumValue']
+
+        self.blueprint_display_parameter_tags = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes',
+                                                 'Axis{{Calc;FullName;value==<PARAMETER>}}']
 
     @property
     def xmlcon_name(self):
@@ -29,9 +101,63 @@ class SeasavePSAfile(PSAfile):
         file_name = file_name.strip('.xmlcon') + '.xmlcon'
         self.tree.find('Settings').find('ConfigurationFilePath').set('value', file_name)
 
+    @property
+    def display_depth(self):
+        return self._get_from_tag_list(self.display_depth_tags, key='value')
+
+    @display_depth.setter
+    def display_depth(self, max_depth):
+        self._set_from_tag_list(self.display_depth_tags, key='value', value=str(max_depth))
+
+    def get_displayed_parameters(self):
+        tag_list = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes', 'Axis']
+        values_from_tags = 'Calc:FullName'
+        return self._get_value_list(tag_list, values_from_tags)
+
+    def get_parameter_range(self, parameter):
+        if parameter not in self.get_displayed_parameters():
+            raise Exception(f'Parameter "{parameter}" not found in display parameters')
+        tag_list = self._get_tag_list_for_parameter(parameter)
+        min_element = self._get_element_from_tag_list(tag_list + ['MinimumValue'])
+        max_element = self._get_element_from_tag_list(tag_list + ['MaximumValue'])
+        return min_element.get('value'), max_element.get('value')
+
+    def set_parameter_range(self, parameter, min_value=None, max_value=None):
+        if parameter not in self.get_displayed_parameters():
+            raise Exception(f'Parameter "{parameter}" not found in display parameters')
+        tag_list = self._get_tag_list_for_parameter(parameter)
+        if min_value:
+            min_element = self._get_element_from_tag_list(tag_list + ['MinimumValue'])
+            min_element.set('value', str(min_value))
+        if max_value:
+            max_element = self._get_element_from_tag_list(tag_list + ['MaximumValue'])
+            max_element.set('value', str(max_value))
+
+    def _get_tag_list_for_parameter(self, parameter):
+        tag_list = []
+        for tag in self.blueprint_display_parameter_tags:
+            tag = tag.replace('<PARAMETER>', parameter)
+            tag_list.append(tag)
+        return tag_list
+
 
 if __name__ == '__main__':
-    psa = SeasavePSAfile(r'C:\mw\temp_svea\temp_psa/Seasave.psa')
-    print(psa.xmlcon_name)
+    psa = SeasavePSAfile(r'C:\mw\git\pre_system_svea\pre_system_svea\resources/Seasave.psa')
+    psa.display_depth = 300
+    # psa.save()
+
+    print(psa.display_depth)
+
+    disp_par_list = psa.get_displayed_parameters()
+    print(disp_par_list)
+
+    psa.set_parameter_range('Salinity, Practical [PSU]', max_value=22)
+    psa.save()
+
+
+
+
+
+
 
 
