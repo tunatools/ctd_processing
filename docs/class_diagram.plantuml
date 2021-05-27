@@ -1,0 +1,133 @@
+@startuml
+'skinparam Style strictuml
+
+class cnv_column_info_CnvSensorInfo {}
+
+class cnv_column_info_CnvInfoFile {}
+
+class cnv_column_info_CnvInfoFiles {}
+
+cnv_column_info_CnvInfoFile *-- cnv_column_info_CnvSensorInfo
+cnv_column_info_CnvInfoFiles o-- cnv_column_info_CnvInfoFile
+
+
+class cnv_CNVparameter {}
+
+class cnv_CNVheader {}
+
+class cnv_CNVfile {}
+
+cnv_CNVfile *-- cnv_CNVheader
+cnv_CNVfile *-- cnv_CNVparameter
+
+
+class processing_CtdProcessing {
+    Huvudklass för att hantera 
+    CTD-processering (SeaBird)
+    ==
+}
+
+class processing_Paths {
+    Håller alla sökvägar
+    ==
+}
+
+class processing_BatchFile {
+    Klass för att skapa och köra 
+    batchfil som kör seabird 
+    ctd-processering
+    ==
+}
+
+class processing_SetupFile {
+
+}
+
+processing_CtdProcessing o-- processing_SetupFile
+processing_CtdProcessing o-- processing_BatchFile
+processing_CtdProcessing o-- processing_Paths
+
+class psa_PSAfile {
+    Huvudklass för att hantera psa-filer.
+    ==
+}
+
+class psa_PlotPSAfile {
+    Klass för att hantera plot.psa-filer
+}
+
+class psa_PSAfileWithPlot {
+    Klass för att hantera psa-filer som 
+    innehåller information om plottning.
+==
+}
+
+class psa_SeasavePSAfile {
+    Klass för att hantera seasave.psa 
+    som används vid ctd-kastet. 
+}
+
+psa_PSAfileWithPlot <|-- psa_PSAfile
+psa_PlotPSAfile <|-- psa_PSAfileWithPlot
+psa_SeasavePSAfile <|-- psa_PSAfileWithPlot
+
+class seabird_SeabirdRawFileBase {}
+
+class seabird_BlFile {}
+
+class seabird_BtlFile {}
+
+class seabird_HdrFile {}
+
+class seabird_HexFile {}
+
+class seabird_RosFile {}
+
+class seabird_ConFile {}
+
+class seabird_XmlconFile {}
+
+class seabird_SeabirdFiles {}
+
+seabird_SeabirdFiles o-- seabird_BlFile
+seabird_SeabirdFiles o-- seabird_BtlFile
+seabird_SeabirdFiles o-- seabird_HdrFile
+seabird_SeabirdFiles o-- seabird_HexFile
+seabird_SeabirdFiles o-- seabird_RosFile
+seabird_SeabirdFiles o-- seabird_XmlconFile
+seabird_SeabirdFiles o-- seabird_ConFile
+
+seabird_SeabirdRawFileBase --|> seabird_BlFile
+seabird_SeabirdRawFileBase --|> seabird_BtlFile
+seabird_SeabirdRawFileBase --|> seabird_HdrFile
+seabird_SeabirdRawFileBase --|> seabird_HexFile
+seabird_SeabirdRawFileBase --|> seabird_RosFile
+seabird_SeabirdRawFileBase --|> seabird_XmlconFile
+seabird_SeabirdRawFileBase --|> seabird_ConFile
+
+
+class sensor_info_InstrumentFile {}
+
+
+class ship_Ship {}
+class ship_Svea {}
+class ship_FinnishShip {}
+class ship_Meri {}
+class ship_Aura {}
+class ship_Aranda {}
+class ship_Dana {}
+class ship_SBE09 {}
+
+ship_Ship 
+ship_Svea
+ship_FinnishShip 
+ship_Meri 
+ship_Aura 
+ship_Aranda 
+ship_Dana 
+ship_SBE09 
+
+
+
+
+@enduml

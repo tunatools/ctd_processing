@@ -1,0 +1,239 @@
+class cnv.CNVparameter #25F050 {}
+
+class cnv.CNVheader #25F050 {}
+
+class cnv.CNVfile #25F050 {}
+
+class cnv_column_info.CnvSensorInfo #70205E {}
+
+class cnv_column_info.CnvInfoFile #70205E {}
+
+class cnv_column_info.CnvInfoFiles #70205E {}
+
+class ctd_sbe9_processing.CtdProcessing #6FE69B {}
+
+class exceptions.CTDException #BCE26D {}
+
+class exceptions.MissingAttribute #BCE26D {}
+
+class exceptions.UnrecognizedFileName #BCE26D {}
+
+class exceptions.InvalidInstrumentName #BCE26D {}
+
+class exceptions.InvalidInstrumentSerialNumber #BCE26D {}
+
+class exceptions.InvalidDateFormat #BCE26D {}
+
+class exceptions.InvalidTimeFormat #BCE26D {}
+
+class exceptions.InvalidCountryCode #BCE26D {}
+
+class exceptions.InvalidSerialNumber #BCE26D {}
+
+class exceptions.InvalidFileNameFormat #BCE26D {}
+
+class exceptions.PathError #BCE26D {}
+
+class exceptions.InvalidSurfacesoak #BCE26D {}
+
+class exceptions.InvalidParameterIndex #BCE26D {}
+
+class exceptions.FileExists #BCE26D {}
+
+class processing.CtdProcessing #B5BCE6 {}
+
+class processing.Paths #B5BCE6 {}
+
+class processing.BatchFile #B5BCE6 {}
+
+class processing.SetupFile #B5BCE6 {}
+
+class psa.PSAfile #52D1FC {}
+
+class psa.PSAfileWithPlot #52D1FC {}
+
+class psa.SeasavePSAfile #52D1FC {}
+
+class psa.PlotPSAfile #52D1FC {}
+
+class seabird.SeabirdRawFileBase #3FCF91 {}
+
+class seabird.BlFile #3FCF91 {}
+
+class seabird.BtlFile #3FCF91 {}
+
+class seabird.HdrFile #3FCF91 {}
+
+class seabird.HexFile #3FCF91 {}
+
+class seabird.RosFile #3FCF91 {}
+
+class seabird.XmlconFile #3FCF91 {}
+
+class seabird.ConFile #3FCF91 {}
+
+class seabird.SeabirdFiles #3FCF91 {}
+
+class sensor_info.InstrumentFile #F8A07E {}
+
+class ship.Ship #4F11F3 {}
+
+class ship.FinnishShip #4F11F3 {}
+
+class ship.SBE09 #4F11F3 {}
+
+class ship.Dana #4F11F3 {}
+
+class ship.Aranda #4F11F3 {}
+
+class ship.Aura #4F11F3 {}
+
+class ship.Meri #4F11F3 {}
+
+class ship.Svea #4F11F3 {}
+
+class xmlcon.XMLCONfile #F5B846 {}
+
+
+cnv_column_info.CnvSensorInfo <|-- dict
+
+ctd_sbe9_processing.CtdProcessing <|-- object
+
+exceptions.CTDException <|-- Exception
+
+exceptions.MissingAttribute <|-- exceptions.CTDException
+
+exceptions.UnrecognizedFileName <|-- exceptions.CTDException
+
+exceptions.InvalidInstrumentName <|-- exceptions.CTDException
+
+exceptions.InvalidInstrumentSerialNumber <|-- exceptions.CTDException
+
+exceptions.InvalidDateFormat <|-- exceptions.CTDException
+
+exceptions.InvalidTimeFormat <|-- exceptions.CTDException
+
+exceptions.InvalidCountryCode <|-- exceptions.CTDException
+
+exceptions.InvalidSerialNumber <|-- exceptions.CTDException
+
+exceptions.InvalidFileNameFormat <|-- exceptions.CTDException
+
+exceptions.PathError <|-- exceptions.CTDException
+
+exceptions.InvalidSurfacesoak <|-- exceptions.CTDException
+
+exceptions.InvalidParameterIndex <|-- exceptions.CTDException
+
+exceptions.FileExists <|-- exceptions.CTDException
+
+psa.PSAfileWithPlot <|-- psa.PSAfile
+
+psa.SeasavePSAfile <|-- psa.PSAfileWithPlot
+
+psa.PlotPSAfile <|-- psa.PSAfileWithPlot
+
+seabird.BlFile <|-- seabird.SeabirdRawFileBase
+
+seabird.BtlFile <|-- seabird.SeabirdRawFileBase
+
+seabird.HdrFile <|-- seabird.SeabirdRawFileBase
+
+seabird.HexFile <|-- seabird.SeabirdRawFileBase
+
+seabird.RosFile <|-- seabird.SeabirdRawFileBase
+
+seabird.XmlconFile <|-- seabird.SeabirdRawFileBase
+
+seabird.ConFile <|-- seabird.SeabirdRawFileBase
+
+ship.FinnishShip <|-- ship.Ship
+
+ship.SBE09 <|-- ship.Ship
+
+ship.Dana <|-- ship.Ship
+
+ship.Aranda <|-- ship.FinnishShip
+
+ship.Aura <|-- ship.FinnishShip
+
+ship.Meri <|-- ship.FinnishShip
+
+ship.Svea <|-- ship.Ship
+
+cnv.CNVparameter o-- cnv.CNVparameter
+
+cnv.CNVfile o-- cnv.CNVheader
+cnv.CNVfile o-- cnv.CNVparameter
+cnv.CNVfile o-- exceptions.FileExists
+cnv.CNVfile o-- exceptions.MissingAttribute
+cnv.CNVfile o-- exceptions.InvalidParameterIndex
+cnv.CNVfile o-- ship.Ship
+
+cnv_column_info.CnvSensorInfo o-- cnv_column_info.CnvSensorInfo
+
+cnv_column_info.CnvInfoFile o-- cnv_column_info.CnvInfoFile
+cnv_column_info.CnvInfoFile o-- cnv_column_info.CnvSensorInfo
+
+cnv_column_info.CnvInfoFiles o-- cnv_column_info.CnvInfoFile
+cnv_column_info.CnvInfoFiles o-- cnv_column_info.CnvInfoFile
+cnv_column_info.CnvInfoFiles o-- exceptions.InvalidInstrumentSerialNumber
+
+ctd_sbe9_processing.CtdProcessing o-- ctd_sbe9_processing.CtdProcessing
+ctd_sbe9_processing.CtdProcessing o-- processing.CtdProcessing
+ctd_sbe9_processing.CtdProcessing o-- ship.Dana
+ctd_sbe9_processing.CtdProcessing o-- ship.Svea
+ctd_sbe9_processing.CtdProcessing o-- ship.Ship
+
+processing.CtdProcessing o-- processing.Paths
+processing.CtdProcessing o-- processing.SetupFile
+processing.CtdProcessing o-- processing.BatchFile
+processing.CtdProcessing o-- cnv.CNVfile
+processing.CtdProcessing o-- cnv_column_info.CnvInfoFile
+processing.CtdProcessing o-- cnv_column_info.CnvInfoFiles
+processing.CtdProcessing o-- exceptions.FileExists
+processing.CtdProcessing o-- exceptions.InvalidInstrumentSerialNumber
+processing.CtdProcessing o-- seabird.SeabirdFiles
+
+seabird.SeabirdFiles o-- seabird.BlFile
+seabird.SeabirdFiles o-- seabird.BtlFile
+seabird.SeabirdFiles o-- seabird.HdrFile
+seabird.SeabirdFiles o-- seabird.HexFile
+seabird.SeabirdFiles o-- seabird.RosFile
+seabird.SeabirdFiles o-- seabird.XmlconFile
+seabird.SeabirdFiles o-- seabird.ConFile
+
+ship.Ship o-- ship.Ship
+
+ship.Dana o-- ship.Dana
+
+ship.Svea o-- ship.Dana
+ship.Svea o-- ship.Aranda
+ship.Svea o-- ship.Aura
+ship.Svea o-- ship.Meri
+ship.Svea o-- ship.Svea
+ship.Svea o-- ship.Ship
+ship.Svea o-- ship.SBE09
+ship.Svea o-- ship.Dana
+ship.Svea o-- ship.Aranda
+ship.Svea o-- ship.Aura
+ship.Svea o-- ship.Meri
+ship.Svea o-- ship.Svea
+ship.Svea o-- ship.Ship
+
+processing.BatchFile o-- exceptions.PathError
+
+processing.SetupFile o-- exceptions.InvalidSurfacesoak
+processing.SetupFile o-- ship.Svea
+processing.SetupFile o-- ship.Dana
+
+seabird.SeabirdRawFileBase o-- exceptions.PathError
+seabird.SeabirdRawFileBase o-- exceptions.UnrecognizedFileName
+seabird.SeabirdRawFileBase o-- exceptions.FileExists
+
+seabird.HdrFile o-- exceptions.InvalidInstrumentName
+seabird.HdrFile o-- exceptions.InvalidInstrumentSerialNumber
+seabird.HdrFile o-- exceptions.InvalidDateFormat
+seabird.HdrFile o-- exceptions.InvalidSerialNumber
+seabird.HdrFile o-- exceptions.InvalidFileNameFormat
+seabird.HdrFile o-- ship.SBE09
