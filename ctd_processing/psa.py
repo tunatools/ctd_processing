@@ -167,7 +167,10 @@ class SeasavePSAfile(PSAfileWithPlot):
         self.cruise_tags = ['Settings', 'HeaderForm', 'Prompt{{index==3}}']
         self.lat_tags = ['Settings', 'HeaderForm', 'Prompt{{index==4}}']
         self.lon_tags = ['Settings', 'HeaderForm', 'Prompt{{index==5}}']
-        self.pos_source_tags = ['Settings', 'HeaderForm', 'Prompt{{index==6}}']
+        # self.pos_source_tags = ['Settings', 'HeaderForm', 'Prompt{{index==6}}']
+        self.event_id_tags = ['Settings', 'HeaderForm', 'Prompt{{index==6}}']
+        self.parent_event_id_tags = ['Settings', 'HeaderForm', 'Prompt{{index==7}}']
+        self.add_samp_tags = ['Settings', 'HeaderForm', 'Prompt{{index==8}}']
 
         self.display_depth_tags = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes',
                     'Axis{{Calc;FullName;value==Scan Count}}', 'MaximumValue']
@@ -263,14 +266,47 @@ class SeasavePSAfile(PSAfileWithPlot):
     def position(self, position):
         lat_element = self._get_element_from_tag_list(self.lat_tags)
         lon_element = self._get_element_from_tag_list(self.lon_tags)
-        source_element = self._get_element_from_tag_list(self.pos_source_tags)
+        # source_element = self._get_element_from_tag_list(self.pos_source_tags)
 
-        if not position[2]:
+        if len(position) < 3 or not position[2]:
             position[2] = 'Unknown'
 
-        lat_element.set('value', f'Latitud [DD]: {position[0]}')
-        lon_element.set('value', f'Longitude [DD]: {position[1]}')
-        source_element.set('value', f'Position source: {position[2]}')
+        lat_element.set('value', f'Latitud [GG MM.mm N]: {position[0]}')
+        lon_element.set('value', f'Longitude [GG MM.mm E]: {position[1]}')
+        # source_element.set('value', f'Position source: {position[2]}')
+
+    @property
+    def event_id(self):
+        element = self._get_element_from_tag_list(self.event_id_tags)
+        return element.get('value')
+
+    @event_id.setter
+    def event_id(self, id):
+        element = self._get_element_from_tag_list(self.event_id_tags)
+        value = f'EventID: {id}'
+        element.set('value', value)
+
+    @property
+    def parent_event_id(self):
+        element = self._get_element_from_tag_list(self.parent_event_id_tags)
+        return element.get('value')
+
+    @parent_event_id.setter
+    def parent_event_id(self, id):
+        element = self._get_element_from_tag_list(self.parent_event_id_tags)
+        value = f'Parent EventID: {id}'
+        element.set('value', value)
+
+    @property
+    def add_samp(self):
+        element = self._get_element_from_tag_list(self.add_samp_tags)
+        return element.get('value')
+
+    @add_samp.setter
+    def add_samp(self, id):
+        element = self._get_element_from_tag_list(self.add_samp_tags)
+        value = f'Additional Sampling: {id}'
+        element.set('value', value)
 
 
 class PlotPSAfile(PSAfileWithPlot):
@@ -297,18 +333,18 @@ class PlotPSAfile(PSAfileWithPlot):
         self._get_element_from_tag_list(self.title_tags).set('value', title)
 
 
-if __name__ == '__main__':
-    psa = SeasavePSAfile(r'C:\mw\git\ctd_config\SBE\seasave_psa\svea/Seasave.psa')
-    print('======')
-    print(psa.display_depth)
-    print('------')
-    print(psa.station)
-    print('------')
-    print(psa.operator)
-    print('------')
-    print(psa.ship)
-    print('------')
-    print(psa.cruise)
+# if __name__ == '__main__':
+#     psa = SeasavePSAfile(r'C:\mw\git\ctd_config\SBE\seasave_psa\svea/Seasave.psa')
+#     print('======')
+#     print(psa.display_depth)
+#     print('------')
+#     print(psa.station)
+#     print('------')
+#     print(psa.operator)
+#     print('------')
+#     print(psa.ship)
+#     print('------')
+#     print(psa.cruise)
 
     # plot = PlotPSAfile(r'C:\mw\git\pre_system_svea\pre_system_svea\resources/File_2-SeaPlot_T_S_difference.psa')
     # psa.display_depth = 300
