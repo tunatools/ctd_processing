@@ -10,11 +10,63 @@ from ctd_processing import cnv
 from ctd_processing import cnv_column_info
 from ctd_processing import exceptions
 from ctd_processing import seabird
+from ctd_processing import psa
 
 try:
     from ctd_processing.stationnames_in_plot import insert_station_name
 except:
     from stationnames_in_plot import insert_station_name
+
+
+class NewCtdProcessing:
+    def __init__(self):
+        self._config_root_path = None
+
+    @property
+    def config_root_path(self):
+        if not self._config_root_path:
+            raise NotADirectoryError('No config root set!')
+        return self._config_root_path
+
+    @config_root_path.setter
+    def config_root_path(self, path):
+        path = Path(path)
+        if not path.exists():
+            print(path)
+            raise NotADirectoryError(f'Not a valid config root directory: \n{path}')
+        self._config_root_path = path
+
+    @staticmethod
+    def _check_paths(paths_dict, file_type=''):
+        non_existing = []
+        for key, path in paths_dict.items():
+            if not path.exists():
+                non_existing.append(f'{key.capitalize()}: {path}')
+        if non_existing:
+            string = '\n'.join(non_existing)
+            raise FileNotFoundError(f'Could not find the following {file_type}-file(s):\n{string}')
+
+    def get_surfacesoak_options(self):
+        options = {'Normal 7-8 m': Path(self.config_root_path, 'SBE', 'processing_psa', 'Common', 'LoopEdit.psa'),
+                   'Deep 15 m': Path(self.config_root_path, 'SBE', 'processing_psa', 'Common', 'LoopEdit_deep.psa'),
+                   'Shallow 5 m': Path(self.config_root_path, 'SBE', 'processing_psa', 'Common', 'LoopEdit_shallow.psa')}
+        self._check_paths(options, file_type='LoopEdit')
+        return options
+
+    def get_file_paths(self):
+        file_paths = {'derive.psa': Path(self.config_root_path, 'SBE', 'processing_psa', 'Common', 'Derive.psa')}
+        self._check_paths(file_paths, file_type='config')
+        return file_paths
+
+    def _get_derive_psa_obj(self):
+        file_paths = self.get_file_paths()
+        return psa.DerivePSAfile(file_paths.get('derive.psa'))
+
+    def turn_tau_correction_on(self):
+        self._get_derive_psa_obj().turn_tau_correction_on()
+
+    def turn_tau_correction_off(self):
+        self._get_derive_psa_obj().turn_tau_correction_off()
 
 
 class CtdProcessing:

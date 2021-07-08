@@ -333,7 +333,29 @@ class PlotPSAfile(PSAfileWithPlot):
         self._get_element_from_tag_list(self.title_tags).set('value', title)
 
 
-# if __name__ == '__main__':
+class DerivePSAfile(PSAfile):
+    def __init__(self, file_path):
+        super().__init__(file_path)
+
+    def turn_tau_correction_on(self):
+        self._set_tau_correction(True)
+
+    def turn_tau_correction_off(self):
+        self._set_tau_correction(False)
+
+    def _set_tau_correction(self, state):
+        state = str(int(state))
+        for element in d.tree.find('CalcArray'):
+            calc_element = element.find('Calc').find('ApplyTauCorrection')
+            if calc_element is not None:
+                calc_element.set('value', state)
+        self.save()
+
+
+if __name__ == '__main__':
+    d = DerivePSAfile(r'C:\mw\git\ctd_config\SBE\processing_psa\Common/Derive.psa')
+    d.turn_tau_correction_on()
+
 #     psa = SeasavePSAfile(r'C:\mw\git\ctd_config\SBE\seasave_psa\svea/Seasave.psa')
 #     print('======')
 #     print(psa.display_depth)
