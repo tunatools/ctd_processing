@@ -4,13 +4,17 @@ import logging.config
 import os
 import shutil
 import subprocess
+import threading
+import psutil
 from pathlib import Path
+import datetime
 
-from ctd_processing import cnv
-from ctd_processing import cnv_column_info
-from ctd_processing import exceptions
-from ctd_processing import seabird
+# from ctd_processing import cnv
+# from ctd_processing import cnv_column_info
+# from ctd_processing import exceptions
+# from ctd_processing import seabird
 from ctd_processing import psa
+from ctd_processing import ctd_files
 
 try:
     from ctd_processing.stationnames_in_plot import insert_station_name
@@ -18,634 +22,478 @@ except:
     from stationnames_in_plot import insert_station_name
 
 
-class NewCtdProcessing:
-    def __init__(self):
-        self._config_root_path = None
+class CtdProcessing:
+    """
+    Config file paths are hard coded based on the root catalogue. Consider putting this info in config file (yaml, json)
+    """
+
+    def __init__(self,
+                 config_root_path=None,
+                 edit=False):
+        self._platform = None
+
+        self._overwrite = False
+        self._edit = edit
+
+        self._config_root_path = Path(config_root_path)
+        self._local_directory = None
+        self._server_directory = None
+
+        if not self._config_root_path.exists():
+            raise NotADirectoryError(self._config_root_path)
+
+        self._ctd_files = None
+
+    def overwrite(self, ok):
+        if not self._edit:
+            self._overwrite = False
+        self._overwrite = bool(ok)
 
     @property
-    def config_root_path(self):
-        if not self._config_root_path:
-            raise NotADirectoryError('No config root set!')
-        return self._config_root_path
+    def platform(self):
+        return self._platform
 
-    @config_root_path.setter
-    def config_root_path(self, path):
-        path = Path(path)
-        if not path.exists():
-            print(path)
-            raise NotADirectoryError(f'Not a valid config root directory: \n{path}')
-        self._config_root_path = path
+    @platform.setter
+    def platform(self, name):
+        # Setting the platform. This is used for prioritising setup files in a specific folder in ctd_config\SBE\processing_psa
+        if not name:
+            return
+        if name.lower() not in self._paths.platforms:
+            raise Exception(f'Invalid platform name: {name}')
+        self._platform = name
+        self._paths.platform = name
 
-    @staticmethod
-    def _check_paths(paths_dict, file_type=''):
-        non_existing = []
-        for key, path in paths_dict.items():
-            if not path.exists():
-                non_existing.append(f'{key.capitalize()}: {path}')
-        if non_existing:
-            string = '\n'.join(non_existing)
-            raise FileNotFoundError(f'Could not find the following {file_type}-file(s):\n{string}')
+    @property
+    def year(self):
+        if not self._ctd_files:
+            return None
+        return self._ctd_files.year
+
+    def set_local_directory(self, path):
+        self._local_directory = Path(path)
+        self._working_directory = Path(self._local_directory, 'temp')
+
+        self._paths = Paths(config_root_path=self._config_root_path,
+                            working_directory=self._working_directory)
+
+    def _create_temp_directory(self):
+        if not self._working_directory.exists():
+            os.makedirs(self._working_directory)
+
+    def set_server_directory(self, path):
+        self._server_directory = Path(path)
+
+    def get_platfrom_options(self):
+        return self._paths.platforms
 
     def get_surfacesoak_options(self):
-        options = {'Normal 7-8 m': Path(self.config_root_path, 'SBE', 'processing_psa', 'Common', 'LoopEdit.psa'),
-                   'Deep 15 m': Path(self.config_root_path, 'SBE', 'processing_psa', 'Common', 'LoopEdit_deep.psa'),
-                   'Shallow 5 m': Path(self.config_root_path, 'SBE', 'processing_psa', 'Common', 'LoopEdit_shallow.psa')}
-        self._check_paths(options, file_type='LoopEdit')
+        options = {}
+        for path in self._paths.loopedit_paths:
+            name = path.name.lower()
+            obj = psa.LoopeditPSAfile(path)
+            depth_str = str(int(float(obj.depth)))
+            if 'deep' in name:
+                options[f'Deep {depth_str} m'] = path
+            elif 'shallow' in name:
+                options[f'Shallow {depth_str} m'] = path
+            else:
+                options[f'Normal {depth_str} m'] = path
         return options
-
-    def get_file_paths(self):
-        file_paths = {'derive.psa': Path(self.config_root_path, 'SBE', 'processing_psa', 'Common', 'Derive.psa')}
-        self._check_paths(file_paths, file_type='config')
-        return file_paths
+                
+    def set_surfacesoak(self, name):
+        """ Sets surfacesoak in setup file. Name must match keys in coming from self.get_surfacesoak_options """
+        name = name.lower()
+        options = self.get_surfacesoak_options()
+        for key, path in options.items():
+            if name in key.lower():
+                self._paths.set_loopedit(options[key])
+                return (key, path)
+        else:
+            raise Exception('Invalid surfacesoak option')
 
     def _get_derive_psa_obj(self):
-        file_paths = self.get_file_paths()
-        return psa.DerivePSAfile(file_paths.get('derive.psa'))
+        # file_paths = self.get_file_paths()
+        return psa.DerivePSAfile(self._paths('psa_derive'))
 
-    def turn_tau_correction_on(self):
-        self._get_derive_psa_obj().turn_tau_correction_on()
+    def set_tau_state(self, state):
+        self._get_derive_psa_obj().set_tau_correction(bool(bool))
 
-    def turn_tau_correction_off(self):
-        self._get_derive_psa_obj().turn_tau_correction_off()
+    def select_uneditable_file(self, file_path):
+        path = Path(file_path)
+        if not path.exists():
+            raise FileNotFoundError(path)
+        self._ctd_files = ctd_files.get_ctd_files_object(path, edit=False)
 
+    def select_file(self, file_path):
+        """ Kontrollen för att skriva över bör göras mot raw-mappen istället för mot tempmappen. """
+        path = Path(file_path)
+        if not path.exists():
+            raise FileNotFoundError(path)
+        # Copying files and load instrument files object
+        self._create_temp_directory()
+        new_path = self._copy_all_files_with_same_file_stem(path, self._working_directory)
+        self._ctd_files = ctd_files.get_ctd_files_object(new_path, edit=self._edit)
+        self._ctd_files.rename_files(self._overwrite)
+        self._paths.set_new_file_base(self._ctd_files.file_base)
+        self._paths.set_config_suffix(self._ctd_files.config_file_suffix)
+        self._setup_file = SetupFile(file_paths=self._paths, instrument_files=self._ctd_files)
+        self._batch_file = BatchFile(file_paths=self._paths)
 
-class CtdProcessing:
-    def __init__(self, root_directory=None, **kwargs):
+    def _copy_all_files_with_same_file_stem(self, file_path, target_directory):
+        if not self._edit:
+            raise Exception(f'Not set to edit mode!')
+        stem = file_path.stem
+        return_path = None
+        for path in file_path.parent.iterdir():
+            if path.stem == stem:
+                return_path = self._copy_file(path, target_directory)
+        return return_path
 
-        self._surfacesoak = kwargs.get('surfacesoak', '')
-        self.name = Path(__file__).stem
-        self.overwrite = kwargs.get('overwrite', False)
-        self.use_cnv_info_format = kwargs.get('use_cnv_info_format', False)
+    def _copy_file(self, source_file_path, target_directory):
+        if not self._edit:
+            raise Exception(f'Not set to edit mode!')
+        target_file_path = Path(target_directory, source_file_path.name)
+        if target_file_path.exists() and not self._overwrite:
+            raise FileExistsError(target_file_path)
+        shutil.copy2(source_file_path, target_file_path)
+        return target_file_path
 
-        self.logger = kwargs.get('logger')
-        if not self.logger:
-            self.logging_level = 'WARNING'
-            self.logging_format = '%(asctime)s [%(levelname)10s]    %(pathname)s [%(lineno)d] => %(funcName)s():    %(message)s'
-            self._setup_logger(**kwargs)
+    def get_file_names_in_server_directory(self, subfolder=None):
+        if not self._server_directory:
+            raise NotADirectoryError('No server directory set')
+        directory = self.get_server_directory(subfolder=subfolder)
+        return [path.name for path in directory.iterdir()]
 
-        # Directories
-        self.paths = Paths(root_directory)
-        self.cnv_column_info_directory = Path(Path(__file__).parent, 'cnv_column_info')
-        self.cnv_info_files = cnv_column_info.CnvInfoFiles(self.cnv_column_info_directory)
+    def get_local_directory(self, subfolder=None, create=False):
+        return self._get_directory(self._local_directory, subfolder=subfolder, create=create)
 
-        # Välj CTD
-        self._ctd_number = None
-        self.ctd_config_suffix = None
+    def get_server_directory(self, subfolder=None, create=False):
+        if not self._server_directory:
+            return None
+        return self._get_directory(self._server_directory, subfolder=subfolder, create=create)
 
-        self.seabird_files = None
-        self.serial_number = None
-        self.ship_short_name = None
-        self.ship_id = None
-        self.ctry = None
-        self.ship = None
-        self.new_file_stem = None
-        self.station_name = None
-        self.number_of_bottles = None
-        self.year = None
+    def _get_directory(self, path, subfolder=None, create=False):
+        if path.name != 'data':
+            path = Path(path, 'data')
+        if not subfolder:
+            return path
+        if not self.year:
+            raise Exception('Could not find valid year to create local data directory!')
+        path = Path(path, str(self.year))
+        if subfolder == 'cnv':
+            path = Path(path, 'cnv')
+        elif subfolder == 'raw':
+            path = Path(path, 'raw')
+        elif subfolder == 'nsf':
+            path = Path(path, 'nsf')
+        elif subfolder:
+            raise Exception(f'Invalid file subfolder: {subfolder}')
+        if not path.exists() and create:
+            os.makedirs(path)
+        return path
 
-        self.setup_file_object = SetupFile(parent=self)
-        self.batch_file_object = BatchFile(parent=self)
-
-        self.ctd_number = None
-        self.cnv_info_object = None
-        self.modify_cnv_file_object = None
-
-        self.ctd_number = kwargs.get('ctd_number', None)
-
-    @property
-    def options(self):
-        return {'root_directory': str,
-                'surfacesoak': self.surfacesoak_options,
-                'ctd_number': self.ctd_number_options,
-                'use_cnv_info_format': bool,
-                'overwrite': bool}
-
-    def _setup_logger(self, **kwargs):
-        self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(self.logging_level)
-        file_path = kwargs.get('logging_file_path')
-        if not file_path:
-            directory = Path(__file__).absolute().parent
-            if not directory.exists():
-                os.makedirs(directory)
-            file_path = Path(directory, f'{self.name}.log')
-        handler = logging.FileHandler(str(file_path))
-        # handler = TimedRotatingFileHandler(str(file_path), when='D', interval=1, backupCount=7)
-        formatter = logging.Formatter(self.logging_format)
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
-
-    def _load_cnv_info_object(self):
-        self.cnv_info_object = self.cnv_info_files.get_info(self.ctd_number)
-
-    @property
-    def root_directory(self):
-        return self.paths.root_directory
-    
-    @root_directory.setter
-    def root_directory(self, directory):
-        self.logger.debug(f'Setting root_directory to: {directory}')
-        self.paths.root_directory = directory
-        self._copy_setup_files()
-
-    @property
-    def ctd_number(self):
-        return self._ctd_number
-
-    @ctd_number.setter
-    def ctd_number(self, number):
-        if not number:
-            return
-        self._ctd_number = str(number)
-        self.logger.debug(f'Setting ctd_number to: {self._ctd_number}')
-        if self._ctd_number == '0817':
-            self.ctd_config_suffix = '.CON'
-        else:
-            self.ctd_config_suffix = '.XMLCON'
-        self._load_cnv_info_object()
-
-    @property
-    def surfacesoak_options(self):
-        return self.setup_file_object.surfacesoak_options[:]
-
-    @property
-    def surfacesoak(self):
-        return self._surfacesoak
-
-    @surfacesoak.setter
-    def surfacesoak(self, value):
-        self._surfacesoak = value
-        self.logger.debug(f'Setting surfacesoak to: {self._surfacesoak}')
-        self.setup_file_object.surfacesoak = self._surfacesoak
-
-    @property
-    def ctd_number_options(self):
-        return self.cnv_info_files.files
-
-    def _save_info_from_seabird_files(self):
-        self.serial_number = self.seabird_files.serial_number
-        self.ship_short_name = self.seabird_files.ship_short_name
-        self.ship_id = self.seabird_files.ship_id
-        self.ctry = self.seabird_files.ctry
-        self.ship = self.seabird_files.ship
-        self.new_file_stem = self.seabird_files.new_file_stem
-        self.station_name = self.seabird_files.station_name
-        self.number_of_bottles = self.seabird_files.number_of_bottles
-        self.year = self.seabird_files.date.year
-        
-    def _copy_setup_files(self):
-        source_dir = Path(Path(__file__).parent, 'setup')
-        target_dir = self.paths.get_directory('setup')
-        for source_path in source_dir.iterdir():
-            target_path = Path(target_dir, source_path.name)
-            if target_path.exists():
-                if not self.overwrite:
-                    self.logger.debug(f'Not overwriting file: {target_path}')
-                    continue
-                os.remove(target_path)
-            shutil.copy2(source_path, target_path)
-
-    def _copy_seabird_files(self, file_path):
-        """
-        Copies seabird files if not already in temp directory.
-        :param file_path: any seabird file with or without suffix.
-        :return:
-        """
-        file_path = Path(file_path)
-        if file_path.parent == self.paths.get_directory('temp'):
-            return
-
-        temp_path = self.paths.get_directory('working')
-        file_stem = file_path.stem
-        for f in file_path.parent.iterdir():
-            if f.stem == file_stem:
-                new_path = Path(temp_path, f.name)
-                if new_path.exists() and not self.overwrite:
-                    raise exceptions.FileExists(new_path)
-                shutil.copy2(f, new_path)
-        return new_path
-
-    def run_process(self, server_path=None):
-        self.logger.debug('Running')
-        self.create_setup_and_batch_files()
-        self.run_seabird()
-        self.modify_cnv_file()
-        self.save_modified_ctd_file()
-        self.move_raw_files()
-        self.remove_files()
-        self.copy_files_to_server(server_path)
-
-    def load_seabird_files(self, file_path):
-        # File path can be any seabird raw file. Even without suffix.
-        self.logger.debug(f'Loading file: {file_path}')
-        if not self.ctd_number:
-            raise exceptions.InvalidInstrumentSerialNumber('No CTD number set')
-
-        new_path = self._copy_seabird_files(file_path)
-
-        self.seabird_files = seabird.SeabirdFiles(new_path, self.ctd_number)
-        self.seabird_files.rename_files(overwrite=self.overwrite)
-        self._save_info_from_seabird_files()
-
-    def create_setup_and_batch_files(self):
-        """
-        Create a text file that will be called by the bat-file.
-        The file runs the SEB-programs
-        """
-        self.logger.debug('Running')
-        self.setup_file_object.parent = self
-        self.setup_file_object.surfacesoak = self.surfacesoak
-        self.setup_file_object.create_file()
-        self.batch_file_object.create_file()
-
-    def run_seabird(self):
-        self.logger.debug('Running')
-        self.batch_file_object.run_file()
-        cnv_down_file_path = self.setup_file_object.paths['cnv_down']
-        self.modify_cnv_file_object = cnv.CNVfile(cnv_down_file_path, ctd_processing_object=self)
-
-    def modify_cnv_file(self):
-        self.logger.debug('Running')
-        self.modify_cnv_file_object.modify()
-
-    def save_modified_ctd_file(self):
-        self.logger.debug('Running')
-        file_name = str(self.modify_cnv_file_object.file_path.name)[1:]
-        directory = self.paths.get_directory('data')
-        # directory = Path(self.paths.get_directory('data'), str(self.year))
-        file_path = Path(directory, file_name)
-        self.modify_cnv_file_object.save_file(file_path, overwrite=self.overwrite)
-
-    def remove_files(self):
-        os.remove(self.setup_file_object.paths.get('cnv_down'))
-        os.remove(self.setup_file_object.paths.get('cnv'))
-
-    def move_raw_files(self):
-        self.logger.debug('Running')
-        year = str(self.year)
-        # upcast_dir = Path(self.paths.get_directory('data'), year, 'up_cast')
-        upcast_dir = Path(self.paths.get_directory('data'), 'up_cast')
-        if not upcast_dir.exists():
-            os.makedirs(upcast_dir)
-        # raw_files_dir = Path(self.paths.get_directory('raw'), year)
-        raw_files_dir = self.paths.get_directory('raw')
-        upcast_file_path = self.setup_file_object.paths.get('cnv_up')
-        new_upcast_file_path = Path(upcast_dir, upcast_file_path.name)
-        if new_upcast_file_path.exists():
-            if not self.overwrite:
-                raise exceptions.FileExists
-            else:
-                os.remove(new_upcast_file_path)
-        shutil.move(upcast_file_path, new_upcast_file_path)
-        self.seabird_files.move_files(raw_files_dir, overwrite=self.overwrite)
-
-    def copy_files_to_server(self, server_path=None):
-        self.logger.debug(f'Copying files to server: {server_path}')
-        if not server_path:
-            self.logger.warning('No server path given')
-            return
-        year = str(self.year)
-        server_path = Path(server_path)
-
-        server_directories = {}
-        for d in ['data', 'plots', 'raw']:
-            path = Path(server_path, d, year)
-            server_directories[d] = path
-            if not path.exists():
-                os.makedirs(path)
-
-        file_id_string = str(self.modify_cnv_file_object.file_path.stem).split('_', 1)[-1]
-
-        # Data files
-        paths = get_paths_in_directory(Path(self.paths.get_directory('data'), year), match_string=file_id_string, walk=True)
-        for file_name, path in paths.items():
-            self.logger.debug(f'Copying file to server: {path}')
-            if file_name.startswith('u'):
-                target_path = Path(server_directories['data'], 'up_cast', file_name)
-            else:
-                target_path = Path(server_directories['data'], file_name)
-            if not target_path.parent.exists():
-                os.makedirs(target_path.parent)
-            try:
-                shutil.copy2(path, target_path)
-            except:
-                self.logger.warning(f'Could not copy file to server: {path} => {target_path}')
-
-        # Raw files
-        for file in self.seabird_files.files.values():
-            target_path = Path(server_directories['raw'], file.file_name)
-            try:
-                shutil.copy2(file.file_path, target_path)
-            except:
-                self.logger.warning(f'Could not copy file to server: {file.file_path} => {target_path}')
-
-        # Plots
-        paths = get_paths_in_directory(Path(self.paths.get_directory('plot'), year), match_string=file_id_string)
-        for path in paths.values():
-            target_path = Path(server_directories['plots'], path.name)
-            try:
-                shutil.copy2(path, target_path)
-            except:
-                self.logger.warning(f'Could not copy file to server: {path} => {target_path}')
-
-
-class Paths:
-    def __init__(self, root_directory=None):
-
-        self.directories = {}
-        self.files = {}
-
-        for d in ['root', 'working', 'setup', 'data', 'raw', 'plot']:
-            self.directories[d] = None
-
-        for f in ['ctdmodule', 'batch']:
-            self.files[f] = None
-
-        self.ctdmodule_file = 'ctdmodule.txt'
-        self._file = 'SBE_batch.bat'
-
-        if root_directory is not None:
-            self.root_directory = root_directory
-            
-    def __repr__(self):
-        str_list = ['Nuvarande mappar är:']
-        for key, path in self.directories.items():
-            str_list.append(f'    {key: <15}: {path}')
-        str_list.append('Nuvarande filer är:')
-        for key, path in self.files.items():
-            str_list.append(f'    {key: <15}: {path}')
-        return '\n'.join(str_list)
-
-    @property
-    def root_directory(self):
-        return self.directories.get('root')
-
-    @root_directory.setter
-    def root_directory(self, directory):
-        if directory is None:
-            return
-        root = Path(directory)
-        self.directories['root'] = root
-        self.directories['working'] = Path(root, 'temp')
-        self.directories['setup'] = Path(root, 'setup')
-        self.directories['data'] = Path(root, 'cnv')
-        self.directories['raw'] = Path(root, 'raw_files')
-        self.directories['plot'] = Path(root, 'plot')
-
-        # Create folders if non existing 
-        for key, path in self.directories.items():
-            if not path.exists():
-                os.makedirs(path)
-
-        self.files['setup'] = Path(root, 'ctdmodule.txt')
-        self.files['batch'] = Path(root, 'SBE_batch.bat')
-
-    def get_file_path(self, file_id):
-        return self.files.get(file_id)
-
-    def get_directory(self, dir_id):
-        return self.directories.get(dir_id, None)
+    def run_process(self):
+        if not self._edit:
+            raise Exception(f'Not set to edit mode!')
+        self._setup_file.create_file()
+        self._batch_file.create_file()
+        self._batch_file.run_file()
+        self._ctd_files.add_processed_file_paths()
+        self._ctd_files.modify_and_save_cnv_file(save_directory=self.get_local_directory('cnv', create=True), overwrite=self._overwrite)
 
 
 class BatchFile:
-    def __init__(self, parent):
-        self.parent = parent
+    def __init__(self, file_paths=None):
+        """
+        :param file_paths: Paths
+        """
+        self._paths = file_paths
+        self._batch_file_path = self._paths('file_batch')
+        self._setup_file_path = self._paths('file_setup')
+        self._working_dir = self._paths('dir_working')
 
     def create_file(self):
-        self.batch_file_path = self.parent.paths.get_file_path('batch')
-        self.setup_file_path = self.parent.paths.get_file_path('setup')
-        self.working_dir = self.parent.paths.get_directory('working')
-
-        with open(self.batch_file_path, 'w') as fid:
-            fid.write(f'sbebatch.exe {self.setup_file_path} {self.working_dir}')
+        with open(self._batch_file_path, 'w') as fid:
+            fid.write(f'sbebatch.exe {self._setup_file_path} {self._working_dir}')
 
     def run_file(self):
-        if not self.batch_file_path.exists():
-            raise exceptions.PathError(f'Batch file not found: {self.batch_file_path}')
-        # os.system(self.batch_file_path)
-        subprocess.run(str(self.batch_file_path))
+        if not self._batch_file_path.exists():
+            raise FileNotFoundError(f'Batch file not found: {self._batch_file_path}')
+        subprocess.run(str(self._batch_file_path))
+        # run_program('Seasave.exe', str(self._batch_file_path))
 
 
 class SetupFile:
-    def __init__(self, parent):
+    def __init__(self, file_paths=None, instrument_files=None):
+        """
+        :param file_paths: Paths
+        :param instrument_files: instrumant_files.InstrumentFiles
+        """
+        self._paths = file_paths
+        self._ctd_files = instrument_files
 
-        self._parent = None
+    def _get_lines(self):
 
-        self.surfacesoak_options = ['', 'deep', 'manual', '0.3', '0.5']
-        self._surfacesoak = None
+        lines = {}
 
-        self.paths = {}
+        lines['datcnv'] = f'datcnv /p{self._paths("psa_datcnv")} /i{self._paths("hex")} /c{self._paths("config")} /o%1'
+        lines['filter'] = f'filter /p{self._paths("psa_filter")} /i{self._paths("cnv")} /o%1 '
+        lines['alignctd'] = f'alignctd /p{self._paths("psa_alignctd")} /i{self._paths("cnv")} /c{self._paths("config")} /o%1'
 
-        try:
-            self.parent = parent
-        except:
-            pass
+        lines['celltm'] = f'celltm /p{self._paths("psa_celltm")} /i{self._paths("cnv")} /c{self._paths("config")} /o%1'
 
-    @property
-    def parent(self):
-        return self._parent
+        lines['loopedit'] = f'loopedit /p{self._paths("psa_loopedit")} /i{self._paths("cnv")} /c{self._paths("config")} /o%1'
 
-    @parent.setter
-    def parent(self, parent):
-        self._parent = parent
-        self._save_variables()
-        self._set_ship_id_str()
-        self._set_paths()
+        lines['derive'] = f'derive /p{self._paths("psa_derive")} /i{self._paths("cnv")} /c{self._paths("config")} /o%1'
+        lines['binavg'] = f'binavg /p{self._paths("psa_binavg")} /i{self._paths("cnv")} /c{self._paths("config")} /o%1'
 
-    def create_file(self):
-        self._save_variables()
-        self._create_lines()
-        self._write_lines()
-        self._add_station_name_to_plots()
+        lines['bottlesum'] = self._get_bottle_sum_line()
 
-    def _save_variables(self):
-        self.setup_directory = self.parent.paths.get_directory('setup')
-        self.working_directory = self.parent.paths.get_directory('working')
-        self.plot_directory = self.parent.paths.get_directory('plot')
-        self.setup_file_path = self.parent.paths.get_file_path('setup')
+        lines['split'] = f'split /p{self._paths("psa_split")} /i{self._paths("cnv")} /o%1'
 
-        self.ship_id = self.parent.ship_id
-        self.ctd_number = self.parent.ctd_number
-        self.new_file_stem = self.parent.new_file_stem
-        self.ctd_config_suffix = self.parent.ctd_config_suffix
-        self.number_of_bottles = self.parent.number_of_bottles
-        self.year = self.parent.year
-        self.station_name = self.parent.station_name
+        lines['plot1'] = f'seaplot /p{self._paths("psa_1-seaplot")} /i{self._paths("cnv_down")} /a_{self._ctd_files.station} /o{self._paths("dir_working")} /f{self._ctd_files.proper_stem}'
+        lines['plot2'] = f'seaplot /p{self._paths("psa_2-seaplot")} /i{self._paths("cnv_down")} /a_TS_diff_{self._ctd_files.station} /o{self._paths("dir_working")} /f{self._ctd_files.proper_stem}'
+        lines['plot3'] = f'seaplot /p{self._paths("psa_3-seaplot")} /i{self._paths("cnv_down")} /a_oxygen_diff_{self._ctd_files.station} /o{self._paths("dir_working")} /f{self._ctd_files.proper_stem}'
+        lines['plot4'] = f'seaplot /p{self._paths("psa_4-seaplot")} /i{self._paths("cnv_down")} /a_fluor_turb_par_{self._ctd_files.station} /o{self._paths("dir_working")} /f{self._ctd_files.proper_stem}'
 
-    @property
-    def surfacesoak(self):
-        return self._surfacesoak
-
-    @surfacesoak.setter
-    def surfacesoak(self, value):
-        if value not in self.surfacesoak_options:
-            raise exceptions.InvalidSurfacesoak(value)
-        value = str(value)
-        self._surfacesoak = value
-
-    def _set_paths(self):
-
-        self.paths['ctd_config'] = Path(self.working_directory, self.new_file_stem + self.ctd_config_suffix)
-        self.paths['hex'] = Path(self.working_directory, f'{self.new_file_stem}.hex')
-        self.paths['ros'] = Path(self.working_directory, f'{self.new_file_stem}.ros')
-        self.paths['cnv'] = Path(self.working_directory, f'{self.new_file_stem}.cnv')
-        self.paths['cnv_down'] = Path(self.working_directory, f'd{self.new_file_stem}.cnv')
-        self.paths['cnv_up'] = Path(self.working_directory, f'u{self.new_file_stem}.cnv')
-
-        self.paths['psa_datacnv'] = Path(self.setup_directory, f'DatCnv{self.ship_id_str}.psa')
-        self.paths['psa_filter'] = Path(self.setup_directory, f'Filter{self.ship_id_str}.psa')
-        self.paths['psa_alignctd'] = Path(self.setup_directory, f'AlignCTD{self.ship_id_str}.psa')
-        self.paths['psa_bottlesum'] = Path(self.setup_directory, f'BottleSum{self.ship_id_str}.psa')
-
-        self.paths['psa_celltm'] = Path(self.setup_directory, 'CellTM.psa')
-        self.paths['psa_derive'] = Path(self.setup_directory, 'Derive.psa')
-        self.paths['psa_binavg'] = Path(self.setup_directory, 'BinAvg.psa')
-
-        if self.ship_id == '26_01':
-            self.paths['psa_loopedit'] = Path(self.setup_directory, f'LoopEdit{self.ship_id_str}.psa')
-        elif self.surfacesoak == 'deep':
-            self.paths['psa_loopedit'] = Path(self.setup_directory, f'LoopEdit_deep.psa')
-        elif self.surfacesoak == 'manual':
-            self.paths['psa_loopedit'] = Path(self.setup_directory, f'LoopEdit_shallow.psa')
-            # self.paths['psa_loopedit'] = Path(self.setup_directory, f'LoopEdit_manuell_surfacesoak.psa')
-        elif self.surfacesoak:
-            self.paths['psa_loopedit'] = Path(self.setup_directory, f'LoopEdit{self.surfacesoak}ms.psa')
-        else:
-            # 'running loopedit with minimum 0.15 m/s'
-            self.paths['psa_loopedit'] = Path(self.setup_directory, f'LoopEdit.psa')
-
-        if self.ship_id_str == '_Svea':
-            self.paths['psa_split'] = Path(self.setup_directory, f'Split{self.ship_id_str}.psa')
-        else:
-            self.paths['psa_split'] = Path(self.setup_directory, 'Split.psa')
-
-        self.paths['psa_plot1'] = Path(self.setup_directory, 'File_1-SeaPlot.psa')
-        self.paths['psa_plot2'] = Path(self.setup_directory, 'File_2-SeaPlot_T_S_difference.psa')
-        self.paths['psa_plot3'] = Path(self.setup_directory, 'File_3-SeaPlot_oxygen1&2.psa')
-        if self.ship_id in ['26_01', '77_10']:
-            self.paths['psa_plot4'] = Path(self.setup_directory, f'File_4-SeaPlot_TURB_PAR{self.ship_id_str}.psa')
-        else:
-            self.paths['psa_plot4'] = Path(self.setup_directory, 'File_4-SeaPlot_TURB_PAR.psa')
-
-    def _set_ship_id_str(self):
-        self.ship_id_str = ''
-        # Dana
-        if self.ship_id == '26_01':
-            self.ship_id_str = '_DANA'
-        # FMI
-        elif self.ctd_number == '0817':
-            self.ship_id_str = '_FMI'
-        # Svea
-        elif self.ctd_number in ['1387', '1044', '0745']:
-            self.ship_id_str = '_Svea'
-
-    def _create_lines(self):
-
-        self.lines = dict()
-
-        self.lines['datacnv'] = f'datcnv /p{self.paths["psa_datacnv"]} /i{self.paths["hex"]} /c{self.paths["ctd_config"]} /o%1'
-        self.lines['filter'] = f'filter /p{self.paths["psa_filter"]} /i{self.paths["cnv"]} /o%1 '
-        self.lines['alignctd'] = f'alignctd /p{self.paths["psa_alignctd"]} /i{self.paths["cnv"]} /c{self.paths["ctd_config"]} /o%1'
-
-        self.lines['celltm'] = f'celltm /p{self.paths["psa_celltm"]} /i{self.paths["cnv"]} /c{self.paths["ctd_config"]} /o%1'
-
-        self.lines['loopedit'] = f'loopedit /p{self.paths["psa_loopedit"]} /i{self.paths["cnv"]} /c{self.paths["ctd_config"]} /o%1'
-
-        self.lines['derive'] = f'derive /p{self.paths["psa_derive"]} /i{self.paths["cnv"]} /c{self.paths["ctd_config"]} /o%1'
-        self.lines['binavg'] = f'binavg /p{self.paths["psa_binavg"]} /i{self.paths["cnv"]} /c{self.paths["ctd_config"]} /o%1'
-
-        self.lines['bottlesum'] = self._get_bottle_sum_line()
-
-        # Strip
-        # Tar bort O2 raw som används för beräkning av 02
-        # borttaget JK, 02 okt 2019
-        # self.strip = 'strip /p{self.setup_directory}\Strip.psa /i{self.paths["cnv"]} /o%1 \n'
-        # module_file.write(self.strip)
-
-        self.lines['split'] = f'split /p{self.paths["psa_split"]} /i{self.paths["cnv"]} /o%1'
-
-        # Use a modified cnv file path here
-        cnv_file_path = Path(self.working_directory, f'd{self.new_file_stem}.cnv')
-        plot_directory = Path(self.plot_directory, str(self.year))
-        if not plot_directory.exists():
-            os.makedirs(plot_directory)
-        self.lines['plot1'] = f'seaplot /p{self.paths["psa_plot1"]} /i{cnv_file_path} /a_{self.station_name} /o{plot_directory} /f{self.new_file_stem}'
-        self.lines['plot2'] = f'seaplot /p{self.paths["psa_plot2"]} /i{cnv_file_path} /a_TS_diff_{self.station_name} /o{plot_directory} /f{self.new_file_stem}'
-        self.lines['plot3'] = f'seaplot /p{self.paths["psa_plot3"]} /i{cnv_file_path} /a_oxygen_diff_{self.station_name} /o{plot_directory} /f{self.new_file_stem}'
-        self.lines['plot4'] = f'seaplot /p{self.paths["psa_plot4"]} /i{cnv_file_path} /a_fluor_turb_par_{self.station_name} /o{plot_directory} /f{self.new_file_stem}'
+        return list(lines.values())
 
     def _get_bottle_sum_line(self):
         bottlesum = ''
-        if self.number_of_bottles:
-            bottlesum = f'bottlesum /p{self.paths["psa_bottlesum"]} /i{self.paths["ros"]} /c{self.paths["ctd_config"]} /o%1 '
+        if self._ctd_files.number_of_bottles and self._paths("ros"):
+            bottlesum = f'bottlesum /p{self._paths("psa_bottlesum")} /i{self._paths("ros")} /c{self._paths("config")} /o%1 '
         else:
             # 'No bottles fired, will not create .btl or .ros file'
             pass
         return bottlesum
-
-    def get_all_lines(self):
-        return [value for key, value in self.lines.items() if value]
+    
+    def create_file(self):
+        self._add_station_name_to_plots()
+        self._write_lines()
 
     def _write_lines(self):
-        all_lines = self.get_all_lines()
-        with codecs.open(self.setup_file_path, "w", encoding='cp1252') as fid:
+        file_path = self._paths('file_setup')
+        all_lines = self._get_lines()
+        with codecs.open(file_path, "w", encoding='cp1252') as fid:
             fid.write('\n'.join(all_lines))
 
     def _add_station_name_to_plots(self):
-        # Skriv in stationsnamn i varje plot
-        insert_station_name(self.station_name, str(self.paths['psa_plot1']))
-        insert_station_name(self.station_name, str(self.paths['psa_plot2']))
-        insert_station_name(self.station_name, str(self.paths['psa_plot3']))
-        insert_station_name(self.station_name, str(self.paths['psa_plot4']))
+        for p in range(1, 5):
+            obj = psa.PlotPSAfile(self._paths(f"psa_{p}-seaplot"))
+            obj.title = self._ctd_files.station
+            obj.save()
 
 
-def get_paths_in_directory(directory, match_string='', walk=False):
-    paths = {}
-    if walk:
-        for root, dirs, files in os.walk(directory, topdown=True):
-            for file_name in files:
-                if match_string in file_name:
-                    paths[file_name] = Path(root, file_name)
-    else:
-        for file_name in os.listdir(directory):
-            if match_string in file_name:
-                paths[file_name] = Path(directory, file_name)
-    return paths
+class Paths:
+    """
+    Class holds paths used in the SetupFile class. Paths are based on structure of the ctd_config repo.
+    For the moment the paths are hardcoded according. Consider putting this information in a config file.
+
+    """
+
+    def __init__(self, config_root_path=None, working_directory=None):
+        """ Config root path is the root path och ctd_config repo """
+        self._paths = {}
+        self._config_root_path = Path(config_root_path)
+        self._working_directory = Path(working_directory)
+        self._paths['dir_config'] = self._config_root_path
+        self._paths['dir_working'] = self._working_directory
+        self._paths['file_setup'] = Path(self._working_directory, 'ctdmodule.txt')
+        self._paths['file_batch'] = Path(self._working_directory, 'SBE_batch.bat')
+
+        self._platform = None
+        self._new_file_base = None
+        self._loopedit_paths = []
+        self._psa_names = ['datcnv',
+                           'filter',
+                           'alignctd',
+                           'bottlesum',
+                           'celltm',
+                           'derive',
+                           'binavg',
+                           'loopedit',
+                           'split',
+                           '1-seaplot',
+                           '2-seaplot',
+                           '3-seaplot',
+                           '4-seaplot']
+
+        self._init()
+
+    def __call__(self, key, *args, **kwargs):
+        path = self._paths.get(key)
+        if not path:
+            raise FileNotFoundError(f'No file found matching key: {key}')
+        return path
+
+    def __str__(self):
+        return_list = []
+        for name in sorted(self._paths):
+            return_list.append(f'{name.ljust(15)}: {self._paths[name]}')
+        return '\n'.join(return_list)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def _init(self):
+        self._save_platform_paths()
+        self._build_psa_file_paths()
+        self._build_loopedit_file_paths()
+
+    def _save_platform_paths(self):
+        self._platform_paths = {}
+        for path in Path(self._config_root_path, 'SBE', 'processing_psa').iterdir():
+            self._platform_paths[path.name.lower()] = path
+
+    @property
+    def loopedit_paths(self):
+        return self._loopedit_paths
+
+    @property
+    def platforms(self):
+        exclude = ['archive', 'common']
+        return [name for name in self._platform_paths if name not in exclude]
+
+    @property
+    def platform(self):
+        return self._platform
+
+    @platform.setter
+    def platform(self, platform):
+        plat = platform.lower()
+        if plat not in self.platforms:
+            raise Exception(f'Invalid platform for SBE processing_psa: {platform}')
+        self._platform = plat
+        self._build_psa_file_paths()
+        self._build_loopedit_file_paths()
+
+    def set_new_file_base(self, new_file_base):
+        self._new_file_base = new_file_base
+        self._set_file_names_with_new_base()
+
+    def _set_file_names_with_new_base(self):
+        """
+        Raw file can be a file with any raw file extension.
+        :param raw_file_name: str
+        :return:
+        """
+        self._build_raw_file_paths_with_new_file_base()
+        self._build_cnv_file_paths_with_new_file_base()
+
+    def _build_raw_file_paths_with_new_file_base(self):
+        """ Builds the raw file paths from working directory and raw file stem """
+        self._paths['config'] = Path(f'{self._new_file_base}.XMLCON')  # Handle CON-files
+        self._paths['hex'] = Path(f'{self._new_file_base}.hex')
+        self._paths['ros'] = Path(f'{self._new_file_base}.ros')
+
+        for name in ['config', 'hex']:
+            if not self._paths[name].exists():
+                raise FileNotFoundError(self._paths[name])
+
+    def _build_cnv_file_paths_with_new_file_base(self):
+        """ Builds the cnv file paths from working directory and raw file stem """
+        self._paths['cnv'] = Path(f'{self._new_file_base}.cnv')
+        self._paths['cnv_down'] = Path(f'{self._new_file_base.parent}', f'd{self._new_file_base.name}.cnv')
+        self._paths['cnv_up'] = Path(f'{self._new_file_base.parent}', f'u{self._new_file_base.name}.cnv')
+
+    def _build_psa_file_paths(self):
+        """
+        Builds file paths for the psa files.
+        If platform is present then these files ar prioritized.
+        Always checking directory ctd_config/SBE/processing_psa/Common
+        """
+        all_paths = self._get_all_pas_paths()
+        for name in self._psa_names:
+            for path in all_paths:
+                if name in path.name.lower():
+                    self._paths[f'psa_{name}'] = path
+                    break
+            else:
+                raise Exception(f'Could not find psa file associated with: {name}')
+
+    def _build_loopedit_file_paths(self):
+        self._loopedit_paths = []
+        for path in self._get_all_pas_paths():
+            name = path.name.lower()
+            if 'loopedit' in name and name not in self._loopedit_paths:
+                self._loopedit_paths.append(path)
+
+    def _get_all_pas_paths(self):
+        """
+        Returns a list of all psa paths.
+        If platform is present then these files ar prioritized.
+        Always include paths in directory ctd_config/SBE/processing_psa/Common
+        """
+        all_paths = []
+        if self._platform:
+            all_paths.extend(self._get_paths_in_directory(self._platform_paths[self._platform]))
+        all_paths.extend(self._get_paths_in_directory(self._platform_paths['common']))
+        return all_paths
+
+    @staticmethod
+    def _get_paths_in_directory(directory):
+        return [path for path in directory.iterdir()]
+
+    def set_loopedit(self, path):
+        """ Manually setting the loopedit file """
+        path = Path(path)
+        if 'loopedit' not in path.name.lower():
+            raise Exception(f'Invalid LoopEdit file: {path}')
+        elif not path.exists():
+            raise FileNotFoundError(path)
+        self._paths['psa_loopedit'] = path
+
+    def set_config_suffix(self, suffix):
+        self._paths['config'] = Path(f'{self._new_file_base}{suffix}')
+
+
+def _get_running_programs():
+    program_list = []
+    for p in psutil.process_iter():
+        program_list.append(p.name())
+    return program_list
+
+
+def _run_subprocess(line):
+    subprocess.run(line)
+
+
+def run_program(program, line):
+    if program in _get_running_programs():
+        raise ChildProcessError(f'{program} is already running!')
+    t = threading.Thread(target=_run_subprocess(line))
+    t.daemon = True  # close pipe if GUI process exits
+    t.start()
+
+
+# def get_paths_in_directory(directory, match_string='', walk=False):
+#     paths = {}
+#     if walk:
+#         for root, dirs, files in os.walk(directory, topdown=True):
+#             for file_name in files:
+#                 if match_string in file_name:
+#                     paths[file_name] = Path(root, file_name)
+#     else:
+#         for file_name in os.listdir(directory):
+#             if match_string in file_name:
+#                 paths[file_name] = Path(directory, file_name)
+#     return paths
 
 
 if __name__ == '__main__':
-    ctdp = CtdProcessing()
-    ctdp.root_directory = r'C:\mw\temp_ctd_processing'
-    ctdp.ctd_number = 1387
-    ctdp.overwrite = True
-    ctdp.use_cnv_info_format = True
-    ctdp.surfacesoak = ''
-    # ctdp.load_seabird_files(r'C:\mw\data\sbe_raw_files\SBE09_1387_20200816_1055_77_10_0496')
-    ctdp.load_seabird_files(r'C:\mw\temp_ctd_processing\_input_files\sv20d0651')
-    ctdp.run_process(server_path=r'C:\mw\temp_svea_server')
+    p = CtdProcessing(config_root_path=r'C:\mw\git\ctd_config', edit=True
+                      # local_directory=r'C:\mw\temp_ctd_pre_system_data_root\data',
+                      )
+    p.overwrite(True)
+    p.set_local_directory(r'C:\mw\temp_ctd_pre_system_data_root\data')
+    #
+    # p.set_surfacesoak('deep')
+    #
+    p.select_file(r'C:\mw\temp_ctd_pre_system_data_root\source/SBE09_1387_20210413_1113_77_10_0278.bl')
+    # p.select_file(r'C:\mw\temp_ctd_pre_system_data_root\source/SBE09_1387_20210413_1422_77SE_01_0279.bl')
 
-    # ctdp.create_setup_and_batch_files()
-    # ctdp.run_seabird()
-    # ctdp.modify_cnv_file()
-    # ctdp.save_modified_ctd_file()
-    # ctdp.move_raw_files()
-    # ctdp.remove_files()
-    server_path = r'\\\\scifi01\\scifi\\Processed\\mcseabirdchem'
+    p.run_process()
 
-    # # c.modify_cnv_file()
-    # print(ctdp.paths)
+    # from ctd_processing import psa
     #
-    # info = ctdp.cnv_info_object
-    #
-    # # cnv_file = r'C:\mw\temp_svea\cnv/SBE09_1387_20200508_0610_77_10_0383.cnv'
-    # cnv_file = r'C:\mw\temp_svea\cnv/SBE09_1387_20200707_1013_77_10_0469.cnv'
-    # cnv = cnv.CNVfile(cnv_file, ctdp)
-    #
-    # cnv2 = readCNV(cnv_file)
-    #
-    #
-    # cnv.modify()
-    #
-    # save_path = cnv_file + 'v'
-    # cnv.save_file(save_path)
-
+    # plot = psa.PlotPSAfile(r'C:\mw\git\ctd_config\SBE\processing_psa\Common/SeaPlot_T_S_difference.psa')

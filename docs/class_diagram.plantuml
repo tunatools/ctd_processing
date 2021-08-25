@@ -118,14 +118,7 @@ class ship_Aranda {}
 class ship_Dana {}
 class ship_SBE09 {}
 
-ship_Ship 
-ship_Svea
-ship_FinnishShip 
-ship_Meri 
-ship_Aura 
-ship_Aranda 
-ship_Dana 
-ship_SBE09 
+
 
 
 

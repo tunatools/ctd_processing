@@ -4,8 +4,6 @@ from time import gmtime, strftime
 from ctd_processing import exceptions
 from ctd_processing import utils
 
-from ctd_processing import cnv_column_info
-
 
 class CNVparameter:
     def __init__(self, use_cnv_info_format=False, cnv_info_object=None, **data):
@@ -156,19 +154,12 @@ class CNVheader:
 
 
 class CNVfile:
-    def __init__(self, ctd_files=None, cnv_column_info_directory=None, use_cnv_info_format=False, **kwargs):
-        self._ctd_files = ctd_files
-        key = 'cnv_down'
-        self.file_path = self._ctd_files(key)
-        if not self.file_path:
-            raise FileNotFoundError(key)
-        if not self.file_path.exists():
-            raise FileNotFoundError(self.file_path)
-
-        self.instrument_number = self._ctd_files.instrument_number
-        cnv_info_files = cnv_column_info.CnvInfoFiles(cnv_column_info_directory)
-        self.cnv_info_object = cnv_info_files.get_info(self.instrument_number)
-        self.use_cnv_info_format = use_cnv_info_format
+    def __init__(self, file_path, ctd_processing_object=None, **kwargs):
+        self.file_path = Path(file_path)
+        self.ctd_processing_object = ctd_processing_object
+        self.cnv_info_object = self.ctd_processing_object.cnv_info_object
+        self.use_cnv_info_format = self.ctd_processing_object.use_cnv_info_format
+        self._load_ctd_processing_object_info()
 
         self.parameters = {}
         self.header = CNVheader()
@@ -215,11 +206,13 @@ class CNVfile:
             data_rows.append(line_string)
         return data_rows
 
-    # def _save_instrument_files_info(self):
-    #         self.year = self._ctd_files.year
-    #         self.ctry = self._ctd_files.ctry
-    #         self.ship = self._ctd_files.ship
-    #         self.serie = self._ctd_files.serial_number
+    def _load_ctd_processing_object_info(self):
+        if self.ctd_processing_object:
+            self.cnv_info_object = self.ctd_processing_object.cnv_info_object
+            self.year = self.ctd_processing_object.year
+            self.ctry = self.ctd_processing_object.ctry
+            self.ship = self.ctd_processing_object.ship
+            self.serie = self.ctd_processing_object.serial_number
 
     def _load_info(self):
         header = True
@@ -375,8 +368,8 @@ class CNVfile:
         rows_to_insert = [f'** Average sound velocity: {str("%6.2f" % svMean)} m/s',
                           f'** True-depth calculation {now}',
                           # f'** CTD Python Module SMHI /ver 3-12/ feb 2012',
-                          # f'** Python Module: ctd_processing, nov 2020'
-                          # f'** LIMS Job: {self.year}{self.ctry}{self.ship}-{self.serie}'
+                          f'** Python Module: ctd_processing, nov 2020',
+                          f'** LIMS Job: {self.year}{self.ctry}{self.ship}-{self.serie}'
         ]
         for row in rows_to_insert:
             if 'True-depth calculation' in row:

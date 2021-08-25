@@ -1,0 +1,8 @@
+@startuml
+start
+:Skapa object 
+**new_processing.CtdProcessing**;
+:;
+stop
+@enduml
+
