@@ -269,8 +269,10 @@ class SeasavePSAfile(PSAfileWithPlot):
         lon_element = self._get_element_from_tag_list(self.lon_tags)
         # source_element = self._get_element_from_tag_list(self.pos_source_tags)
 
-        if len(position) < 3 or not position[2]:
-            position[2] = 'Unknown'
+        if len(position) == 2:
+            position.append('Unknown')
+        elif not position[2]:
+            position.append('Unknown')
 
         lat_element.set('value', f'Latitud [GG MM.mm N]: {position[0]}')
         lon_element.set('value', f'Longitude [GG MM.mm E]: {position[1]}')
@@ -345,6 +347,7 @@ class DerivePSAfile(PSAfile):
         self.set_tau_correction(False)
 
     def set_tau_correction(self, state):
+        return
         state = str(int(state))
         for element in self.tree.find('CalcArray'):
             calc_element = element.find('Calc').find('ApplyTauCorrection')

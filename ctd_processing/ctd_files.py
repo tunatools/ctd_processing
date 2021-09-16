@@ -81,9 +81,6 @@ class CTDFiles(ABC):
     _plot_files = []
     __proper_pattern = '[^_]+_\d{4}_\d{8}_\d{4}_\d{2}[a-zA-Z]{2}_\d{2}_\d{4}'
 
-    def __init__(self, edit=False):
-        self.edit = edit
-
     def __str__(self):
         files = '\n'.join(sorted([f'  {str(path)}' for path in self._files.values()]))
         return f"""Instrument object for pattern {self.pattern}\nFiles: \n{files}"""
@@ -94,6 +91,11 @@ class CTDFiles(ABC):
 
     def __call__(self, key, *args, **kwargs):
         return self._files.get(key, None)
+
+    @property
+    @abstractmethod
+    def raw_files_extensions(self):
+        pass
 
     @property
     @abstractmethod
@@ -130,6 +132,14 @@ class CTDFiles(ABC):
     def file_path(self):
         pass
 
+    @property
+    def all_files(self):
+        return self._files
+
+    @property
+    def plot_files(self):
+        return self._plot_files
+
     @abstractmethod
     def _get_proper_file_stem(self):
         pass
@@ -151,8 +161,6 @@ class CTDFiles(ABC):
         pass
 
     def modify_and_save_cnv_file(self, save_directory=None, overwrite=False):
-        if not self.edit:
-            raise Exception(f'{self.name} not set to edit mode!')
         self._modify_and_save_cnv_file(save_directory=save_directory, overwrite=overwrite)
 
     @property
@@ -162,11 +170,6 @@ class CTDFiles(ABC):
     @property
     def parent(self):
         return self.file_path.parent
-
-    @property
-    def file_base(self):
-        """ Returns the file path without suffix """
-        return Path(self.file_path.parent, self.stem)
 
     def has_file(self, suffix):
         if not self._files.get(suffix):
@@ -184,8 +187,6 @@ class CTDFiles(ABC):
 
     def rename_files(self, overwrite=False):
         """ Rename the files so they get the proper file stem """
-        if not self.edit:
-            raise Exception(f'{self.name} not set to edit mode!')
         new_files = {}
         for key, path in self._files.items():
             new_path = self._rename_file(path, overwrite=overwrite)
@@ -195,6 +196,8 @@ class CTDFiles(ABC):
     def _rename_file(self, path, overwrite=False):
         """ Rename a single file with the proper file stem """
         new_path = Path(path.parent, f'{self.proper_stem}{path.suffix}')
+        if str(new_path) == str(path):
+            return new_path
         if new_path.exists():
             if not overwrite:
                 raise FileExistsError(new_path)
@@ -221,6 +224,7 @@ class CTDFiles(ABC):
 
 
 class SBECTDFiles(CTDFiles):
+    raw_files_extensions = ['.bl', '.btl', '.hdr', '.hex', '.ros', '.XMLCON', '.CON']
 
     @property
     @abstractmethod
@@ -248,6 +252,7 @@ class SBECTDFiles(CTDFiles):
 
     @property
     def instrument_number(self):
+        # Information not in file name in former raw files. Should be in child.
         return self.stem.split('_')[1]
 
     @property
@@ -341,9 +346,9 @@ class SveaSBECTDFiles(SBECTDFiles):
         self._add_local_cnv_file_path(target_path)
 
 
-def get_ctd_files_object(file_path, edit=False):
-    files_object = [SveaFormerFinalSBECTDFiles(edit),
-                    SveaSBECTDFiles(edit)]
+def get_ctd_files_object(file_path):
+    files_object = [SveaFormerFinalSBECTDFiles(),
+                    SveaSBECTDFiles()]
     for obj in files_object:
         if obj.is_valid(file_path):
             obj.set_file_path(file_path)
