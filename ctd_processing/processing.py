@@ -305,7 +305,6 @@ class SBEProcessingPaths:
                            '2-seaplot',
                            '3-seaplot',
                            '4-seaplot']
-        self.update_paths()
 
     def __call__(self, key, create=False, **kwargs):
         path = self._paths.get(key)

@@ -194,7 +194,7 @@ class CNVfile:
     def save_file(self, file_path, overwrite=False):
         file_path = Path(file_path)
         if file_path.exists() and not overwrite:
-            raise exceptions.FileExists(file_path)
+            raise FileExistsError(file_path)
         if not file_path.parent.exists():
             os.makedirs(file_path.parent)
         all_rows = []

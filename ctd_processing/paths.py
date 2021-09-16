@@ -15,7 +15,7 @@ class SBEPaths:
         if not path:
             if default is not None:
                 return default
-            raise FileNotFoundError(f'No file found matching key: {key}')
+            return False
         if create and not path.exists():
             os.makedirs(str(path))
         return path
