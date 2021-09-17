@@ -35,7 +35,6 @@ class SBEProcessing:
         self._paths = sbe_paths
         self._processing_paths = sbe_processing_paths
 
-        self._platform = None
         self._file_path = None
         self._confirmed = False
         self._overwrite = False
@@ -43,7 +42,7 @@ class SBEProcessing:
 
     @property
     def platform(self):
-        return self._platform
+        return self._processing_paths
 
     @platform.setter
     def platform(self, name):
@@ -52,8 +51,7 @@ class SBEProcessing:
             return
         if name.lower() not in self._processing_paths.platforms:
             raise Exception(f'Invalid platform name: {name}')
-        self._platform = name
-        self._paths.platform = name
+        self._processing_paths.platform = name
 
     @property
     def year(self):
@@ -66,6 +64,7 @@ class SBEProcessing:
 
     def get_surfacesoak_options(self):
         options = {}
+        print('self._processing_paths', self._processing_paths)
         for path in self._processing_paths.loopedit_paths:
             name = path.name.lower()
             obj = psa.LoopeditPSAfile(path)
@@ -79,7 +78,7 @@ class SBEProcessing:
         return options
 
     def set_platform(self, platform):
-        self._platform = platform
+        self._processing_paths.platform = platform
 
     def set_surfacesoak(self, name):
         """ Sets surfacesoak in setup file. Name must match keys in coming from self.get_surfacesoak_options """
@@ -333,15 +332,22 @@ class SBEProcessingPaths:
             self._platform_paths[path.name.lower()] = path
 
     def update_paths(self):
-        self._paths['file_setup'] = Path(self.sbe_paths('working_dir'), 'ctdmodule.txt')
-        self._paths['file_batch'] = Path(self.sbe_paths('working_dir'), 'SBE_batch.bat')
-        self._save_platform_paths()
+        if self.sbe_paths('working_dir'):
+            print("= self.sbe_paths('working_dir')", self.sbe_paths('working_dir'))
+            self._paths['file_setup'] = Path(self.sbe_paths('working_dir'), 'ctdmodule.txt')
+            self._paths['file_batch'] = Path(self.sbe_paths('working_dir'), 'SBE_batch.bat')
+
+        if self.sbe_paths('config_dir'):
+            print("= self.sbe_paths('config_dir')", self.sbe_paths('config_dir'))
+            self._save_platform_paths()
 
         if self._new_file_stem:
+            print('= self._new_file_stem', self._new_file_stem)
             self._build_raw_file_paths_with_new_file_stem()
             self._build_cnv_file_paths_with_new_file_stem()
 
         if self._platform:
+            print('= self._platform', self._platform)
             self._build_psa_file_paths()
             self._build_loopedit_file_paths()
 
