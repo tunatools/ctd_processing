@@ -31,6 +31,27 @@ class BlFile:
                 if nr > 1 and stripped_line:
                     self._number_of_bottles += 1
 
+
+class CnvFile:
+    def __init__(self, file_path):
+        self._path = Path(file_path)
+
+        self.date_format_in_file = '%b %d %Y %H:%M:%S'
+        self._time = None
+        self._get_info_from_file()
+
+    def _get_info_from_file(self):
+        with codecs.open(self._path, encoding='cp1252') as fid:
+            for line in fid:
+                if '* System UTC' in line:
+                    self._time = datetime.datetime.strptime(line.split('=')[1].strip(), self.date_format_in_file)
+                    break
+
+    @property
+    def time(self):
+        return self._time
+
+
 class HdrFile:
     def __init__(self, file_path):
         """
@@ -45,7 +66,7 @@ class HdrFile:
         self.date_format_in_file = '%b %d %Y %H:%M:%S'
 
         self._station = None
-        self._date = None
+        self._time = None
         self._cruise_number = '00'
 
         self._get_info_from_file()
@@ -55,8 +76,8 @@ class HdrFile:
         return self._station
 
     @property
-    def date(self):
-        return self._date
+    def time(self):
+        return self._time
 
     @property
     def cruise_number(self):
@@ -68,7 +89,7 @@ class HdrFile:
                 if '* System UpLoad Time' in row:
                     # self.date_string = row[23:40]
                     date_string = row.split('=')[-1].strip()
-                    self._date = datetime.datetime.strptime(date_string, self.date_format_in_file)
+                    self._time = datetime.datetime.strptime(date_string, self.date_format_in_file)
                 elif '** Station:' in row:
                     self._station = row.split(':')[-1].strip().replace(' ', '_').replace('/', '-')
                 elif '** Cruise:' in row:
@@ -105,6 +126,11 @@ class CTDFiles(ABC):
     @property
     @abstractmethod
     def station(self):
+        pass
+
+    @property
+    @abstractmethod
+    def time(self):
         pass
 
     @property
@@ -241,9 +267,16 @@ class SBECTDFiles(CTDFiles):
         return obj.station
 
     @property
+    def time(self):
+        if self._files.get('.hdr'):
+            obj = HdrFile(self._files['.hdr'])
+        else:
+            obj = CnvFile(self._files['.cnv'])
+        return obj.time
+
+    @property
     def year(self):
-        obj = HdrFile(self._files['.hdr'])
-        return obj.date.year
+        return self.time.year
 
     @property
     def number_of_bottles(self):
@@ -259,7 +292,7 @@ class SBECTDFiles(CTDFiles):
     def file_path(self):
         path = self._files.get('.hex')
         if not path:
-            return None
+            return self._files.get('.cnv')
         return path
 
     def add_processed_file_paths(self):
@@ -321,7 +354,6 @@ class SveaFormerFinalSBECTDFiles(SveaFormerCTDFiles):
         new_stem = '_'.join(stem_parts)
         return new_stem
 
-
 class SveaSBECTDFiles(SBECTDFiles):
     """
     This is the file pattern that matches the one coming from the "Pre system" implemented on Svea.
@@ -370,15 +402,18 @@ def get_matching_files_in_directory(directory):
 
 if __name__ == '__main__':
 
-    f1 = Path(r'C:\mw\temp_ctd_pre_system_data_root\source/SBE09_1387_20210413_1422_77SE_01_0279.bl')
-    f2 = Path(r'C:\mw\temp_ctd_pre_system_data_root\source/SBE09_1387_20210413_1113_77_10_0278.bl')
+    f = r'C:\mw\temp_ctd_pre_system_data_root\cnv/SBE09_1387_20210413_1113_77SE_00_0278.cnv'
+    i = get_ctd_files_object(f)
 
-    i1 = get_ctd_files_object(f1)
-    i2 = get_ctd_files_object(f2)
-    print(i1)
-    print(i2.proper_stem)
-
-    files = get_matching_files_in_directory(r'C:\mw\temp\temp_ctd_processing\raw_files\2020')
+    # f1 = Path(r'C:\mw\temp_ctd_pre_system_data_root\source/SBE09_1387_20210413_1422_77SE_01_0279.bl')
+    # f2 = Path(r'C:\mw\temp_ctd_pre_system_data_root\source/SBE09_1387_20210413_1113_77_10_0278.bl')
+    #
+    # i1 = get_ctd_files_object(f1)
+    # i2 = get_ctd_files_object(f2)
+    # print(i1)
+    # print(i2.proper_stem)
+    #
+    # files = get_matching_files_in_directory(r'C:\mw\temp\temp_ctd_processing\raw_files\2020')
 
     # si = SveaSBEInstrument()
     # si.set_file_path(r'C:\mw\temp_ctd_pre_system_data_root\source/SBE09_1387_20210413_1422_77SE_01_0279.bl')

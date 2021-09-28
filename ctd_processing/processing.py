@@ -17,6 +17,7 @@ from abc import ABC, abstractmethod
 # from ctd_processing import seabird
 from ctd_processing import psa
 from ctd_processing import ctd_files
+from ctd_processing import sensor_info
 
 from ctdpy.core import session as ctdpy_session
 
@@ -140,7 +141,7 @@ class SBEProcessing:
     def _copy_cnv_files_to_local(self):
         """ Copies cnv-up file to local directory """
         target_directory = self._paths.get_local_directory('cnv_up', create=True)
-        self._copy_file(self._ctd_files('cnv_up'), target_directory, overwrite=self._overwrite)
+        return self._copy_file(self._ctd_files('cnv_up'), target_directory, overwrite=self._overwrite)
 
     def _copy_plot_files_to_local(self):
         target_directory = self._paths.get_local_directory('plot', create=True)
@@ -191,6 +192,12 @@ class SBEProcessing:
         self._ctd_files.modify_and_save_cnv_file(save_directory=self._paths.get_local_directory('cnv', create=True),
                                                  overwrite=self._overwrite)
         self._copy_processed_files_to_local()
+
+    def create_sensorinfo_file(self):
+        if not self._ctd_files('local_cnv'):
+            return
+        sensor_info_obj = sensor_info.get_sensor_info_object(self._paths('instrumentinfo_file'))
+        sensor_info_obj.create_file_from_cnv_file(self._ctd_files('local_cnv'))
 
 
 class SBEBatchFile:
@@ -508,7 +515,7 @@ class NewStandardFormat:
             source_path = nsf_files.get(nsf_file_stem)
             if not source_path:
                 continue
-            target_path = Path(target_dir, f'{cnv_file.stem}.nsf')
+            target_path = Path(target_dir, f'{cnv_file.stem}.txt')
             shutil.copy2(source_path, target_path)
 
 
