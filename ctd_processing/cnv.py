@@ -5,6 +5,7 @@ from ctd_processing import exceptions
 from ctd_processing import utils
 
 from ctd_processing import cnv_column_info
+from ctd_processing import xmlcon
 
 
 class CNVparameter:
@@ -450,7 +451,34 @@ class CNVfile:
             self.header.replace_row(span_index, new_line)
 
 
+def get_parameter_channels_and_names_from_cnv(path):
+    info = {}
+    with open(path) as fid:
+        for line in fid:
+            if not line.startswith('# name'):
+                continue
+            name, par = line.split('=', 1)
+            par = par.strip()
+            channel = int(name.strip().split()[-1])
+            info[channel] = par
+    return info
+
+
+def get_sensor_id_and_paramater_mapping_from_cnv(path):
+    xml_info = xmlcon.CNVfileXML(path).get_sensor_info()
+    name_info = get_parameter_channels_and_names_from_cnv(path)
+    mapping = {}
+    for info in xml_info:
+        mapping[info['serial_number']] = name_info.get(info['channel'], '')
+    return mapping
+
+
+
+
+
 if __name__ == '__main__':
-    cnv_file = r'C:\mw\temp_svea\cnv/SBE09_1387_20200508_0610_77_10_0383.cnv'
-    cnv = CNVfile(cnv_file, None)
-    print(cnv.parameters[3])
+    cnv_file = r'C:\mw\temp_ctd_pre_system_data_root\cnv/SBE09_1387_20210413_1113_77SE_00_0278.cnv'
+    xml_info = xmlcon.CNVfileXML(cnv_file).get_sensor_info()
+    name_info = get_parameter_channels_and_names_from_cnv(cnv_file)
+
+    mapping = get_sensor_id_and_paramater_mapping_from_cnv(cnv_file)

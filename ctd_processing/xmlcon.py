@@ -78,7 +78,8 @@ class CNVfileXML:
                 nr = ''
             index.setdefault(par, [])
             index[par].append(i)
-            data = {'parameter': par,
+            data = {'channel': int(sensor.attrib['Channel']),
+                    'parameter': par,
                     'serial_number': nr,
                     'calibration_date': datetime.datetime.strptime(calibration_date, '%d-%b-%y')}
             sensor_list.append(data)
