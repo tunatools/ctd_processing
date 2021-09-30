@@ -90,6 +90,12 @@ class CNVfileXML:
                 sensor_list[i]['parameter'] = f'{sensor_list[i]["parameter"]}_{nr+1}'
         return sensor_list
 
+    @property
+    def serial_number(self):
+        for sensor in self.get_sensor_info():
+            if sensor['parameter'] == 'PressureSensor':
+                return sensor['serial_number']
+
 
 if __name__ == '__main__':
     file_path = Path(r'C:\mw\temp_svea\_input_files/SBE09_1387_20200207_0801_77_10_0120.XMLCON')

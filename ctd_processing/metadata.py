@@ -45,6 +45,8 @@ class MetadataRow:
                 value = header_form_info.get('Additional Sampling')
             elif col == 'FILE_NAME':
                 value = self._path.name
+            elif col == 'INSTRUMENT_SERIE':
+                value = ctd_info.instrument_number
             self._metadata[col] = value
 
     def get_info(self):
