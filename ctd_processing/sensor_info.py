@@ -24,7 +24,8 @@ class InstrumentFile:
 
     def _save_info(self):
         self._info = {}
-        df = pd.read_excel(self._path, sheet_name='Instrument.xls', engine='openpyxl', skiprows=[0])
+        # df = pd.read_excel(self._path, sheet_name='Instrument.xls', engine='openpyxl', skiprows=[0])
+        df = pd.read_excel(self._path, sheet_name='Sensor_info', engine='openpyxl', skiprows=[0])
         df = df.fillna('')
         for i in df.index:
             cnv_name = str(df.iloc[i]['CNV_NAME'])

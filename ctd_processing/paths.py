@@ -72,7 +72,8 @@ class SBEPaths:
 
     def set_config_root_directory(self, path):
         self._paths['config_dir'] = Path(path)
-        self._paths['instrumentinfo_file'] = Path(self._paths['config_dir'], 'instrumentinfo.xlsx')
+        # self._paths['instrumentinfo_file'] = Path(self._paths['config_dir'], 'instrumentinfo.xlsx')
+        self._paths['instrumentinfo_file'] = Path(self._paths['config_dir'], 'Instruments.xlsx')
 
     def set_local_root_directory(self, directory):
         root_directory = Path(directory)
