@@ -198,8 +198,9 @@ class SensorInfoItem:
 
 class SensorInfoFiles:
 
-    def __init__(self, file_paths):
-        self._paths = [pathlib.Path(path) for path in file_paths if str(path).endswith('.sensorinfo')]
+    def __init__(self, directory):
+        self._directory = pathlib.Path(directory)
+        self._paths = [path for path in self._directory.iterdir() if path.suffix == '.sensorinfo']
         self._sensor_info_items = {}
         self._save_info()
 
@@ -218,8 +219,8 @@ class SensorInfoFiles:
                     obj = self._sensor_info_items.setdefault(key, SensorInfoItem())
                     obj.add_data(data)
 
-    def write_lines_to_file(self, file_path):
-        path = pathlib.Path(file_path)
+    def write_to_file(self):
+        path = pathlib.Path(self._directory, 'sensorinfo.txt')
         columns = get_sensor_info_columns()
         lines = []
         lines.append('\t'.join(columns))
@@ -229,7 +230,6 @@ class SensorInfoFiles:
 
         with open(path, 'w') as fid:
             fid.write('\n'.join(lines))
-
 
 
 def get_sensor_info_columns():
@@ -250,11 +250,10 @@ def get_sensor_info_object(instrumentinfo_file):
     return sensor_info
 
 
-
 if __name__ == '__main__':
     cnv_file = r'C:\mw\temp_ctd_pre_system_data_root\cnv/SBE09_1387_20210413_1113_77SE_00_0278.cnv'
-    sif = SensorInfoFiles(list(pathlib.Path(r'C:\mw\temp_ctd_pre_system_data_root\cnv').iterdir()))
-    sif.write_lines_to_file(r'C:\mw\temp_ctd_pre_system_data_root\cnv/sensorinfo.txt')
+    sif = SensorInfoFiles(r'C:\mw\temp_ctd_pre_system_data_root\cnv')
+    sif.write_to_file()
     instrument_file_path = r'C:\mw\git\ctd_config/instrumentinfo.xlsx'
     # # e = pd.read_excel(r'C:\mw\temp_svea\temp_filer/Instruments.xlsx', engine='openpyxl')
     # # e = openpyxl.load_workbook(file_path)

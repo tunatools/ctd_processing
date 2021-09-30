@@ -2,6 +2,8 @@ from pathlib import Path
 
 import xml.etree.ElementTree as ET
 
+from ctd_processing import utils
+
 
 class PSAfile:
     """
@@ -172,6 +174,8 @@ class SeasavePSAfile(PSAfileWithPlot):
         self.event_id_tags = ['Settings', 'HeaderForm', 'Prompt{{index==6}}']
         self.parent_event_id_tags = ['Settings', 'HeaderForm', 'Prompt{{index==7}}']
         self.add_samp_tags = ['Settings', 'HeaderForm', 'Prompt{{index==8}}']
+        self.metadata_admin_tags = ['Settings', 'HeaderForm', 'Prompt{{index==9}}']
+        self.metadata_conditions_tags = ['Settings', 'HeaderForm', 'Prompt{{index==10}}']
 
         self.display_depth_tags = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes',
                     'Axis{{Calc;FullName;value==Scan Count}}', 'MaximumValue']
@@ -306,9 +310,35 @@ class SeasavePSAfile(PSAfileWithPlot):
         return element.get('value')
 
     @add_samp.setter
-    def add_samp(self, id):
+    def add_samp(self, add_samp):
         element = self._get_element_from_tag_list(self.add_samp_tags)
-        value = f'Additional Sampling: {id}'
+        value = f'Additional Sampling: {add_samp}'
+        element.set('value', value)
+
+    @property
+    def metadata_admin(self):
+        element = self._get_element_from_tag_list(self.metadata_admin_tags)
+        string = element.get('value')
+        return utils.metadata_string_to_dict(string.split(':', 1)[-1].strip())
+
+    @metadata_admin.setter
+    def metadata_admin(self, metadata_admin):
+        string = utils.metadata_dict_to_string(metadata_admin)
+        element = self._get_element_from_tag_list(self.metadata_admin_tags)
+        value = f'Metadata admin: {string}'
+        element.set('value', value)
+
+    @property
+    def metadata_conditions(self):
+        element = self._get_element_from_tag_list(self.metadata_conditions_tags)
+        string = element.get('value')
+        return utils.metadata_string_to_dict(string)
+
+    @metadata_conditions.setter
+    def metadata_conditions(self, metadata_conditions):
+        string = utils.metadata_dict_to_string(metadata_conditions)
+        element = self._get_element_from_tag_list(self.metadata_conditions_tags)
+        value = f'Metadata conditions: {string}'
         element.set('value', value)
 
 
@@ -394,6 +424,8 @@ if __name__ == '__main__':
     #
     # psa.set_parameter_range('Salinity, Practical [PSU]', max_value=22)
     # psa.save()
+
+    psa = SeasavePSAfile(r'C:\mw\git\ctd_config\SBE\seasave_psa\svea/Seasave.psa')
 
 
 

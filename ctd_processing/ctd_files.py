@@ -38,6 +38,9 @@ class CnvFile:
 
         self.date_format_in_file = '%b %d %Y %H:%M:%S'
         self._time = None
+        self._lat = None
+        self._lon = None
+        self._station = None
         self._get_info_from_file()
 
     def _get_info_from_file(self):
@@ -45,11 +48,28 @@ class CnvFile:
             for line in fid:
                 if '* System UTC' in line:
                     self._time = datetime.datetime.strptime(line.split('=')[1].strip(), self.date_format_in_file)
-                    break
+                elif '* NMEA Latitude' in line:
+                    self._lat = line.split('=')[1].strip()[:-1].replace(' ', '')
+                elif '* NMEA Longitude' in line:
+                    self._lon = line.split('=')[1].strip()[:-1].replace(' ', '')
+                elif line.startswith('** Station'):
+                    self._station = line.split(':')[-1].strip()
 
     @property
     def time(self):
         return self._time
+
+    @property
+    def lat(self):
+        return self._lat
+
+    @property
+    def lon(self):
+        return self._lon
+
+    @property
+    def station(self):
+        return self._station
 
 
 class HdrFile:
@@ -126,6 +146,21 @@ class CTDFiles(ABC):
     @property
     @abstractmethod
     def station(self):
+        pass
+
+    @property
+    @abstractmethod
+    def lat(self):
+        pass
+
+    @property
+    @abstractmethod
+    def lon(self):
+        pass
+
+    @property
+    @abstractmethod
+    def serno(self):
         pass
 
     @property
@@ -263,8 +298,27 @@ class SBECTDFiles(CTDFiles):
 
     @property
     def station(self):
-        obj = HdrFile(self._files['.hdr'])
+        if self._files.get('.hdr'):
+            obj = HdrFile(self._files['.hdr'])
+        else:
+            obj = CnvFile(self._files['.cnv'])
         return obj.station
+
+    @property
+    def serno(self):
+        return self.stem.split('_')[-1]
+
+    @property
+    def lat(self):
+        if not self._files.get('.cnv'):
+            return None
+        return CnvFile(self._files['.cnv']).lat
+
+    @property
+    def lon(self):
+        if not self._files.get('.cnv'):
+            return None
+        return CnvFile(self._files['.cnv']).lon
 
     @property
     def time(self):

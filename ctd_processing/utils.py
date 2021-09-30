@@ -15,3 +15,20 @@ def git_version():
         return 'github version "{}" of repository {}'.format(version, repo)
     else:
         return ''
+
+
+def metadata_string_to_dict(string):
+    key_value = [item.strip() for item in string.split('#')]
+    data = {}
+    for key_val in key_value:
+        key, value = [item.strip() for item in key_val.split(':')]
+        data[key] = value
+    return data
+
+
+def metadata_dict_to_string(data):
+    string_list = []
+    for key, value in data.items():
+        string_list.append(f'{key}: {value}')
+    string = ' # '.join(string_list)
+    return string
