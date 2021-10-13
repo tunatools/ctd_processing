@@ -1,161 +1,13 @@
+import time
 import os
-from pathlib import Path
-from time import gmtime, strftime
+import pathlib
 import datetime
 
-from ctd_processing import exceptions
-from ctd_processing import utils
-
 from ctd_processing import cnv_column_info
-from ctd_processing import xmlcon
+from ctd_processing import exceptions
 
-
-class CNVparameter:
-    def __init__(self, use_cnv_info_format=False, cnv_info_object=None, **data):
-        self.info = {}
-        for key, value in data.items():
-            if key in ['index']:
-                value = int(value)
-            self.info[key] = value
-            setattr(self, key, value)
-
-        self.use_cnv_info_format = use_cnv_info_format
-        self.cnv_info_object = cnv_info_object
-        self._tot_value_length = 11
-        self._value_format = 'd'
-        self._nr_decimals = None
-        self.sample_value = None
-        self._data = []
-        self.active = False
-
-    def __repr__(self):
-        return_list = [f'CNVparameter (dict): {self.info["name"]}']
-        blanks = ' '*4
-        for key, value in self.info.items():
-            return_list.append(f'{blanks}{key:<20}{value}')
-
-        if len(self._data):
-            return_list.append(f'{blanks}{"Sample value":<20}{self.sample_value}')
-            if self.use_cnv_info_format:
-                form = f'{self.format} (from info file)'
-            else:
-                form = f'{self.format} (calculated from data)'
-            return_list.append(f'{blanks}{"Value format":<20}{form}')
-        return '\n'.join(return_list)
-
-    def _set_nr_decimals(self, value_str):
-        # Keeps the highest number och decimals in self._nr_decimals
-        # Also saves sample_value
-        if self._nr_decimals is None:
-            self._nr_decimals = len(value_str.strip().split('e')[0].split('.')[-1])
-            self.sample_value = float(value_str)
-        else:
-            nr = len(value_str.strip().split('e')[0].split('.')[-1])
-            if nr > self._nr_decimals:
-                self._nr_decimals = nr
-                self.sample_value = float(value_str)
-
-    @property
-    def format(self):
-        if self.use_cnv_info_format:
-            return self.cnv_info_object.format
-        if self._nr_decimals is None:
-            form = f'{self._tot_value_length}{self._value_format}'
-        else:
-            form = f'{self._tot_value_length}.{self._nr_decimals}{self._value_format}'
-        return form
-
-    def set_value_length(self, length):
-        self._tot_value_length = length
-
-    def add_data(self, value_str):
-        string = value_str.strip('+-')
-        if '+' in string or '-' in string:
-            self._value_format = 'e'
-        elif '.' in value_str:
-            self._value_format = 'f'
-        if '.' in value_str:
-            self._set_nr_decimals(value_str)
-            value = float(value_str)
-        else:
-            value = int(value_str)
-            self._value_format = 'd'
-
-        self._data.append(value)
-
-    @property
-    def data(self):
-        return self._data
-
-    @data.setter
-    def data(self, data):
-        self._data = data
-
-    def change_name(self, new_name):
-        self.info['name'] = new_name
-        self.name = new_name
-
-    def get_value_as_string_for_index(self, index):
-        return '{:{}}'.format(self.data[index], self.format)
-
-    def set_active(self, is_active):
-        self.active = is_active
-
-
-class CNVheader:
-    def __init__(self, linebreak='\n'):
-        self.linebreak = linebreak
-        self.rows = []
-
-    def add_row(self, row):
-        self.rows.append(row.strip())
-
-    def insert_row_after(self, row, after_str, ignore_if_string=None):
-        for line in self.rows:
-            if row == line:
-                return
-        for i, value in enumerate(self.rows[:]):
-            if after_str in value:
-                if ignore_if_string:
-                    if ignore_if_string in self.rows[i+1]:
-                        continue
-                self.rows.insert(i+1, row.strip())
-                break
-
-    def append_to_row(self, string_in_row, append_string):
-        for i, value in enumerate(self.rows[:]):
-            if string_in_row in value:
-                new_string = self.rows[i] + append_string.rstrip()
-                if self.rows[i] == new_string:
-                    continue
-                self.rows[i] = new_string
-                break
-
-    def get_row_index_for_matching_string(self, match_string, as_list=False):
-        index = []
-        for i, value in enumerate(self.rows):
-            if match_string in value:
-                index.append(i)
-        if not index:
-            return None
-        if as_list:
-            return index
-        if len(index) == 1:
-            return index[0]
-        return index
-
-    def replace_string_at_index(self, index, from_string, to_string, ignore_if_present=True):
-        if index is None:
-            return
-        if type(index) == int:
-            index = [index]
-        for i in index:
-            if to_string in self.rows[i] and ignore_if_present:
-                continue
-            self.rows[i] = self.rows[i].replace(from_string, to_string)
-
-    def replace_row(self, index, new_value):
-        self.rows[index] = new_value.strip()
+from ctd_processing.cnv.cnv_header import CNVheader
+from ctd_processing.cnv.cnv_parameter import CNVparameter
 
 
 class CNVfile:
@@ -217,7 +69,7 @@ class CNVfile:
         self._modify_depth()
 
     def save_file(self, file_path, overwrite=False):
-        file_path = Path(file_path)
+        file_path = pathlib.Path(file_path)
         if file_path.exists() and not overwrite:
             raise FileExistsError(file_path)
         if not file_path.parent.exists():
@@ -404,7 +256,7 @@ class CNVfile:
 
     def _modify_header_information(self):
         svMean = self._get_mean_sound_velocity()
-        now = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
+        now = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
         after_str = '** Ship'
         rows_to_insert = [f'** Average sound velocity: {str("%6.2f" % svMean)} m/s',
                           f'** True-depth calculation {now}',
@@ -482,53 +334,3 @@ class CNVfile:
             else:
                 new_line = f'# span {span_index} = {self.missing_value_str}, {self.missing_value_str}{" ": >6}'
             self.header.replace_row(span_index, new_line)
-
-
-def get_parameter_channels_and_names_from_cnv(path):
-    info = {}
-    with open(path) as fid:
-        for line in fid:
-            if not line.startswith('# name'):
-                continue
-            name, par = line.split('=', 1)
-            par = par.strip()
-            channel = int(name.strip().split()[-1])
-            info[channel] = par
-    return info
-
-
-def get_sensor_id_and_paramater_mapping_from_cnv(path):
-    xml_info = xmlcon.CNVfileXML(path).get_sensor_info()
-    name_info = get_parameter_channels_and_names_from_cnv(path)
-    mapping = {}
-    for info in xml_info:
-        mapping[info['serial_number']] = name_info.get(info['channel'], '')
-    return mapping
-
-
-def get_header_form_information(path):
-    info = {}
-    with open(path) as fid:
-        for line in fid:
-            if not line.startswith('**'):
-                continue
-            split_line = [part.strip() for part in line.strip('*').split(':', 1)]
-            if len(split_line) != 2:
-                continue
-            info[split_line[0]] = split_line[1]
-            # Special treatment for metadata
-            if 'metadata' in split_line[0].lower():
-                metadata = utils.metadata_string_to_dict(split_line[1])
-                for key, value in metadata.items():
-                    info[key] = value
-    return info
-
-
-if __name__ == '__main__':
-    cnv_file = r'C:\mw\temp_ctd_pre_system_data_root\cnv/SBE09_1387_20210413_1113_77SE_00_0278.cnv'
-    xml_info = xmlcon.CNVfileXML(cnv_file).get_sensor_info()
-    name_info = get_parameter_channels_and_names_from_cnv(cnv_file)
-
-    mapping = get_sensor_id_and_paramater_mapping_from_cnv(cnv_file)
-
-    hf = get_header_form_information(cnv_file)
