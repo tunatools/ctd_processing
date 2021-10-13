@@ -1,0 +1,21 @@
+mprog: ['NATL', 'Other']
+proj: ['BAS', 'COD', 'IBT', 'EKO', 'EXT', 'Other']
+orderer: ['HAV, SMHI', 'SMHI', 'SLUA', 'HAV', 'SGUS', 'Other']
+slabo: ['SMHI', 'SLU', 'SLUA']
+alabo: ['SMHI', 'SLU', 'SLUA']
+wadep:
+  min: 0
+  max: 1000
+winsp:
+  min: 0
+  max: 25
+airtemp:
+  min: -50
+  max: 50
+airpres:
+  min: 930
+  max: 1070
+weath: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+cloud: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+waves: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+iceob: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']

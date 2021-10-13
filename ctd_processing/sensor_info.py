@@ -63,6 +63,7 @@ class SensorInfoFile:
         The sensor info file is created at the same location as the cnv file.
         """
         path = pathlib.Path(cnv_file_path)
+        print(path)
         self._stem = path.stem
         self._save_path = pathlib.Path(path.parent, f'{self._stem}.sensorinfo')
         self._save_data_from_cnv(path)
@@ -82,7 +83,7 @@ class SensorInfoFile:
             instrument_info = self.instrument_file.get_info_for_parameter_and_sensor_id(parameter=info['parameter'],
                                                                                         sensor_id=info['serial_number'])
             if not instrument_info:
-                print('NOT', info['serial_number'], info['parameter'])
+                #print('NOT', info['serial_number'], info['parameter'])
                 continue
             for col in columns:
                 value = str(instrument_info.get(col, ''))
@@ -251,20 +252,34 @@ def get_sensor_info_object(instrumentinfo_file):
     return sensor_info
 
 
+def create_sensor_info_files_in_cnv_directory(directory, instrument_file_path):
+    sensor_info = get_sensor_info_object(instrument_file_path)
+    for path in pathlib.Path(directory).iterdir():
+        if not path.suffix == '.cnv':
+            continue
+        sensor_info.create_file_from_cnv_file(path)
+
+
 if __name__ == '__main__':
-    cnv_file = r'C:\mw\temp_ctd_pre_system_data_root\cnv/SBE09_1387_20210413_1113_77SE_00_0278.cnv'
-    sif = SensorInfoFiles(r'C:\mw\temp_ctd_pre_system_data_root\cnv')
-    sif.write_to_file()
-    instrument_file_path = r'C:\mw\git\ctd_config/instrumentinfo.xlsx'
+    instrument_file_path = r'C:\mw\git\ctd_config/instruments.xlsx'
+    cnv_directory = r'C:\mw\temp_profiles'
+    create_sensor_info_files_in_cnv_directory(cnv_directory, instrument_file_path)
+
+
+
+    # cnv_file = r'C:\mw\temp_ctd_pre_system_data_root\cnv/SBE09_1387_20210413_1113_77SE_00_0278.cnv'
+    # sif = SensorInfoFiles(r'C:\mw\temp_ctd_pre_system_data_root\cnv')
+    # .write_to_file()
+
     # # e = pd.read_excel(r'C:\mw\temp_svea\temp_filer/Instruments.xlsx', engine='openpyxl')
     # # e = openpyxl.load_workbook(file_path)
     # # df = pd.read_excel(file_path, sheet_name='SBE Dissolved Oxygen Sensors', engine='openpyxl')
     #
     # cnv_file = r'C:\mw\temp_ctd_pre_system_data_root\cnv/SBE09_1387_20210413_1113_77SE_00_0278.cnv'
     #
-    instrument_file = InstrumentFile(instrument_file_path)
+    #instrument_file = InstrumentFile(instrument_file_path)
     #
     # sensor_info = SensorInfoFile(instrument_file)
     # sensor_info.create_file_from_cnv_file(cnv_file)
     #
-    cnv_info = xmlcon.CNVfileXML(cnv_file).get_sensor_info()
+    # cnv_info = xmlcon.CNVfileXML(cnv_file).get_sensor_info()

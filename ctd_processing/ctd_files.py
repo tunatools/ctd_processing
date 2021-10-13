@@ -393,7 +393,7 @@ class SveaFormerFinalSBECTDFiles(SveaFormerCTDFiles):
     This is the converted name pattern created by the old scripts before the implementation of the "Pre system" on Svea.
     """
     name = 'Former Svea CTD'
-    pattern = 'SBE09_1387_\d{8}_\d{4}_77_10_\d{4}'
+    pattern = 'SBE09_\d{4}_\d{8}_\d{4}_77_10_\d{4}'
     pattern_example = 'SBE09_1387_20210413_1113_77_10_0278'
 
     @property
@@ -407,6 +407,25 @@ class SveaFormerFinalSBECTDFiles(SveaFormerCTDFiles):
         stem_parts.insert(-1, '00')
         new_stem = '_'.join(stem_parts)
         return new_stem
+
+
+class FormerFinalSBECTDFiles(SveaFormerCTDFiles):
+    """
+    Former archive format used for CTD from Svea.
+    This is the converted name pattern created by the old scripts before the implementation of the "Pre system" on Svea.
+    """
+    name = 'Former Svea CTD'
+    pattern = 'SBE09_\d{4}_\d{8}_\d{4}_\d{2}_\d{2}_\d{4}'
+    pattern_example = 'SBE09_1387_20210413_1113_77_10_0278'
+
+    @property
+    def config_file_suffix(self):
+        return '.XMLCON'
+
+    def _get_proper_file_stem(self):
+        stem = self._original_file_path.stem
+        return stem
+
 
 class SveaSBECTDFiles(SBECTDFiles):
     """
@@ -434,7 +453,8 @@ class SveaSBECTDFiles(SBECTDFiles):
 
 def get_ctd_files_object(file_path):
     files_object = [SveaFormerFinalSBECTDFiles(),
-                    SveaSBECTDFiles()]
+                    SveaSBECTDFiles(),
+                    FormerFinalSBECTDFiles()]
     for obj in files_object:
         if obj.is_valid(file_path):
             obj.set_file_path(file_path)

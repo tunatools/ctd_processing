@@ -43,7 +43,7 @@ class SBEProcessing:
 
     @property
     def platform(self):
-        return self._processing_paths
+        return self._processing_paths.platform
 
     @platform.setter
     def platform(self, name):
@@ -87,7 +87,7 @@ class SBEProcessing:
         options = self.get_surfacesoak_options()
         for key, path in options.items():
             if name in key.lower():
-                self._processing_paths.set_loopedit(options[key])
+                self._processing_paths.set_loopedit(path)
                 return (key, path)
         else:
             raise Exception('Invalid surfacesoak option')
