@@ -1,0 +1,95 @@
+@startuml
+
+title cnv_class_diagram
+
+class cnv_file.CNVfile #42CDED {
+	+cnv_info_object
+	+col_dens
+	+col_dens2
+	+col_depth
+	+col_pres
+	+col_sv
+	+data
+	+date_format_in_file
+	+file_path
+	+g
+	+header
+	+instrument_number
+	+lat, @p
+	+linebreak
+	+lon, @p
+	+missing_value
+	+missing_value_str
+	+nr_data_lines
+	+parameters
+	+station, @p
+	+time, @p
+	+use_cnv_info_format
+	-_ctd_files
+	-_lat
+	-_lon
+	-_station
+	-_time
+==
+	+modify()
+	+save_file()
+	-_change_parameter_name()
+	-_check_index()
+	-_get_calculated_true_depth()
+	-_get_data_rows()
+	-_get_density_data()
+	-_get_depth_data()
+	-_get_mean_sound_velocity()
+	-_get_parameter_name_matching_string()
+	-_get_pressure_data()
+	-_get_sound_velocity_data()
+	-_load_info()
+	-_modify_depth()
+	-_modify_fluorescence()
+	-_modify_header_information()
+	-_modify_irradiance()
+	-_modify_span()
+	-_save_columns()
+	-_set_active_parameters()
+}
+
+class cnv_header.CNVheader #B22EA3 {
+	+linebreak
+	+rows
+==
+	+add_row()
+	+append_to_row()
+	+get_row_index_for_matching_string()
+	+insert_row_after()
+	+replace_row()
+	+replace_string_at_index()
+}
+
+class cnv_parameter.CNVparameter #CE1149 {
+	+active
+	+cnv_info_object
+	+data, @p
+	+format, @p
+	+info
+	+name
+	+sample_value
+	+use_cnv_info_format
+	-_data
+	-_nr_decimals
+	-_tot_value_length
+	-_value_format
+==
+	+add_data()
+	+change_name()
+	+get_value_as_string_for_index()
+	+set_active()
+	+set_value_length()
+	-__repr__()
+	-_set_nr_decimals()
+}
+
+
+cnv_file.CNVfile o-- cnv_header.CNVheader
+cnv_file.CNVfile o-- cnv_parameter.CNVparameter
+
+@enduml

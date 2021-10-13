@@ -1,0 +1,90 @@
+@startuml
+
+title processing_class_diagram
+
+class sbe_batch_file.SBEBatchFile #62BD7E {
+	-_paths
+	-_processing_paths
+==
+	+create_file()
+	+run_file()
+}
+
+class sbe_processing.SBEProcessing #A8B3E4 {
+	+platform, @p
+	+year, @p
+	-_batch_file
+	-_confirmed
+	-_ctd_files
+	-_file_path
+	-_overwrite
+	-_paths
+	-_processing_paths
+	-_setup_file
+==
+	+confirm_file()
+	+create_sensorinfo_file()
+	+get_file_names_in_server_directory()
+	+get_platform_options()
+	+get_surfacesoak_options()
+	+run_process()
+	+select_file()
+	+set_platform()
+	+set_surfacesoak()
+	+set_tau_state()
+	-_copy_all_files_with_same_file_stem_to_working_dir()
+	-_copy_cnv_files_to_local()
+	-_copy_file()
+	-_copy_plot_files_to_local()
+	-_copy_processed_files_to_local()
+	-_copy_raw_files_to_local()
+	-_get_derive_psa_obj()
+}
+
+class sbe_processing_paths.SBEProcessingPaths #0ED1CE {
+	+loopedit_paths, @p
+	+platform, @p
+	+platforms, @p
+	+sbe_paths
+	-_loopedit_paths
+	-_new_file_stem
+	-_paths
+	-_platform
+	-_platform_paths
+	-_psa_names
+==
+	+set_config_suffix()
+	+set_loopedit()
+	+set_raw_file_path()
+	+update_paths()
+	-__call__()
+	-__repr__()
+	-__str__()
+	-_build_cnv_file_paths_with_new_file_stem()
+	-_build_loopedit_file_paths()
+	-_build_psa_file_paths()
+	-_build_raw_file_paths_with_new_file_stem()
+	-_get_all_psa_paths()
+	-_get_paths_in_directory(), @sm
+	-_save_platform_paths()
+}
+
+class sbe_setup_file.SBESetupFile #70CD6B {
+	-_ctd_files
+	-_paths
+	-_proc_paths
+==
+	+create_file()
+	-_add_station_name_to_plots()
+	-_get_bottle_sum_line()
+	-_get_lines()
+	-_write_lines()
+}
+
+
+sbe_processing.SBEProcessing o-- sbe_batch_file.SBEBatchFile
+sbe_processing.SBEProcessing o-- sbe_setup_file.SBESetupFile
+
+sbe_processing_paths.SBEProcessingPaths o-- sbe_setup_file.SBESetupFile
+
+@enduml

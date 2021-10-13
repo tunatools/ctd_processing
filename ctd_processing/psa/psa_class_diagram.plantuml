@@ -1,0 +1,109 @@
+@startuml
+
+title psa_class_diagram
+
+class derive.DerivePSAfile #F26962 {
+	
+==
+	+set_tau_correction()
+	+turn_tau_correction_off()
+	+turn_tau_correction_on()
+}
+
+class loopedit.LoopeditPSAfile #A8A3B0 {
+	+depth, @p
+==
+	
+}
+
+class psa_file.PSAfile #C152BA {
+	+file_path
+	+tree
+==
+	+list_all()
+	+save()
+	-_get_element_from_tag_list()
+	-_get_from_tag_list()
+	-_get_value_list()
+	-_has_condition()
+	-_set_from_tag_list()
+}
+
+class psa_file_with_plot.PSAfileWithPlot #8A265E {
+	+blueprint_display_parameter_tags
+	+display_depth, @p
+	+display_depth_tags
+	+display_nr_bins_tags
+	+display_nr_minor_bins_tags
+	+display_parameter_tags
+	+nr_bins, @p
+	+parameter_max_tag
+	+parameter_min_tag
+==
+	+get_displayed_parameters()
+	+get_parameter_range()
+	+set_parameter_range()
+	-_get_tag_list_for_parameter()
+}
+
+class psa_plot_file.PlotPSAfile #DEB41C {
+	+blueprint_display_parameter_tags
+	+display_depth_tags
+	+display_parameter_tags
+	+parameter_max_tag
+	+parameter_min_tag
+	+title, @p
+	+title_tags
+==
+	
+}
+
+class seasave.SeasavePSAfile #FC98C4 {
+	+add_samp, @p
+	+add_samp_tags
+	+blueprint_display_parameter_tags
+	+cruise, @p
+	+cruise_tags
+	+data_file_tags
+	+data_path, @p
+	+display_depth_tags
+	+display_nr_bins_tags
+	+display_nr_minor_bins_tags
+	+display_parameter_tags
+	+event_id, @p
+	+event_id_tags
+	+lat_tags
+	+lon_tags
+	+metadata_admin, @p
+	+metadata_admin_tags
+	+metadata_conditions, @p
+	+metadata_conditions_tags
+	+operator, @p
+	+operator_tags
+	+parameter_max_tag
+	+parameter_min_tag
+	+parent_event_id, @p
+	+parent_event_id_tags
+	+position, @p
+	+ship, @p
+	+ship_tags
+	+station, @p
+	+station_tags
+	+xmlcon_name_tags
+	+xmlcon_path, @p
+==
+	
+}
+
+
+derive.DerivePSAfile <|-- psa_file.PSAfile
+
+loopedit.LoopeditPSAfile <|-- psa_file.PSAfile
+
+psa_file_with_plot.PSAfileWithPlot <|-- psa_file.PSAfile
+
+psa_plot_file.PlotPSAfile <|-- psa_file_with_plot.PSAfileWithPlot
+
+seasave.SeasavePSAfile <|-- psa_file_with_plot.PSAfileWithPlot
+
+@enduml

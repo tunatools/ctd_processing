@@ -2,7 +2,7 @@
 
 title ctd_files_class_diagram
 
-class bl_file.BlFile #A13592 {
+class bl_file.BlFile #06F981 {
 	+file_path
 	+number_of_bottles, @p
 	-_number_of_bottles
@@ -10,7 +10,7 @@ class bl_file.BlFile #A13592 {
 	-_save_number_of_bottles()
 }
 
-class cnv_file.old_CnvFile #3CD7A6 {
+class cnv_file.old_CnvFile #54886F {
 	+date_format_in_file
 	+lat, @p
 	+lon, @p
@@ -25,7 +25,7 @@ class cnv_file.old_CnvFile #3CD7A6 {
 	-_get_info_from_file()
 }
 
-class file_pattern_nodc.NODCSBECTDFiles #BACF98 {
+class file_pattern_nodc.NODCSBECTDFiles #E49544 {
 	+config_file_suffix, @p
 	+instrument_number, @p
 	+serno, @p
@@ -34,7 +34,7 @@ class file_pattern_nodc.NODCSBECTDFiles #BACF98 {
 	-_get_proper_file_stem()
 }
 
-class file_pattern_old_processing_script.OldSBECTDFiles #A8D6F6 {
+class file_pattern_old_processing_script.OldSBECTDFiles #53E97A {
 	+config_file_suffix, @p
 	+instrument_number, @p
 	+serno, @p
@@ -43,7 +43,7 @@ class file_pattern_old_processing_script.OldSBECTDFiles #A8D6F6 {
 	-_get_proper_file_stem()
 }
 
-class hdr_file.HdrFile #B69326 {
+class hdr_file.HdrFile #D75E2D {
 	+cruise_number, @p
 	+date_format_in_file
 	+file_path
@@ -56,13 +56,13 @@ class hdr_file.HdrFile #B69326 {
 	-_get_info_from_file()
 }
 
-class modify.ModifyCTDfiles #A51BAD {
+class modify.ModifyCTDfiles #ED0168 {
 	
 ==
 	-_modify_and_save_cnv_file()
 }
 
-class parent_abc_class.CTDFiles #E020CE {
+class parent_abc_class.CTDFiles #02A1D8 {
 	+all_files, @p
 	+parent, @p
 	+plot_files, @p
@@ -101,7 +101,7 @@ class parent_abc_class.CTDFiles #E020CE {
 	-_save_file_paths()
 }
 
-class sbe_parent_class.SBECTDFiles #8730AF {
+class sbe_parent_class.SBECTDFiles #7A66BD {
 	+file_path, @p
 	+lat, @p
 	+lon, @p
