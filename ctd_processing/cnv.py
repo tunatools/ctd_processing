@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 from time import gmtime, strftime
+import datetime
+
 from ctd_processing import exceptions
 from ctd_processing import utils
 
@@ -185,6 +187,28 @@ class CNVfile:
         self._save_columns()
         self._set_active_parameters()
 
+        self.date_format_in_file = '%b %d %Y %H:%M:%S'
+        self._time = None
+        self._lat = None
+        self._lon = None
+        self._station = None
+
+    @property
+    def time(self):
+        return self._time
+
+    @property
+    def lat(self):
+        return self._lat
+
+    @property
+    def lon(self):
+        return self._lon
+
+    @property
+    def station(self):
+        return self._station
+
     def modify(self):
         self._check_index()
         self._modify_header_information()
@@ -229,6 +253,15 @@ class CNVfile:
         with open(self.file_path) as fid:
             for r, line in enumerate(fid):
                 strip_line = line.strip()
+                if '* System UTC' in line:
+                    self._time = datetime.datetime.strptime(line.split('=')[1].strip(), self.date_format_in_file)
+                if '* NMEA Latitude' in line:
+                    self._lat = line.split('=')[1].strip()[:-1].replace(' ', '')
+                if '* NMEA Longitude' in line:
+                    self._lon = line.split('=')[1].strip()[:-1].replace(' ', '')
+                if line.startswith('** Station'):
+                    self._station = line.split(':')[-1].strip()
+
                 if '*END*' in line:
                     self.header.add_row(line)
                     header = False

@@ -1,0 +1,134 @@
+@startuml
+
+title ctd_files_class_diagram
+
+class bl_file.BlFile #A13592 {
+	+file_path
+	+number_of_bottles, @p
+	-_number_of_bottles
+==
+	-_save_number_of_bottles()
+}
+
+class cnv_file.old_CnvFile #3CD7A6 {
+	+date_format_in_file
+	+lat, @p
+	+lon, @p
+	+station, @p
+	+time, @p
+	-_lat
+	-_lon
+	-_path
+	-_station
+	-_time
+==
+	-_get_info_from_file()
+}
+
+class file_pattern_nodc.NODCSBECTDFiles #BACF98 {
+	+config_file_suffix, @p
+	+instrument_number, @p
+	+serno, @p
+	+shipcode, @p
+==
+	-_get_proper_file_stem()
+}
+
+class file_pattern_old_processing_script.OldSBECTDFiles #A8D6F6 {
+	+config_file_suffix, @p
+	+instrument_number, @p
+	+serno, @p
+	+shipcode, @p
+==
+	-_get_proper_file_stem()
+}
+
+class hdr_file.HdrFile #B69326 {
+	+cruise_number, @p
+	+date_format_in_file
+	+file_path
+	+station, @p
+	+time, @p
+	-_cruise_number
+	-_station
+	-_time
+==
+	-_get_info_from_file()
+}
+
+class modify.ModifyCTDfiles #A51BAD {
+	
+==
+	-_modify_and_save_cnv_file()
+}
+
+class parent_abc_class.CTDFiles #E020CE {
+	+all_files, @p
+	+parent, @p
+	+plot_files, @p
+	+proper_stem, @p
+	+stem, @p
+	-_file_name_info
+	-_files
+	-_original_file_path
+==
+	+add_processed_file_paths()
+	+file_path()
+	+has_file()
+	+instrument_number()
+	+is_valid()
+	+lat()
+	+lon()
+	+modify_and_save_cnv_file()
+	+name()
+	+pattern()
+	+pattern_example()
+	+raw_files_extensions()
+	+rename_files()
+	+serno()
+	+set_file_path()
+	+shipcode()
+	+station()
+	+time()
+	+year()
+	-__call__()
+	-__repr__()
+	-__str__()
+	-_check_file_stem()
+	-_get_proper_file_stem()
+	-_modify_and_save_cnv_file()
+	-_rename_file()
+	-_save_file_paths()
+}
+
+class sbe_parent_class.SBECTDFiles #8730AF {
+	+file_path, @p
+	+lat, @p
+	+lon, @p
+	+number_of_bottles, @p
+	+station, @p
+	+time, @p
+	+year, @p
+	-_plot_files
+==
+	+add_processed_file_paths()
+	+config_file_suffix()
+	-_add_local_cnv_file_path()
+	-_check_hdr_file()
+}
+
+
+parent_abc_class.CTDFiles <|-- ABC
+
+file_pattern_nodc.NODCSBECTDFiles <|-- modify.ModifyCTDfiles
+
+file_pattern_old_processing_script.OldSBECTDFiles <|-- modify.ModifyCTDfiles
+
+modify.ModifyCTDfiles <|-- sbe_parent_class.SBECTDFiles
+
+sbe_parent_class.SBECTDFiles <|-- parent_abc_class.CTDFiles
+
+sbe_parent_class.SBECTDFiles o-- bl_file.BlFile
+sbe_parent_class.SBECTDFiles o-- hdr_file.HdrFile
+
+@enduml

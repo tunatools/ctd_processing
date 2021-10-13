@@ -1,103 +1,1048 @@
-class cnv.CNVparameter #25F050 {}
+@startuml
 
-class cnv.CNVheader #25F050 {}
+title ctd_processing_class_diagram
 
-class cnv.CNVfile #25F050 {}
+class _old_ctd_sbe9_processing.CtdProcessing #26BEC1 {
+	+alignctd
+	+batch_file
+	+binavg
+	+bottlesum
+	+celltm
+	+cnty
+	+cnv_column_info
+	+ctdNo
+	+ctd_data
+	+ctdmodule_file
+	+data_directory
+	+datacnv
+	+deep_surfacesoak
+	+derive
+	+filter
+	+loopedit
+	+manuell_surfacesoak
+	+new_fname
+	+number_of_bottles
+	+plot1
+	+plot2
+	+plot3
+	+plot4
+	+plot_directory
+	+raw_files_directory
+	+serie
+	+ship
+	+split
+	+stationname
+	+working_directory
+	+year
+==
+	+check_bl()
+	+copy_files_to_server()
+	+create_batch_file()
+	+get_file()
+	+get_string_for_data_file()
+	+get_string_for_shark_file()
+	+load_options()
+	+modify_cnv_file()
+	+run_seabird()
+}
 
-class cnv_column_info.CnvSensorInfo #70205E {}
+class bl_file.BlFile #34A527 {
+	+file_path
+	+number_of_bottles, @p
+	-_number_of_bottles
+==
+	-_save_number_of_bottles()
+}
 
-class cnv_column_info.CnvInfoFile #70205E {}
+class cnv.CNVfile #1445AD {
+	+cnv_info_object
+	+col_dens
+	+col_dens2
+	+col_depth
+	+col_pres
+	+col_sv
+	+data
+	+date_format_in_file
+	+file_path
+	+g
+	+header
+	+instrument_number
+	+lat, @p
+	+linebreak
+	+lon, @p
+	+missing_value
+	+missing_value_str
+	+nr_data_lines
+	+parameters
+	+station, @p
+	+time, @p
+	+use_cnv_info_format
+	-_ctd_files
+	-_lat
+	-_lon
+	-_station
+	-_time
+==
+	+modify()
+	+save_file()
+	-_change_parameter_name()
+	-_check_index()
+	-_get_calculated_true_depth()
+	-_get_data_rows()
+	-_get_density_data()
+	-_get_depth_data()
+	-_get_mean_sound_velocity()
+	-_get_parameter_name_matching_string()
+	-_get_pressure_data()
+	-_get_sound_velocity_data()
+	-_load_info()
+	-_modify_depth()
+	-_modify_fluorescence()
+	-_modify_header_information()
+	-_modify_irradiance()
+	-_modify_span()
+	-_save_columns()
+	-_set_active_parameters()
+}
 
-class cnv_column_info.CnvInfoFiles #70205E {}
+class cnv.CNVheader #1445AD {
+	+linebreak
+	+rows
+==
+	+add_row()
+	+append_to_row()
+	+get_row_index_for_matching_string()
+	+insert_row_after()
+	+replace_row()
+	+replace_string_at_index()
+}
 
-class ctd_sbe9_processing.CtdProcessing #6FE69B {}
+class cnv.CNVparameter #1445AD {
+	+active
+	+cnv_info_object
+	+data, @p
+	+format, @p
+	+info
+	+name
+	+sample_value
+	+use_cnv_info_format
+	-_data
+	-_nr_decimals
+	-_tot_value_length
+	-_value_format
+==
+	+add_data()
+	+change_name()
+	+get_value_as_string_for_index()
+	+set_active()
+	+set_value_length()
+	-__repr__()
+	-_set_nr_decimals()
+}
 
-class exceptions.CTDException #BCE26D {}
+class cnv_column_info.CnvInfoFile #A1FDEB {
+	+file_path
+	+file_stem
+	+sensor_info
+==
+	+get_info()
+	-__repr__()
+	-_load_file()
+}
 
-class exceptions.MissingAttribute #BCE26D {}
+class cnv_column_info.CnvInfoFiles #A1FDEB {
+	+directory
+	+files, @p
+	-_files
+==
+	+get_info()
+	-__repr__()
+	-_load_files()
+}
 
-class exceptions.UnrecognizedFileName #BCE26D {}
+class cnv_column_info.CnvSensorInfo #A1FDEB {
+	+name, @p
+==
+	-__repr__()
+}
 
-class exceptions.InvalidInstrumentName #BCE26D {}
+class cnv_file.old_CnvFile #F70F92 {
+	+date_format_in_file
+	+lat, @p
+	+lon, @p
+	+station, @p
+	+time, @p
+	-_lat
+	-_lon
+	-_path
+	-_station
+	-_time
+==
+	-_get_info_from_file()
+}
 
-class exceptions.InvalidInstrumentSerialNumber #BCE26D {}
+class delivery_note.DeliveryNote #ABD24C {
+	-_comment
+	-_contact
+	-_data
+	-_description
+	-_directory
+	-_paths
+	-_save_path
+	-_stem
+==
+	+write_to_file()
+	-__str__()
+	-_save_info()
+}
 
-class exceptions.InvalidDateFormat #BCE26D {}
+class exceptions.CTDException #9F26DF {
+	
+==
+	
+}
 
-class exceptions.InvalidTimeFormat #BCE26D {}
+class exceptions.FileExists #9F26DF {
+	
+==
+	
+}
 
-class exceptions.InvalidCountryCode #BCE26D {}
+class exceptions.InvalidCountryCode #9F26DF {
+	
+==
+	
+}
 
-class exceptions.InvalidSerialNumber #BCE26D {}
+class exceptions.InvalidDateFormat #9F26DF {
+	
+==
+	
+}
 
-class exceptions.InvalidFileNameFormat #BCE26D {}
+class exceptions.InvalidFileNameFormat #9F26DF {
+	
+==
+	
+}
 
-class exceptions.PathError #BCE26D {}
+class exceptions.InvalidInstrumentName #9F26DF {
+	
+==
+	
+}
 
-class exceptions.InvalidSurfacesoak #BCE26D {}
+class exceptions.InvalidInstrumentSerialNumber #9F26DF {
+	
+==
+	
+}
 
-class exceptions.InvalidParameterIndex #BCE26D {}
+class exceptions.InvalidParameterIndex #9F26DF {
+	
+==
+	
+}
 
-class exceptions.FileExists #BCE26D {}
+class exceptions.InvalidSerialNumber #9F26DF {
+	
+==
+	
+}
 
-class processing.CtdProcessing #B5BCE6 {}
+class exceptions.InvalidSurfacesoak #9F26DF {
+	
+==
+	
+}
 
-class processing.Paths #B5BCE6 {}
+class exceptions.InvalidTimeFormat #9F26DF {
+	
+==
+	
+}
 
-class processing.BatchFile #B5BCE6 {}
+class exceptions.MissingAttribute #9F26DF {
+	
+==
+	
+}
 
-class processing.SetupFile #B5BCE6 {}
+class exceptions.PathError #9F26DF {
+	
+==
+	
+}
 
-class psa.PSAfile #52D1FC {}
+class exceptions.UnrecognizedFileName #9F26DF {
+	
+==
+	
+}
 
-class psa.PSAfileWithPlot #52D1FC {}
+class file_handler.File #9ED9A5 {
+	+name, @p
+	+path
+	+suffix, @p
+==
+	-__call__()
+	-__eq__()
+	-__str__()
+}
 
-class psa.SeasavePSAfile #52D1FC {}
+class file_handler.SBEFileHandler #9ED9A5 {
+	+local_files
+	+paths
+	+server_files
+==
+	+copy_files_to_server()
+	+not_on_server()
+	+not_updated_on_server()
+	+select_file()
+	-_load_files()
+	-_not_on_server()
+	-_not_updated_on_server()
+}
 
-class psa.PlotPSAfile #52D1FC {}
+class file_pattern_nodc.NODCSBECTDFiles #AF3842 {
+	+config_file_suffix, @p
+	+instrument_number, @p
+	+serno, @p
+	+shipcode, @p
+==
+	-_get_proper_file_stem()
+}
 
-class seabird.SeabirdRawFileBase #3FCF91 {}
+class file_pattern_old_processing_script.OldSBECTDFiles #137CBD {
+	+config_file_suffix, @p
+	+instrument_number, @p
+	+serno, @p
+	+shipcode, @p
+==
+	-_get_proper_file_stem()
+}
 
-class seabird.BlFile #3FCF91 {}
+class former_cnv.CNVfile #178BE9 {
+	+cnv_info_object
+	+col_dens
+	+col_dens2
+	+col_depth
+	+col_pres
+	+col_sv
+	+ctd_processing_object
+	+ctry
+	+data
+	+file_path
+	+g
+	+header
+	+linebreak
+	+missing_value
+	+missing_value_str
+	+nr_data_lines
+	+parameters
+	+serie
+	+ship
+	+use_cnv_info_format
+	+year
+==
+	+modify()
+	+save_file()
+	-_change_parameter_name()
+	-_check_index()
+	-_get_calculated_true_depth()
+	-_get_data_rows()
+	-_get_density_data()
+	-_get_depth_data()
+	-_get_mean_sound_velocity()
+	-_get_parameter_name_matching_string()
+	-_get_pressure_data()
+	-_get_sound_velocity_data()
+	-_load_ctd_processing_object_info()
+	-_load_info()
+	-_modify_depth()
+	-_modify_fluorescence()
+	-_modify_header_information()
+	-_modify_irradiance()
+	-_modify_span()
+	-_save_columns()
+	-_set_active_parameters()
+}
 
-class seabird.BtlFile #3FCF91 {}
+class former_cnv.CNVheader #178BE9 {
+	+linebreak
+	+rows
+==
+	+add_row()
+	+append_to_row()
+	+get_row_index_for_matching_string()
+	+insert_row_after()
+	+replace_row()
+	+replace_string_at_index()
+}
 
-class seabird.HdrFile #3FCF91 {}
+class former_cnv.CNVparameter #178BE9 {
+	+active
+	+cnv_info_object
+	+data, @p
+	+format, @p
+	+info
+	+name
+	+sample_value
+	+use_cnv_info_format
+	-_data
+	-_nr_decimals
+	-_tot_value_length
+	-_value_format
+==
+	+add_data()
+	+change_name()
+	+get_value_as_string_for_index()
+	+set_active()
+	+set_value_length()
+	-__repr__()
+	-_set_nr_decimals()
+}
 
-class seabird.HexFile #3FCF91 {}
+class former_processing.BatchFile #C0DB32 {
+	+batch_file_path
+	+parent
+	+setup_file_path
+	+working_dir
+==
+	+create_file()
+	+run_file()
+}
 
-class seabird.RosFile #3FCF91 {}
+class former_processing.CtdProcessing #C0DB32 {
+	+batch_file_object
+	+cnv_column_info_directory
+	+cnv_info_files
+	+cnv_info_object
+	+ctd_config_suffix
+	+ctd_number
+	+ctd_number, @p
+	+ctd_number_options, @p
+	+ctry
+	+logger
+	+logging_format
+	+logging_level
+	+modify_cnv_file_object
+	+name
+	+new_file_stem
+	+number_of_bottles
+	+options, @p
+	+overwrite
+	+paths
+	+root_directory, @p
+	+seabird_files
+	+serial_number
+	+setup_file_object
+	+ship
+	+ship_id
+	+ship_short_name
+	+station_name
+	+surfacesoak, @p
+	+surfacesoak_options, @p
+	+use_cnv_info_format
+	+year
+	-_ctd_number
+	-_surfacesoak
+==
+	+copy_files_to_server()
+	+create_setup_and_batch_files()
+	+load_seabird_files()
+	+modify_cnv_file()
+	+move_raw_files()
+	+remove_files()
+	+run_process()
+	+run_seabird()
+	+save_modified_ctd_file()
+	-_copy_seabird_files()
+	-_copy_setup_files()
+	-_load_cnv_info_object()
+	-_save_info_from_seabird_files()
+	-_setup_logger()
+}
 
-class seabird.XmlconFile #3FCF91 {}
+class former_processing.Paths #C0DB32 {
+	+ctdmodule_file
+	+directories
+	+files
+	+root_directory
+	+root_directory, @p
+	-_file
+==
+	+get_directory()
+	+get_file_path()
+	-__repr__()
+}
 
-class seabird.ConFile #3FCF91 {}
+class former_processing.SetupFile #C0DB32 {
+	+ctd_config_suffix
+	+ctd_number
+	+lines
+	+new_file_stem
+	+number_of_bottles
+	+parent
+	+parent, @p
+	+paths
+	+plot_directory
+	+setup_directory
+	+setup_file_path
+	+ship_id
+	+ship_id_str
+	+station_name
+	+surfacesoak
+	+surfacesoak, @p
+	+surfacesoak_options
+	+working_directory
+	+year
+	-_parent
+	-_surfacesoak
+==
+	+create_file()
+	+get_all_lines()
+	-_add_station_name_to_plots()
+	-_create_lines()
+	-_get_bottle_sum_line()
+	-_save_variables()
+	-_set_paths()
+	-_set_ship_id_str()
+	-_write_lines()
+}
 
-class seabird.SeabirdFiles #3FCF91 {}
+class hdr_file.HdrFile #8AF95E {
+	+cruise_number, @p
+	+date_format_in_file
+	+file_path
+	+station, @p
+	+time, @p
+	-_cruise_number
+	-_station
+	-_time
+==
+	-_get_info_from_file()
+}
 
-class sensor_info.InstrumentFile #F8A07E {}
+class metadata.MetadataFile #C08850 {
+	-_data
+	-_directory
+	-_paths
+	-_save_path
+	-_stem
+==
+	+write_to_file()
+	-__str__()
+	-_save_info()
+}
 
-class ship.Ship #4F11F3 {}
+class metadata.MetadataRow #C08850 {
+	-_metadata
+	-_metadata_columns
+	-_path
+==
+	+get_info()
+	+get_metadata_row_from_cnv_file()
+	-_save_metadata()
+}
 
-class ship.FinnishShip #4F11F3 {}
+class modify.ModifyCTDfiles #702309 {
+	
+==
+	-_modify_and_save_cnv_file()
+}
 
-class ship.SBE09 #4F11F3 {}
+class parent_abc_class.CTDFiles #0E2218 {
+	+all_files, @p
+	+parent, @p
+	+plot_files, @p
+	+proper_stem, @p
+	+stem, @p
+	-_file_name_info
+	-_files
+	-_original_file_path
+==
+	+add_processed_file_paths()
+	+file_path()
+	+has_file()
+	+instrument_number()
+	+is_valid()
+	+lat()
+	+lon()
+	+modify_and_save_cnv_file()
+	+name()
+	+pattern()
+	+pattern_example()
+	+raw_files_extensions()
+	+rename_files()
+	+serno()
+	+set_file_path()
+	+shipcode()
+	+station()
+	+time()
+	+year()
+	-__call__()
+	-__repr__()
+	-__str__()
+	-_check_file_stem()
+	-_get_proper_file_stem()
+	-_modify_and_save_cnv_file()
+	-_rename_file()
+	-_save_file_paths()
+}
 
-class ship.Dana #4F11F3 {}
+class paths.SBEPaths #B55ED6 {
+	+local_sub_directories, @p
+	+server_sub_directories, @p
+	+year, @p
+	-_paths
+	-_sub_dir_list_local
+	-_sub_dir_list_server
+	-_year
+==
+	+create_local_paths()
+	+create_server_paths()
+	+get_local_directory()
+	+get_server_directory()
+	+set_config_root_directory()
+	+set_local_root_directory()
+	+set_server_root_directory()
+	+set_year()
+	-__call__()
+	-_get_server_directory_for_year()
+	-_local_key()
+	-_server_key()
+}
 
-class ship.Aranda #4F11F3 {}
+class processing.NewStandardFormat #F75FA5 {
+	+paths
+	-_cnv_files
+	-_export_directory
+	-_metadata_path
+	-_overwrite
+==
+	+create_files_from_cnv()
+	-_copy_standard_format_files_to_local()
+	-_create_metadata_file()
+	-_create_standard_format_files()
+}
 
-class ship.Aura #4F11F3 {}
+class processing.SBEBatchFile #F75FA5 {
+	-_paths
+	-_processing_paths
+==
+	+create_file()
+	+run_file()
+}
 
-class ship.Meri #4F11F3 {}
+class processing.SBEProcessing #F75FA5 {
+	+platform, @p
+	+year, @p
+	-_batch_file
+	-_confirmed
+	-_ctd_files
+	-_file_path
+	-_overwrite
+	-_paths
+	-_processing_paths
+	-_setup_file
+==
+	+confirm_file()
+	+create_sensorinfo_file()
+	+get_file_names_in_server_directory()
+	+get_platform_options()
+	+get_surfacesoak_options()
+	+run_process()
+	+select_file()
+	+set_platform()
+	+set_surfacesoak()
+	+set_tau_state()
+	-_copy_all_files_with_same_file_stem_to_working_dir()
+	-_copy_cnv_files_to_local()
+	-_copy_file()
+	-_copy_plot_files_to_local()
+	-_copy_processed_files_to_local()
+	-_copy_raw_files_to_local()
+	-_get_derive_psa_obj()
+}
 
-class ship.Svea #4F11F3 {}
+class processing.SBEProcessingPaths #F75FA5 {
+	+loopedit_paths, @p
+	+platform, @p
+	+platforms, @p
+	+sbe_paths
+	-_loopedit_paths
+	-_new_file_stem
+	-_paths
+	-_platform
+	-_platform_paths
+	-_psa_names
+==
+	+set_config_suffix()
+	+set_loopedit()
+	+set_raw_file_path()
+	+update_paths()
+	-__call__()
+	-__repr__()
+	-__str__()
+	-_build_cnv_file_paths_with_new_file_stem()
+	-_build_loopedit_file_paths()
+	-_build_psa_file_paths()
+	-_build_raw_file_paths_with_new_file_stem()
+	-_get_all_psa_paths()
+	-_get_paths_in_directory(), @sm
+	-_save_platform_paths()
+}
 
-class xmlcon.XMLCONfile #F5B846 {}
+class processing.SBESetupFile #F75FA5 {
+	-_ctd_files
+	-_paths
+	-_proc_paths
+==
+	+create_file()
+	-_add_station_name_to_plots()
+	-_get_bottle_sum_line()
+	-_get_lines()
+	-_write_lines()
+}
+
+class psa.DerivePSAfile #867A79 {
+	
+==
+	+set_tau_correction()
+	+turn_tau_correction_off()
+	+turn_tau_correction_on()
+}
+
+class psa.LoopeditPSAfile #867A79 {
+	+depth, @p
+==
+	
+}
+
+class psa.PSAfile #867A79 {
+	+file_path
+	+tree
+==
+	+list_all()
+	+save()
+	-_get_element_from_tag_list()
+	-_get_from_tag_list()
+	-_get_value_list()
+	-_has_condition()
+	-_set_from_tag_list()
+}
+
+class psa.PSAfileWithPlot #867A79 {
+	+blueprint_display_parameter_tags
+	+display_depth, @p
+	+display_depth_tags
+	+display_nr_bins_tags
+	+display_nr_minor_bins_tags
+	+display_parameter_tags
+	+nr_bins, @p
+	+parameter_max_tag
+	+parameter_min_tag
+==
+	+get_displayed_parameters()
+	+get_parameter_range()
+	+set_parameter_range()
+	-_get_tag_list_for_parameter()
+}
+
+class psa.PlotPSAfile #867A79 {
+	+blueprint_display_parameter_tags
+	+display_depth_tags
+	+display_parameter_tags
+	+parameter_max_tag
+	+parameter_min_tag
+	+title, @p
+	+title_tags
+==
+	
+}
+
+class psa.SeasavePSAfile #867A79 {
+	+add_samp, @p
+	+add_samp_tags
+	+blueprint_display_parameter_tags
+	+cruise, @p
+	+cruise_tags
+	+data_file_tags
+	+data_path, @p
+	+display_depth_tags
+	+display_nr_bins_tags
+	+display_nr_minor_bins_tags
+	+display_parameter_tags
+	+event_id, @p
+	+event_id_tags
+	+lat_tags
+	+lon_tags
+	+metadata_admin, @p
+	+metadata_admin_tags
+	+metadata_conditions, @p
+	+metadata_conditions_tags
+	+operator, @p
+	+operator_tags
+	+parameter_max_tag
+	+parameter_min_tag
+	+parent_event_id, @p
+	+parent_event_id_tags
+	+position, @p
+	+ship, @p
+	+ship_tags
+	+station, @p
+	+station_tags
+	+xmlcon_name_tags
+	+xmlcon_path, @p
+==
+	
+}
+
+class sbe_parent_class.SBECTDFiles #C1143A {
+	+file_path, @p
+	+lat, @p
+	+lon, @p
+	+number_of_bottles, @p
+	+station, @p
+	+time, @p
+	+year, @p
+	-_plot_files
+==
+	+add_processed_file_paths()
+	+config_file_suffix()
+	-_add_local_cnv_file_path()
+	-_check_hdr_file()
+}
+
+class seabird.BlFile #411820 {
+	+file_suffix
+	+number_of_bottles
+==
+	-_save_number_of_bottles()
+}
+
+class seabird.BtlFile #411820 {
+	+file_suffix
+==
+	
+}
+
+class seabird.ConFile #411820 {
+	+file_suffix
+==
+	
+}
+
+class seabird.HdrFile #411820 {
+	+ctd
+	+date
+	+date_format_in_file
+	+datum
+	+file_suffix
+	+new_file_stem
+	+station_name
+	+tid
+==
+	+validate_new_file_stem()
+	-_check_country_code()
+	-_check_date_format()
+	-_check_instrument_name()
+	-_check_instrument_serial_number()
+	-_check_serial_number()
+	-_check_ship_code()
+	-_check_time_format()
+	-_get_info_from_file()
+	-_save_new_file_stem()
+}
+
+class seabird.HexFile #411820 {
+	+file_suffix
+==
+	
+}
+
+class seabird.RosFile #411820 {
+	+file_suffix
+==
+	
+}
+
+class seabird.SeabirdFiles #411820 {
+	+ctd
+	+ctry
+	+date
+	+datum
+	+directory
+	+file_stem
+	+files
+	+new_file_stem
+	+number_of_bottles
+	+serial_number
+	+ship
+	+ship_id
+	+ship_short_name
+	+station_name
+	+tid
+==
+	+move_files()
+	+rename_files()
+	-__repr__()
+	-_load_files()
+	-_load_info()
+}
+
+class seabird.SeabirdRawFileBase #411820 {
+	+ctry
+	+directory
+	+file_name
+	+file_path
+	+file_stem
+	+file_suffix
+	+serial_number
+	+ship
+	+ship_id
+	+ship_short_name
+==
+	+move_file()
+	+rename()
+	-__repr__()
+	-_check_validity()
+	-_load_ship()
+	-_load_ship_info()
+	-_save_file_path_info()
+}
+
+class seabird.XmlconFile #411820 {
+	+file_suffix
+==
+	
+}
+
+class sensor_info.InstrumentFile #6708F5 {
+	-_info
+	-_path
+	-_sheets
+	-_wb
+==
+	+get_info_for_parameter_and_sensor_id()
+	-__str__()
+	-_save_info()
+}
+
+class sensor_info.SensorInfoFile #6708F5 {
+	+instrument_file
+	-_data
+	-_save_path
+	-_stem
+==
+	+create_file_from_cnv_file()
+	-__str__()
+	-_save_data_from_cnv()
+	-_save_file()
+}
+
+class sensor_info.SensorInfoFiles #6708F5 {
+	-_directory
+	-_paths
+	-_sensor_info_items
+==
+	+write_to_file()
+	-_save_info()
+}
+
+class sensor_info.SensorInfoItem #6708F5 {
+	+valid_from, @p
+	+valid_to, @p
+	-_all_columns
+	-_columns
+	-_data
+	-_key
+	-_valid_from
+	-_valid_to
+==
+	+add_data()
+	+get_info()
+	+get_key(), @sm
+	-_add_additional_data()
+	-_add_first_data()
+	-_check_columns()
+	-_get_time_object(), @sm
+	-_get_time_string(), @sm
+	-_set_valid_from()
+	-_set_valid_to()
+}
+
+class ship.Aranda #0739C5 {
+	
+==
+	
+}
+
+class ship.Aura #0739C5 {
+	
+==
+	
+}
+
+class ship.Dana #0739C5 {
+	+serial_number, @p
+==
+	
+}
+
+class ship.FinnishShip #0739C5 {
+	+fstem)
+	+serial_number, @p
+==
+	
+}
+
+class ship.Meri #0739C5 {
+	
+==
+	
+}
+
+class ship.SBE09 #0739C5 {
+	+serial_number, @p
+	+ship_id
+==
+	-_load_info()
+}
+
+class ship.Ship #0739C5 {
+	+fstem
+==
+	-__repr__()
+}
+
+class ship.Svea #0739C5 {
+	+serial_number, @p
+==
+	
+}
+
+class xmlcon.CNVfileXML #5650BC {
+	+path
+	+serial_number, @p
+	+tree
+==
+	+get_datetime_object(), @sm
+	+get_sensor_info()
+}
+
+class xmlcon.XMLCONfile #5650BC {
+	+file_path
+	+serial_number, @p
+	+tree
+==
+	+get_sensor_info()
+	+print_sensors()
+}
 
 
 cnv_column_info.CnvSensorInfo <|-- dict
-
-ctd_sbe9_processing.CtdProcessing <|-- object
 
 exceptions.CTDException <|-- Exception
 
@@ -133,6 +1078,10 @@ psa.SeasavePSAfile <|-- psa.PSAfileWithPlot
 
 psa.PlotPSAfile <|-- psa.PSAfileWithPlot
 
+psa.DerivePSAfile <|-- psa.PSAfile
+
+psa.LoopeditPSAfile <|-- psa.PSAfile
+
 seabird.BlFile <|-- seabird.SeabirdRawFileBase
 
 seabird.BtlFile <|-- seabird.SeabirdRawFileBase
@@ -161,39 +1110,92 @@ ship.Meri <|-- ship.FinnishShip
 
 ship.Svea <|-- ship.Ship
 
+_old_ctd_sbe9_processing.CtdProcessing <|-- object
+
+parent_abc_class.CTDFiles <|-- ABC
+
+file_pattern_nodc.NODCSBECTDFiles <|-- modify.ModifyCTDfiles
+
+file_pattern_old_processing_script.OldSBECTDFiles <|-- modify.ModifyCTDfiles
+
+modify.ModifyCTDfiles <|-- sbe_parent_class.SBECTDFiles
+
+sbe_parent_class.SBECTDFiles <|-- parent_abc_class.CTDFiles
+
 cnv.CNVparameter o-- cnv.CNVparameter
+cnv.CNVparameter o-- former_cnv.CNVparameter
 
 cnv.CNVfile o-- cnv.CNVheader
 cnv.CNVfile o-- cnv.CNVparameter
+cnv.CNVfile o-- cnv.CNVfile
+cnv.CNVfile o-- cnv_column_info.CnvInfoFile
+cnv.CNVfile o-- cnv_column_info.CnvInfoFiles
 cnv.CNVfile o-- exceptions.FileExists
 cnv.CNVfile o-- exceptions.MissingAttribute
 cnv.CNVfile o-- exceptions.InvalidParameterIndex
+cnv.CNVfile o-- file_handler.File
+cnv.CNVfile o-- former_cnv.CNVheader
+cnv.CNVfile o-- former_cnv.CNVparameter
+cnv.CNVfile o-- former_cnv.CNVfile
 cnv.CNVfile o-- ship.Ship
+cnv.CNVfile o-- xmlcon.CNVfileXML
 
 cnv_column_info.CnvSensorInfo o-- cnv_column_info.CnvSensorInfo
 
 cnv_column_info.CnvInfoFile o-- cnv_column_info.CnvInfoFile
 cnv_column_info.CnvInfoFile o-- cnv_column_info.CnvSensorInfo
+cnv_column_info.CnvInfoFile o-- file_handler.File
 
 cnv_column_info.CnvInfoFiles o-- cnv_column_info.CnvInfoFile
 cnv_column_info.CnvInfoFiles o-- cnv_column_info.CnvInfoFile
 cnv_column_info.CnvInfoFiles o-- exceptions.InvalidInstrumentSerialNumber
+cnv_column_info.CnvInfoFiles o-- file_handler.File
 
-ctd_sbe9_processing.CtdProcessing o-- ctd_sbe9_processing.CtdProcessing
-ctd_sbe9_processing.CtdProcessing o-- processing.CtdProcessing
-ctd_sbe9_processing.CtdProcessing o-- ship.Dana
-ctd_sbe9_processing.CtdProcessing o-- ship.Svea
-ctd_sbe9_processing.CtdProcessing o-- ship.Ship
+file_handler.SBEFileHandler o-- file_handler.File
+file_handler.SBEFileHandler o-- file_handler.File
 
-processing.CtdProcessing o-- processing.Paths
-processing.CtdProcessing o-- processing.SetupFile
-processing.CtdProcessing o-- processing.BatchFile
-processing.CtdProcessing o-- cnv.CNVfile
-processing.CtdProcessing o-- cnv_column_info.CnvInfoFile
-processing.CtdProcessing o-- cnv_column_info.CnvInfoFiles
-processing.CtdProcessing o-- exceptions.FileExists
-processing.CtdProcessing o-- exceptions.InvalidInstrumentSerialNumber
-processing.CtdProcessing o-- seabird.SeabirdFiles
+former_cnv.CNVparameter o-- former_cnv.CNVparameter
+former_cnv.CNVparameter o-- cnv.CNVparameter
+
+former_cnv.CNVfile o-- former_cnv.CNVheader
+former_cnv.CNVfile o-- former_cnv.CNVparameter
+former_cnv.CNVfile o-- cnv.CNVheader
+former_cnv.CNVfile o-- cnv.CNVparameter
+former_cnv.CNVfile o-- exceptions.FileExists
+former_cnv.CNVfile o-- exceptions.MissingAttribute
+former_cnv.CNVfile o-- exceptions.InvalidParameterIndex
+former_cnv.CNVfile o-- file_handler.File
+former_cnv.CNVfile o-- ship.Ship
+
+former_processing.CtdProcessing o-- former_processing.Paths
+former_processing.CtdProcessing o-- former_processing.SetupFile
+former_processing.CtdProcessing o-- former_processing.BatchFile
+former_processing.CtdProcessing o-- cnv.CNVfile
+former_processing.CtdProcessing o-- cnv_column_info.CnvInfoFile
+former_processing.CtdProcessing o-- cnv_column_info.CnvInfoFiles
+former_processing.CtdProcessing o-- exceptions.FileExists
+former_processing.CtdProcessing o-- exceptions.InvalidInstrumentSerialNumber
+former_processing.CtdProcessing o-- file_handler.File
+former_processing.CtdProcessing o-- former_cnv.CNVfile
+former_processing.CtdProcessing o-- seabird.SeabirdFiles
+
+metadata.MetadataFile o-- metadata.MetadataRow
+metadata.MetadataFile o-- file_handler.File
+
+processing.SBEProcessing o-- processing.SBESetupFile
+processing.SBEProcessing o-- processing.SBEBatchFile
+processing.SBEProcessing o-- exceptions.FileExists
+processing.SBEProcessing o-- file_handler.File
+processing.SBEProcessing o-- former_processing.SetupFile
+processing.SBEProcessing o-- former_processing.BatchFile
+processing.SBEProcessing o-- psa.LoopeditPSAfile
+processing.SBEProcessing o-- psa.PSAfile
+processing.SBEProcessing o-- psa.DerivePSAfile
+
+processing.SBEProcessingPaths o-- processing.SBESetupFile
+processing.SBEProcessingPaths o-- file_handler.File
+processing.SBEProcessingPaths o-- former_processing.Paths
+processing.SBEProcessingPaths o-- former_processing.SetupFile
 
 seabird.SeabirdFiles o-- seabird.BlFile
 seabird.SeabirdFiles o-- seabird.BtlFile
@@ -202,38 +1204,105 @@ seabird.SeabirdFiles o-- seabird.HexFile
 seabird.SeabirdFiles o-- seabird.RosFile
 seabird.SeabirdFiles o-- seabird.XmlconFile
 seabird.SeabirdFiles o-- seabird.ConFile
+seabird.SeabirdFiles o-- file_handler.File
+seabird.SeabirdFiles o-- bl_file.BlFile
+seabird.SeabirdFiles o-- hdr_file.HdrFile
+
+sensor_info.InstrumentFile o-- sensor_info.InstrumentFile
+sensor_info.InstrumentFile o-- file_handler.File
+
+sensor_info.SensorInfoFile o-- sensor_info.InstrumentFile
+sensor_info.SensorInfoFile o-- sensor_info.SensorInfoFile
+sensor_info.SensorInfoFile o-- cnv.CNVfile
+sensor_info.SensorInfoFile o-- file_handler.File
+sensor_info.SensorInfoFile o-- former_cnv.CNVfile
+sensor_info.SensorInfoFile o-- xmlcon.CNVfileXML
+
+sensor_info.SensorInfoItem o-- sensor_info.SensorInfoItem
+
+sensor_info.SensorInfoFiles o-- sensor_info.SensorInfoItem
+sensor_info.SensorInfoFiles o-- sensor_info.SensorInfoItem
+sensor_info.SensorInfoFiles o-- sensor_info.InstrumentFile
+sensor_info.SensorInfoFiles o-- sensor_info.SensorInfoFile
+sensor_info.SensorInfoFiles o-- file_handler.File
 
 ship.Ship o-- ship.Ship
 
 ship.Dana o-- ship.Dana
 
-ship.Svea o-- ship.Dana
 ship.Svea o-- ship.Aranda
 ship.Svea o-- ship.Aura
+ship.Svea o-- ship.Dana
 ship.Svea o-- ship.Meri
 ship.Svea o-- ship.Svea
-ship.Svea o-- ship.Ship
+ship.Svea o-- ship.Aranda
+ship.Svea o-- ship.Aura
+ship.Svea o-- ship.Dana
+ship.Svea o-- ship.Meri
 ship.Svea o-- ship.SBE09
-ship.Svea o-- ship.Dana
-ship.Svea o-- ship.Aranda
-ship.Svea o-- ship.Aura
-ship.Svea o-- ship.Meri
+ship.Svea o-- ship.Ship
 ship.Svea o-- ship.Svea
 ship.Svea o-- ship.Ship
 
-processing.BatchFile o-- exceptions.PathError
+_old_ctd_sbe9_processing.CtdProcessing o-- _old_ctd_sbe9_processing.CtdProcessing
+_old_ctd_sbe9_processing.CtdProcessing o-- file_handler.File
+_old_ctd_sbe9_processing.CtdProcessing o-- former_processing.CtdProcessing
+_old_ctd_sbe9_processing.CtdProcessing o-- ship.Dana
+_old_ctd_sbe9_processing.CtdProcessing o-- ship.Svea
+_old_ctd_sbe9_processing.CtdProcessing o-- ship.Ship
 
-processing.SetupFile o-- exceptions.InvalidSurfacesoak
-processing.SetupFile o-- ship.Svea
-processing.SetupFile o-- ship.Dana
+modify.ModifyCTDfiles o-- cnv.CNVfile
+modify.ModifyCTDfiles o-- former_cnv.CNVfile
+
+sbe_parent_class.SBECTDFiles o-- cnv.CNVfile
+sbe_parent_class.SBECTDFiles o-- file_handler.File
+sbe_parent_class.SBECTDFiles o-- former_cnv.CNVfile
+sbe_parent_class.SBECTDFiles o-- seabird.HdrFile
+sbe_parent_class.SBECTDFiles o-- seabird.BlFile
+sbe_parent_class.SBECTDFiles o-- bl_file.BlFile
+sbe_parent_class.SBECTDFiles o-- hdr_file.HdrFile
+
+former_processing.BatchFile o-- exceptions.PathError
+
+former_processing.SetupFile o-- exceptions.InvalidSurfacesoak
+former_processing.SetupFile o-- file_handler.File
+former_processing.SetupFile o-- ship.Svea
+former_processing.SetupFile o-- ship.Dana
 
 seabird.SeabirdRawFileBase o-- exceptions.PathError
 seabird.SeabirdRawFileBase o-- exceptions.UnrecognizedFileName
 seabird.SeabirdRawFileBase o-- exceptions.FileExists
+seabird.SeabirdRawFileBase o-- file_handler.File
 
 seabird.HdrFile o-- exceptions.InvalidInstrumentName
 seabird.HdrFile o-- exceptions.InvalidInstrumentSerialNumber
 seabird.HdrFile o-- exceptions.InvalidDateFormat
 seabird.HdrFile o-- exceptions.InvalidSerialNumber
 seabird.HdrFile o-- exceptions.InvalidFileNameFormat
+seabird.HdrFile o-- file_handler.File
 seabird.HdrFile o-- ship.SBE09
+
+parent_abc_class.CTDFiles o-- exceptions.FileExists
+parent_abc_class.CTDFiles o-- file_handler.File
+
+file_pattern_nodc.NODCSBECTDFiles o-- exceptions.FileExists
+file_pattern_nodc.NODCSBECTDFiles o-- file_handler.File
+file_pattern_nodc.NODCSBECTDFiles o-- ship.Svea
+file_pattern_nodc.NODCSBECTDFiles o-- ship.SBE09
+
+processing.SBEBatchFile o-- file_handler.File
+processing.SBEBatchFile o-- former_processing.Paths
+
+processing.SBESetupFile o-- file_handler.File
+processing.SBESetupFile o-- former_processing.Paths
+processing.SBESetupFile o-- psa.PSAfile
+processing.SBESetupFile o-- psa.PlotPSAfile
+processing.SBESetupFile o-- sensor_info.InstrumentFile
+
+psa.SeasavePSAfile o-- file_handler.File
+psa.SeasavePSAfile o-- ship.Ship
+
+file_pattern_old_processing_script.OldSBECTDFiles o-- ship.Svea
+file_pattern_old_processing_script.OldSBECTDFiles o-- ship.SBE09
+
+@enduml
