@@ -2,6 +2,7 @@ from ctd_processing import utils
 from ctd_processing import xmlcon
 
 from .cnv_file import CNVfile
+from .cnv_file import CNVfileInfo
 
 
 def get_parameter_channels_and_names_from_cnv(path):

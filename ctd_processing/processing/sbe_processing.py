@@ -5,6 +5,9 @@ from ctd_processing import psa
 from ctd_processing import ctd_files
 from ctd_processing import sensor_info
 
+from ctd_processing.processing.sbe_setup_file import SBESetupFile
+from ctd_processing.processing.sbe_batch_file import SBEBatchFile
+
 class SBEProcessing:
     """
     Config file paths are hard coded based on the root catalogue. Consider putting this info in config file (yaml, json)

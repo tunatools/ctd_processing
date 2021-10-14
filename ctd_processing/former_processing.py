@@ -15,7 +15,7 @@ from ctd_processing import psa
 try:
     from ctd_processing.former_stationnames_in_plot import former_insert_station_name as insert_station_name
 except:
-    from stationnames_in_plot import insert_station_name
+    from ctd_processing.former_stationnames_in_plot import insert_station_name
 
 
 class CtdProcessing:

@@ -2,15 +2,30 @@ import pathlib
 
 from .instrument_file import InstrumentFile
 from .sensor_info_item import SensorInfoItem
-from . import get_sensor_info_columns
+from .func import get_sensor_info_columns
 
 from ctd_processing import cnv
 from ctd_processing import xmlcon
 from ctd_processing import ctd_files
 
 
+# def get_sensor_info_columns():
+#     path = pathlib.Path(pathlib.Path(__file__).parent, 'resources', 'sensor_info_columns.txt')
+#     columns = []
+#     with open(path) as fid:
+#         for line in fid:
+#             sline = line.strip()
+#             if not sline:
+#                 continue
+#             columns.append(sline)
+#     return columns
+
+
+
+
+
 class SensorInfoFile:
-    def __init__(self, instrument_file: InstrumentFile):
+    def __init__(self, instrument_file):
         self.instrument_file = instrument_file
         self._stem = None
         self._save_path = None

@@ -1,13 +1,14 @@
 import datetime
 
-from . import get_sensor_info_columns
+from .func import get_sensor_info_columns
 
 
 class SensorInfoItem:
     """
-    Holds information about a sensor INSTRUMENT_SERIE - PARAM_REPORTED kombination.
+    Holds information about a sensor INSTRUMENT_SERIE - PARAM_REPORTED combination.
     """
     def __init__(self):
+        # self._all_columns = func.get_sensor_info_columns()
         self._all_columns = get_sensor_info_columns()
         self._columns = [col for col in self._all_columns if col not in ['VALIDFR', 'VALIDTO']]
         self._key = ()

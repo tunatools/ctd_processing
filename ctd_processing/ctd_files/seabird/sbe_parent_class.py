@@ -3,7 +3,7 @@ from abc import abstractmethod
 from ctd_processing.ctd_files.parent_abc_class import CTDFiles
 from ctd_processing.ctd_files.seabird import BlFile
 from ctd_processing.ctd_files.seabird import HdrFile
-from ctd_processing.cnv import CNVfile
+from ctd_processing.cnv import CNVfileInfo
 
 
 class SBECTDFiles(CTDFiles):
@@ -23,27 +23,27 @@ class SBECTDFiles(CTDFiles):
         if self._files.get('.hdr'):
             obj = HdrFile(self._files['.hdr'])
         else:
-            obj = CNVfile(self._files['.cnv'])
+            obj = CNVfileInfo(self._files['.cnv'])
         return obj.station
 
     @property
     def lat(self):
         if not self._files.get('.cnv'):
             return None
-        return CNVfile(self._files['.cnv']).lat
+        return CNVfileInfo(self._files['.cnv']).lat
 
     @property
     def lon(self):
         if not self._files.get('.cnv'):
             return None
-        return CNVfile(self._files['.cnv']).lon
+        return CNVfileInfo(self._files['.cnv']).lon
 
     @property
     def time(self):
         if self._files.get('.hdr'):
             obj = HdrFile(self._files['.hdr'])
         else:
-            obj = CNVfile(self._files['.cnv'])
+            obj = CNVfileInfo(self._files['.cnv'])
         return obj.time
 
     @property
