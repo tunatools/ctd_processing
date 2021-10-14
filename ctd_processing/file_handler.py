@@ -20,9 +20,11 @@ class SBEFileHandler:
         self._load_files(file_stem)
 
     def _load_files(self, file_stem):
-        self.local_files = {}
-        self.server_files = {}
+        self._load_local_files(file_stem)
+        self._load_server_files(file_stem)
 
+    def _load_local_files(self, file_stem):
+        self.local_files = {}
         for sub in self.paths.local_sub_directories:
             local_path = self.paths.get_local_directory(sub, create=True)
             if local_path:
@@ -32,6 +34,8 @@ class SBEFileHandler:
                         obj = File(path)
                         self.local_files[(sub, obj.name)] = obj
 
+    def _load_server_files(self, file_stem):
+        self.server_files = {}
         for sub in self.paths.server_sub_directories:
             server_path = self.paths.get_server_directory(sub, create=True)
             if server_path:
@@ -44,11 +48,12 @@ class SBEFileHandler:
     def _not_on_server(self):
         """ Returns a dict with the local files that are not on server """
         result = {}
-        for key, value in self.local_files.items():
-            if key not in self.paths.server_sub_directories:
+        for key, path in self.local_files.items():
+            sub, name = key
+            if sub not in self.paths.server_sub_directories:
                 continue
             if not self.server_files.get(key):
-                result[key] = value
+                result[key] = path
         return result
 
     def _not_updated_on_server(self):
@@ -70,9 +75,11 @@ class SBEFileHandler:
         return bool(self._not_updated_on_server())
 
     def copy_files_to_server(self, update=False):
+        print('_not_on_server', self._not_on_server())
         for key, path in self._not_on_server().items():
             sub, name = key
             server_directory = self.paths.get_server_directory(sub)
+            print('server_directory', server_directory)
             if not server_directory:
                 continue
             target_path = Path(server_directory, path.name)
