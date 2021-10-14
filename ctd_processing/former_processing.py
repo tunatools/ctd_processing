@@ -9,11 +9,11 @@ from pathlib import Path
 from ctd_processing import former_cnv
 from ctd_processing import cnv_column_info
 from ctd_processing import exceptions
-from ctd_processing import seabird
+from ctd_processing import former_seabird as seabird
 from ctd_processing import psa
 
 try:
-    from ctd_processing.stationnames_in_plot import insert_station_name
+    from ctd_processing.former_stationnames_in_plot import former_insert_station_name as insert_station_name
 except:
     from stationnames_in_plot import insert_station_name
 

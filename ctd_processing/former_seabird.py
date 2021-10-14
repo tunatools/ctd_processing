@@ -4,11 +4,9 @@ import os
 from pathlib import Path
 import shutil
 
-import ctd_processing
-
 from ctd_processing import exceptions
 
-from ctd_processing.ship import SHIPS
+from ctd_processing.former_ship import SHIPS
 
 
 class SeabirdRawFileBase:
