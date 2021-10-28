@@ -100,5 +100,5 @@ class SBEPaths:
         if self._year and self._paths.get('server_dir_root'):
             self._paths['server_dir_raw'] = Path(self._paths['server_dir_root'], self._year, 'raw')
             self._paths['server_dir_cnv'] = Path(self._paths['server_dir_root'], self._year, 'cnv')
-            self._paths['server_dir_nsf'] = Path(self._paths['server_dir_root'], self._year, 'nsf')
+            self._paths['server_dir_nsf'] = Path(self._paths['server_dir_root'], self._year, 'data')
             self._paths['server_dir_cnv_up'] = Path(self._paths['server_dir_root'], self._year, 'cnv_up')

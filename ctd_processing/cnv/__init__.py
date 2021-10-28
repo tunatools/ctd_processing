@@ -18,13 +18,18 @@ def get_parameter_channels_and_names_from_cnv(path):
     return info
 
 
-def get_sensor_id_and_paramater_mapping_from_cnv(path):
+def get_sensor_id_and_parameter_mapping_from_cnv(path):
     xml_info = xmlcon.CNVfileXML(path).get_sensor_info()
     name_info = get_parameter_channels_and_names_from_cnv(path)
     mapping = {}
     for info in xml_info:
         mapping[info['serial_number']] = name_info.get(info['channel'], '')
     return mapping
+
+
+def get_reported_names_in_cnv(path):
+    name_info = get_parameter_channels_and_names_from_cnv(path)
+    return list(name_info.values())
 
 
 def get_header_form_information(path):

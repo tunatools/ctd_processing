@@ -1,27 +1,14 @@
 import pathlib
+import datetime
 
-from .instrument_file import InstrumentFile
+# from .instrument_file import InstrumentFile
 from .sensor_info_item import SensorInfoItem
 from .func import get_sensor_info_columns
 
 from ctd_processing import cnv
 from ctd_processing import xmlcon
 from ctd_processing import ctd_files
-
-
-# def get_sensor_info_columns():
-#     path = pathlib.Path(pathlib.Path(__file__).parent, 'resources', 'sensor_info_columns.txt')
-#     columns = []
-#     with open(path) as fid:
-#         for line in fid:
-#             sline = line.strip()
-#             if not sline:
-#                 continue
-#             columns.append(sline)
-#     return columns
-
-
-
+from ctd_processing.sensor_info import param_reported
 
 
 class SensorInfoFile:
@@ -40,7 +27,6 @@ class SensorInfoFile:
         The sensor info file is created at the same location as the cnv file.
         """
         path = pathlib.Path(cnv_file_path)
-        print(path)
         self._stem = path.stem
         self._save_path = pathlib.Path(path.parent, f'{self._stem}.sensorinfo')
         self._save_data_from_cnv(path)
@@ -49,28 +35,37 @@ class SensorInfoFile:
     def _save_data_from_cnv(self, path):
         self._data = []
         cnv_info = xmlcon.CNVfileXML(path).get_sensor_info()
-        channel_mapping = cnv.get_sensor_id_and_paramater_mapping_from_cnv(path)
+        # channel_mapping = cnv.get_sensor_id_and_parameter_mapping_from_cnv(path)
+        # print('channel_mapping', channel_mapping)
         ctd_file_obj = ctd_files.get_ctd_files_object(path)
+
+        par_reported = param_reported.ParamReported(path, self.instrument_file)
 
         instrument = path.name.split('_')[0]
         columns = [col for col in get_sensor_info_columns() if col not in ['VALIDFR', 'VALIDTO']]
         self._data.append('\t'.join(columns))
         for info in cnv_info:
+            print('='*50)
+            print(info['parameter'])
+            print('-' * 50)
             row_list = []
             instrument_info = self.instrument_file.get_info_for_parameter_and_sensor_id(parameter=info['parameter'],
                                                                                         sensor_id=info['serial_number'])
             if not instrument_info:
                 #print('NOT', info['serial_number'], info['parameter'])
                 continue
+            print('instrument_info', instrument_info)
             for col in columns:
+                # print('col', col)
                 value = str(instrument_info.get(col, ''))
                 if col == 'SENSOR_ID':
                     value = info['serial_number']
                 elif col == 'CALIB_DATE':
                     value = info['calibration_date'].strftime('%Y-%m-%d')
+                elif col == 'PARAM_REPORTED':
+                    value = par_reported.get_reported_name(info['parameter'], info['serial_number'])
+                    print('value:PARAM_REPORTED', value, info['parameter'])
                 elif value:
-                    if col == 'PARAMETER_REPORTED':
-                        value = channel_mapping.get(info['serial_number'])
                     if info['parameter'][-1] == '2':
                         if col == 'PARAM_SIMPLE':
                             value = value + '2'
@@ -119,11 +114,36 @@ class SensorInfoFiles:
                         continue
                     data = dict(zip(header, split_line))
                     key = SensorInfoItem.get_key(data)
-                    obj = self._sensor_info_items.setdefault(key, SensorInfoItem())
-                    obj.add_data(data)
+                    # obj = self._sensor_info_items.setdefault(key, SensorInfoItem())
+                    # obj.add_data(data)
+                    # =============================
+                    print('key', key)
+                    par = key[1]
+                    self._sensor_info_items.setdefault(par, [])
+                    if not self._sensor_info_items[par] or self._sensor_info_items[par][-1]['key'] != key:
+                        self._sensor_info_items[par].append(dict(key=key,
+                                                                 obj=SensorInfoItem()))
+                    self._sensor_info_items[par][-1]['obj'].add_data(data)
 
-    def write_to_file(self):
-        path = pathlib.Path(self._directory, 'sensorinfo.txt')
+    def write_summary_to_file(self, directory=None):
+        if not directory:
+            directory = self._directory
+        path = pathlib.Path(directory, 'sensorinfo.txt')
+        columns = get_sensor_info_columns()
+        lines = []
+        lines.append('\t'.join(columns))
+        for par in sorted(self._sensor_info_items):
+            for item in self._sensor_info_items[par]:
+                info = item['obj'].get_info()
+                lines.append('\t'.join([info.get(col, '') for col in columns]))
+
+        with open(path, 'w') as fid:
+            fid.write('\n'.join(lines))
+
+    def old_write_summary_to_file(self, directory=None):
+        if not directory:
+            directory = self._directory
+        path = pathlib.Path(directory, 'sensorinfo.txt')
         columns = get_sensor_info_columns()
         lines = []
         lines.append('\t'.join(columns))
