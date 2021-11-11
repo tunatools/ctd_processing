@@ -7,7 +7,7 @@ class SBEPaths:
     def __init__(self):
         self._paths = {}
         self._year = None
-        self._sub_dir_list_local = ['source', 'raw', 'cnv', 'nsf', 'cnv_up', 'plot']
+        self._sub_dir_list_local = ['source', 'raw', 'cnv', 'nsf', 'cnv_up', 'plot', 'temp']
         self._sub_dir_list_server = ['raw', 'cnv', 'nsf', 'cnv_up']
 
     def __call__(self, key, create=False, default=None, **kwargs):
@@ -81,6 +81,7 @@ class SBEPaths:
             root_directory = root_directory.parent
         self._paths['local_dir_root'] = root_directory
         self._paths['working_dir'] = Path(self._paths['local_dir_root'], 'temp')
+        self._paths['local_dir_temp'] = self._paths['working_dir'] 
         self._paths['local_dir_source'] = Path(self._paths['local_dir_root'], 'source')
         self._paths['local_dir_raw'] = Path(self._paths['local_dir_root'], 'raw')
         self._paths['local_dir_cnv'] = Path(self._paths['local_dir_root'], 'cnv')

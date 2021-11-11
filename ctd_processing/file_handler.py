@@ -93,6 +93,14 @@ class SBEFileHandler:
                 target_path = Path(server_directory, path.name)
                 shutil.copy2(path(), target_path)
 
+    def get_local_file_path(self, suffix):
+        paths = []
+        for key, file in self.local_files.items():
+            if key[0] in suffix:
+                paths.append(file.path)
+        if len(paths) == 1:
+            return paths[0]
+        return paths
 
 class File:
     def __init__(self, file_path):
