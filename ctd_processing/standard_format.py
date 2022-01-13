@@ -13,7 +13,7 @@ from ctd_processing.data_delivery import DeliveryMetadataFile
 from ctd_processing import exceptions
 
 
-class NewStandardFormat:
+class CreateStandardFormat:
 
     def __init__(self, paths_object):
         self.paths = paths_object
