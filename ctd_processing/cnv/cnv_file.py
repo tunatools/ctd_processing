@@ -161,6 +161,9 @@ class CNVfile:
                 if strip_line.startswith('# name'):
                     name, par = [item.strip() for item in strip_line.split('=', 1)]
                     index = name.split(' ')[-1]
+                    if int(index) not in self.cnv_info_object:
+                        raise Exception('''Felaktigt index i ctd-infofil under
+                                        "C:\mw\git\ctd_processing\ctd_processing\ctd_files\seabird\cnv_column_info"''')
                     obj = CNVparameter(use_cnv_info_format=self.use_cnv_info_format,
                                        cnv_info_object=self.cnv_info_object[int(index)],
                                        index=index, name=par)
@@ -207,6 +210,19 @@ class CNVfile:
 
     def _set_active_parameters(self):
         for i, info in self.cnv_info_object.items():
+            if i not in self.parameters:
+                raise Exception(f'''Sensoruppsättningen stämmer inte! 
+                                   Kontrollera sensoruppsättningen i fil: 
+                                   ctd_processing/ctd_processing/ctd_files/seabird/cnv_column_info/{info.file}''')
+            if info.name not in self.parameters[i].name:
+                if 'Depth' not in info.name:
+                    raise Exception(f'''Sensoruppsättningen stämmer inte! 
+                                    Det är kan vara för få eller får många sensorer beskrivna i fil: 
+                                    "ctd_processing/ctd_processing/ctd_files/seabird/cnv_column_info/{info.file}"
+                                    
+                                    Index:             {i}
+                                    Sensoruppsättning: {info.name} 
+                                    Info i fil:        {self.parameters[i].name}''')
             self.parameters[i].set_active(info.active)
 
     def _change_parameter_name(self, current_name, new_name):
@@ -333,6 +349,8 @@ class CNVfile:
             self._change_parameter_name(par_name_1, new_par_name_1)
 
         if fluo_xml_index_2 and (fluo_xml_index_2 + 2) in serial_index_2:
+            if not par_name_2:
+                raise Exception('Fluorometer parameter finns i xml-delen men inte i parameterlistan. Kan vara missmatch mellan DataCnv och xmlcon. ')
             self.header.replace_string_at_index(fluo_xml_index_2, 'Fluorometer', 'Phycocyanin Fluorometer')
             self.header.replace_string_at_index(fluo_index_2, 'Fluorescence', 'Phycocyanin Fluorescence')
             new_par_name_2 = par_name_2.replace('Fluorescence', 'Phycocyanin Fluorescence')

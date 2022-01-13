@@ -4,7 +4,8 @@ from ctd_processing import exceptions
 
 
 class CnvSensorInfo(dict):
-    def __init__(self, data):
+    def __init__(self, data, file_path):
+        self._file_path = file_path
         for key, value in data.items():
             if key in ['active', 'index']:
                 value = int(value)
@@ -23,6 +24,9 @@ class CnvSensorInfo(dict):
     def name(self):
         return self['parameter']
 
+    @property
+    def file(self):
+        return self._file_path.stem
 
 class CnvInfoFile:
     def __init__(self, file_path):
@@ -44,7 +48,7 @@ class CnvInfoFile:
                 if i == 0:
                     header = split_line
                 else:
-                    obj = CnvSensorInfo(dict(zip(header, split_line)))
+                    obj = CnvSensorInfo(dict(zip(header, split_line)), self.file_path)
                     self.sensor_info[obj['index']] = obj
 
     def get_info(self):

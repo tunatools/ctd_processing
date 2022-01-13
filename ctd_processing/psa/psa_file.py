@@ -14,6 +14,7 @@ class PSAfile:
         for tag in tag_list:
             element = element.find(tag)
         key, value = [item.strip() for item in condition.split('==')]
+        # Add vildcard here
         v = element.get(key)
         if element.get(key) == value:
             return True

@@ -2,6 +2,7 @@ import pathlib
 import subprocess
 import threading
 import psutil
+import pandas as pd
 
 
 def git_version():
@@ -47,9 +48,19 @@ def _get_running_programs():
 def _run_subprocess(line):
     subprocess.run(line)
 
+
 def run_program(program, line):
     if program in _get_running_programs():
         raise ChildProcessError(f'{program} is already running!')
     t = threading.Thread(target=_run_subprocess(line))
     t.daemon = True  # close pipe if GUI process exits
     t.start()
+
+
+def get_dataframe_from_file(file_path, **kwargs):
+    kw = {'sep': '\t',
+          'encoding': 'cp1252'}
+    kw.update(kwargs)
+    df = pd.read_csv(file_path, **kw)
+    df = df.fillna('')
+    return df

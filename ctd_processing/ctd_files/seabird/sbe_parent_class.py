@@ -65,15 +65,18 @@ class SBECTDFiles(CTDFiles):
     def add_processed_file_paths(self):
         """ Adds files created by seasave. Saves filepaths with same file stem"""
         self._plot_files = []
-        stem = self.stem.lower()
+        stem = self.stem.upper()
         for path in self.parent.iterdir():
-            if stem not in str(path).lower():
+            suffix = path.suffix.lower()
+            if stem not in str(path).upper():
                 continue
             if path in self._files.values():
                 continue
-            if path.suffix == '.jpg':
+            if suffix == '.jpg':
                 self._plot_files.append(path)
-            elif path.suffix == '.cnv':
+            elif suffix in ['.bl', '.btl', '.ros']:
+                self._files[suffix] = path
+            elif suffix == '.cnv':
                 if path.name.lower().startswith('sbe'):
                     self._files['cnv'] = path
                 elif path.name.lower().startswith('u'):

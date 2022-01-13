@@ -27,14 +27,25 @@ class SeasavePSAfile(PSAfileWithPlot):
         self.metadata_admin_tags = ['Settings', 'HeaderForm', 'Prompt{{index==9}}']
         self.metadata_conditions_tags = ['Settings', 'HeaderForm', 'Prompt{{index==10}}']
 
+        # self.display_depth_tags = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes',
+        #             'Axis{{Calc;FullName;value==Scan Count}}', 'MaximumValue']
+        #
+        # self.display_nr_bins_tags = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes',
+        #                              'Axis{{Calc;FullName;value==Scan Count}}', 'MajorDivisions']
+        #
+        # self.display_nr_minor_bins_tags = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes',
+        #                              'Axis{{Calc;FullName;value==Scan Count}}', 'MinorDivisions']
+
         self.display_depth_tags = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes',
-                    'Axis{{Calc;FullName;value==Scan Count}}', 'MaximumValue']
+                                   'Axis{{Calc;FullName;value==Pressure, Digiquartz [db]}}', 'MaximumValue']
 
         self.display_nr_bins_tags = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes',
-                                     'Axis{{Calc;FullName;value==Scan Count}}', 'MajorDivisions']
+                                     'Axis{{Calc;FullName;value==Pressure, Digiquartz [db]}}', 'MajorDivisions']
 
         self.display_nr_minor_bins_tags = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes',
-                                     'Axis{{Calc;FullName;value==Scan Count}}', 'MinorDivisions']
+                                           'Axis{{Calc;FullName;value==Pressure, Digiquartz [db]}}', 'MinorDivisions']
+
+
 
         self.display_parameter_tags = ['Clients', 'DisplaySettings', 'Display', 'XYPlotData', 'Axes', 'Axis']
 

@@ -1,0 +1,31 @@
+index	active	format	parameter
+0	1	11d	scan: Scan Count
+1	1	11.3f	prDM: Pressure, Digiquartz [db]
+2	1	11.4f	t090C: Temperature [ITS-90, deg C]
+3	1	11.4f	t190C: Temperature, 2 [ITS-90, deg C]
+4	1	11.5f	c0S/m: Conductivity [S/m]
+5	1	11.5f	c1S/m: Conductivity, 2 [S/m]
+6	1	11d	pumps: Pump Status
+7	1	11.4f	sbeox0V: Oxygen raw, SBE 43 [V]
+8	1	11.4f	sbeox1V: Oxygen raw, SBE 43, 2 [V]
+9	1	11.2f	altM: Altimeter [m]
+10	1	11.3f	dz/dtM: Descent Rate [m/s]
+11	1	11.4f	flECO-AFL: Fluorescence, WET Labs ECO-AFL/FL [mg/m^3]
+12	1	11.4f	flECO-AFL1: Fluorescence, WET Labs ECO-AFL/FL, 2 [mg/m^3]
+13	1	11.3e	par: PAR/Irradiance, Biospherical/Licor
+14	1	11.7f	turbWETntu0: Turbidity, WET Labs ECO [NTU]
+15	1	11.4f	sal00: Salinity, Practical [PSU]
+16	1	11.4f	sal11: Salinity, Practical, 2 [PSU]
+17	1	11.4f	secS-priS: Salinity, Practical, Difference, 2 - 1 [PSU]
+18	1	11.4f	T2-T190C: Temperature Difference, 2 - 1 [ITS-90, deg C]
+19	1	11.4f	sigma-t00: Density [sigma-t, kg/m^3 ]
+20	1	11.4f	sigma-t11: Density, 2 [sigma-t, kg/m^3 ]
+21	1	11.3f	depSM: Depth [salt water, m], lat 
+22	1	11.3f	depFM: Depth [true depth, m], lat 
+23	1	11.2f	svCM: Sound Velocity [Chen-Millero, m/s]
+24	1	11.2f	svCM1: Sound Velocity, 2 [Chen-Millero, m/s]
+25	1	11.4f	sbeox0ML/L: Oxygen, SBE 43 [ml/l], WS = 2
+26	1	11.4f	sbeox1ML/L: Oxygen, SBE 43, 2 [ml/l], WS = 2
+27	1	11.4f	sbeox0PS: Oxygen, SBE 43 [% saturation], WS = 2
+28	1	11.4f	sbeox1PS: Oxygen, SBE 43, 2 [% saturation], WS = 2
+29	1	11.3e	flag: flag

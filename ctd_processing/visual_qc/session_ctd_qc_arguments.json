@@ -1,5 +1,5 @@
 {
-    "data_directory": "C:/mw/temp_ctd_pre_system_data_root/data",
-    "visualize_setting": "smhi_vis",
+    "data_directory": "C:\\mw\\temp_ctd_pre_system_data_root\\data",
+    "visualize_setting": "smhi_expedition_vis",
     "filters": null
 }

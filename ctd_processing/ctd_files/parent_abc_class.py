@@ -143,6 +143,8 @@ class CTDFiles(ABC):
     def rename_files(self, overwrite=False):
         """ Rename the files so they get the proper file stem """
         new_files = {}
+        print('#######')
+        print(self._files)
         for key, path in self._files.items():
             new_path = self._rename_file(path, overwrite=overwrite)
             new_files[key] = new_path
@@ -172,8 +174,8 @@ class CTDFiles(ABC):
     def _save_file_paths(self, file_path):
         self._files = {}
         for path in file_path.parent.iterdir():
-            if path.stem == file_path.stem:
-                self._files[path.suffix] = path
+            if path.stem.lower() == file_path.stem.lower():
+                self._files[path.suffix.lower()] = path
 
     def is_valid(self, file_path):
         file_path = pathlib.Path(file_path)

@@ -3,6 +3,8 @@ from pathlib import Path
 import shutil
 import filecmp
 
+from ctd_processing import exceptions
+
 
 class SBEFileHandler:
     def __init__(self, paths_object):
@@ -14,7 +16,7 @@ class SBEFileHandler:
         """ This will load all files matching the file_paths file stem. Loading files in paths_object. """
         file_stem = Path(path).stem
         if not file_stem.startswith('SBE'):
-            raise Exception('Not a valid file')
+            raise exceptions.InvalidFileNameFormat('Not a valid file')
         year = file_stem.split('_')[2][:4]
         self.paths.set_year(year)
         self._load_files(file_stem)

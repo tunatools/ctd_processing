@@ -42,7 +42,11 @@ class SBEPaths:
             raise Exception(f'Not a valid sub directory: {key}')
         return f'server_dir_{key}'
 
+    def get_path(self, key):
+        return self._paths.get(key, None)
+
     def get_local_directory(self, key, create=False, default=None):
+        print('self._local_key(key)', self._local_key(key))
         return self(self._local_key(key), create=create, default=default)
 
     def get_server_directory(self, key, year=None, create=False, default=None):
@@ -53,13 +57,13 @@ class SBEPaths:
         return self(self._server_key(key), create=create, default=default)
 
     def create_local_paths(self):
-        for key in self._sub_dir_list:
+        for key in self._sub_dir_list_local:
             self.get_local_directory(key, create=True)
 
     def create_server_paths(self, year=None):
         if not year:
             year = datetime.datetime.now().year
-        for key in self._sub_dir_list:
+        for key in self._sub_dir_list_server:
             self.get_server_directory(key, year=year, create=True)
 
     def _get_server_directory_for_year(self, key, year, create=False):

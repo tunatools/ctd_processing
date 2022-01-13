@@ -1,4 +1,5 @@
 import pathlib
+import datetime
 
 from ctd_processing import cnv
 from ctd_processing import ctd_files
@@ -6,12 +7,19 @@ from ctd_processing import ctd_files
 
 class DeliveryNote:
 
-    def __init__(self, directory, contact='', comment='', description=''):
-        self._directory = pathlib.Path(directory)
+    def __init__(self, directory=None, file_list=None, contact='', comment='', description=''):
+        self._directory = None
+        self._paths = None
+        if directory:
+            self._directory = pathlib.Path(directory)
+            self._paths = [path for path in self._directory.iterdir() if path.suffix == '.cnv']
+        elif file_list:
+            self._paths = file_list
+        else:
+            raise Exception('No files selected for delivery note')
         self._contact = contact
         self._comment = comment
         self._description = description
-        self._paths = [path for path in self._directory.iterdir() if path.suffix == '.cnv']
         self._stem = None
         self._save_path = None
         self._data = None
@@ -43,25 +51,39 @@ class DeliveryNote:
             all_orderers.extend([item.strip() for item in ord.split(',')])
 
         self._data = {}
-        self._data['data kontrollerad av'] = 'Leverantör'
-        self._data['format'] = 'PROFILE'
-        self._data['projekt'] = ', '.join(sorted(proj_set))
-        self._data['rapporterande institut'] = 'SMHI'
-        self._data['datatype'] = 'PROFILE'
-        self._data['beskrivning av dataset'] = self._description
-        self._data['övervakningsprogram'] = ', '.join(sorted(mprog_set))
-        self._data['beställare'] = ', '.join(sorted(set(all_orderers)))
-        self._data['provtagningsår'] = ', '.join(sorted(year_set))
-        self._data['kontaktperson'] = self._contact
-        self._data['kommentar'] = self._comment
+        self._data['MYEAR'] = ', '.join(sorted(year_set))
+        self._data['DTYPE'] = 'PROFILE'
+        self._data['MPROG'] = ', '.join(sorted(mprog_set))
+        self._data['ORDERER'] = ', '.join(sorted(set(all_orderers)))
+        self._data['PROJ'] = ', '.join(sorted(proj_set))
+        self._data['RLABO'] = 'SMHI'
+        self._data['REPBY'] = self._contact
+        self._data['COMNT_DN'] = self._comment
+        self._data['DESCR'] = self._description
+        self._data['FORMAT'] = 'PROFILE'
+        self._data['VERSION'] = datetime.datetime.now().strftime('%Y-%m-%d')
 
-    def write_to_file(self):
-        path = pathlib.Path(self._directory, 'delivery_note.txt')
+
+        # self._data['data kontrollerad av'] = 'Leverantör'
+        # self._data['format'] = 'PROFILE'
+        # self._data['projekt'] = ', '.join(sorted(proj_set))
+        # self._data['rapporterande institut'] = 'SMHI'
+        # self._data['datatype'] = 'PROFILE'
+        # self._data['beskrivning av dataset'] = self._description
+        # self._data['övervakningsprogram'] = ', '.join(sorted(mprog_set))
+        # self._data['beställare'] = ', '.join(sorted(set(all_orderers)))
+        # self._data['provtagningsår'] = ', '.join(sorted(year_set))
+        # self._data['kontaktperson'] = self._contact
+        # self._data['kommentar'] = self._comment
+
+    def write_to_file(self, directory):
+        path = pathlib.Path(directory, 'delivery_note.txt')
         lines = []
         for key, value in self._data.items():
             lines.append(f'{key}: {value}')
         with open(path, 'w') as fid:
             fid.write('\n'.join(lines))
+        return path
 
 
 if __name__ == '__main__':

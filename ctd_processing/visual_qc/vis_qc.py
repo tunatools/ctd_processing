@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 import subprocess
 import webbrowser
+import ctdvis
 
 
 class VisQC:
@@ -22,7 +23,7 @@ class VisQC:
 
     def _create_settings_argument_file(self):
         kwargs = {
-            'data_directory': self.data_directory,
+            'data_directory': str(self.data_directory),
             'visualize_setting': self.visualize_setting,
             'filters': self.filters
         }

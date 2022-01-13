@@ -55,9 +55,19 @@ class MetadataRow:
 
 class MetadataFile:
 
-    def __init__(self, directory):
-        self._directory = pathlib.Path(directory)
-        self._paths = [path for path in self._directory.iterdir() if path.suffix == '.cnv']
+    def __init__(self, directory=None, file_list=None):
+        if directory:
+            self._directory = pathlib.Path(directory)
+            self._paths = [path for path in self._directory.iterdir() if path.suffix == '.cnv']
+        elif file_list:
+            self._paths = []
+            for file_path in file_list:
+                path = pathlib.Path(file_path)
+                if path.suffix != '.cnv':
+                    continue
+                self._paths.append(path)
+        else:
+            raise Exception('No info given to class MetadataFile')
         self._stem = None
         self._save_path = None
         self._data = None
@@ -73,8 +83,10 @@ class MetadataFile:
             metarow = MetadataRow()
             self._data[path] = metarow.get_metadata_row_from_cnv_file(path)
 
-    def write_to_file(self):
-        path = pathlib.Path(self._directory, 'metadata.txt')
+    def write_to_file(self, output_dir=None):
+        if not output_dir:
+            output_dir = self._directory
+        path = pathlib.Path(output_dir, 'metadata.txt')
         columns = get_metadata_columns()
         lines = []
         lines.append('\t'.join(columns))
@@ -82,6 +94,7 @@ class MetadataFile:
             lines.append('\t'.join([info.get(key, '') for key in columns]))
         with open(path, 'w') as fid:
             fid.write('\n'.join(lines))
+        return path
 
 
 def get_metadata_columns():

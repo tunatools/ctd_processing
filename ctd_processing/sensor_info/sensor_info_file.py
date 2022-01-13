@@ -21,20 +21,23 @@ class SensorInfoFile:
     def __str__(self):
         return f'SensorInfoFile: {self._stem}'
 
-    def create_file_from_cnv_file(self, cnv_file_path):
+    def create_file_from_cnv_file(self, cnv_file_path, output_dir=None):
         """
         Created a sensor info file with information in given cnv file.
         The sensor info file is created at the same location as the cnv file.
         """
         path = pathlib.Path(cnv_file_path)
         self._stem = path.stem
-        self._save_path = pathlib.Path(path.parent, f'{self._stem}.sensorinfo')
-        self._save_data_from_cnv(path)
+        if not output_dir:
+            output_dir = path.parent
+        self._save_path = pathlib.Path(output_dir, f'{self._stem}.sensorinfo')
+        self._save_xml_data_from_cnv(path)
         self._save_file()
 
-    def _save_data_from_cnv(self, path):
+    def _save_xml_data_from_cnv(self, path):
         self._data = []
-        cnv_info = xmlcon.CNVfileXML(path).get_sensor_info()
+        self.cnv_info = xmlcon.CNVfileXML(path).get_sensor_info()
+        self._add_header_information_to_cnv_info(path)
         # channel_mapping = cnv.get_sensor_id_and_parameter_mapping_from_cnv(path)
         # print('channel_mapping', channel_mapping)
         ctd_file_obj = ctd_files.get_ctd_files_object(path)
@@ -44,7 +47,9 @@ class SensorInfoFile:
         instrument = path.name.split('_')[0]
         columns = [col for col in get_sensor_info_columns() if col not in ['VALIDFR', 'VALIDTO']]
         self._data.append('\t'.join(columns))
-        for info in cnv_info:
+        for info in self.cnv_info:
+            # if info['parameter'] != 'sal11':
+            #     continue
             print('='*50)
             print(info['parameter'])
             print('-' * 50)
@@ -52,16 +57,20 @@ class SensorInfoFile:
             instrument_info = self.instrument_file.get_info_for_parameter_and_sensor_id(parameter=info['parameter'],
                                                                                         sensor_id=info['serial_number'])
             if not instrument_info:
-                #print('NOT', info['serial_number'], info['parameter'])
+                print('NOT', info['serial_number'], info['parameter'])
                 continue
             print('instrument_info', instrument_info)
             for col in columns:
                 # print('col', col)
                 value = str(instrument_info.get(col, ''))
                 if col == 'SENSOR_ID':
-                    value = info['serial_number']
+                    value = info.get('serial_number', '')
+                    if value is None:
+                        value = ''
                 elif col == 'CALIB_DATE':
-                    value = info['calibration_date'].strftime('%Y-%m-%d')
+                    value = info.get('calibration_date', '')
+                    if value:
+                        value = value.strftime('%Y-%m-%d')
                 elif col == 'PARAM_REPORTED':
                     value = par_reported.get_reported_name(info['parameter'], info['serial_number'])
                     print('value:PARAM_REPORTED', value, info['parameter'])
@@ -85,9 +94,16 @@ class SensorInfoFile:
                         value = ctd_file_obj.instrument_number
                     elif col == 'TIME':
                         value = ctd_file_obj.time.strftime('%Y-%m-%d')
-
                 row_list.append(value)
             self._data.append('\t'.join(row_list))
+
+    def _add_header_information_to_cnv_info(self, path):
+        names = cnv.get_reported_names_in_cnv(path)
+        for name in names:
+            cnv_code = name.split(':')[0].strip()
+            info = {'parameter': cnv_code,
+                    'serial_number': None}
+            self.cnv_info.append(info)
 
     def _save_file(self):
         with open(self._save_path, 'w') as fid:
@@ -139,6 +155,7 @@ class SensorInfoFiles:
 
         with open(path, 'w') as fid:
             fid.write('\n'.join(lines))
+        return path
 
     def old_write_summary_to_file(self, directory=None):
         if not directory:
@@ -153,3 +170,4 @@ class SensorInfoFiles:
 
         with open(path, 'w') as fid:
             fid.write('\n'.join(lines))
+
