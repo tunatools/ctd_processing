@@ -59,21 +59,21 @@ class SBEProcessingPaths:
 
     def update_paths(self):
         if self.sbe_paths('working_dir'):
-            print("= self.sbe_paths('working_dir')", self.sbe_paths('working_dir'))
+            # print("= self.sbe_paths('working_dir')", self.sbe_paths('working_dir'))
             self._paths['file_setup'] = pathlib.Path(self.sbe_paths('working_dir'), 'ctdmodule.txt')
             self._paths['file_batch'] = pathlib.Path(self.sbe_paths('working_dir'), 'SBE_batch.bat')
 
         if self.sbe_paths('config_dir'):
-            print("= self.sbe_paths('config_dir')", self.sbe_paths('config_dir'))
+            # print("= self.sbe_paths('config_dir')", self.sbe_paths('config_dir'))
             self._save_platform_paths()
 
         if self._new_file_stem:
-            print('= self._new_file_stem', self._new_file_stem)
+            # print('= self._new_file_stem', self._new_file_stem)
             self._build_raw_file_paths_with_new_file_stem()
             self._build_cnv_file_paths_with_new_file_stem()
 
         if self._platform:
-            print('= self._platform', self._platform)
+            # print('= self._platform', self._platform)
             self._build_psa_file_paths()
             self._build_loopedit_file_paths()
 

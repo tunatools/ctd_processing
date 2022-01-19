@@ -50,9 +50,9 @@ class SensorInfoFile:
         for info in self.cnv_info:
             # if info['parameter'] != 'sal11':
             #     continue
-            print('='*50)
-            print(info['parameter'])
-            print('-' * 50)
+            # print('='*50)
+            # print(info['parameter'])
+            # print('-' * 50)
             row_list = []
             instrument_info = self.instrument_file.get_info_for_parameter_and_sensor_id(parameter=info['parameter'],
                                                                                         sensor_id=info['serial_number'])
@@ -73,7 +73,7 @@ class SensorInfoFile:
                         value = value.strftime('%Y-%m-%d')
                 elif col == 'PARAM_REPORTED':
                     value = par_reported.get_reported_name(info['parameter'], info['serial_number'])
-                    print('value:PARAM_REPORTED', value, info['parameter'])
+                    # print('value:PARAM_REPORTED', value, info['parameter'])
                 elif value:
                     if info['parameter'][-1] == '2':
                         if col == 'PARAM_SIMPLE':

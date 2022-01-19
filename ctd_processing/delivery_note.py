@@ -88,6 +88,6 @@ class DeliveryNote:
 
 if __name__ == '__main__':
     dn = DeliveryNote(r'C:\mw\temp_ctd_pre_system_data_root\cnv')
-    dn.write_to_file()
+    dn.write_to_file(r'C:\mw\temp_ctd_pre_system_export')
 
 

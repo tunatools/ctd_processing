@@ -46,7 +46,6 @@ class SBEPaths:
         return self._paths.get(key, None)
 
     def get_local_directory(self, key, create=False, default=None):
-        print('self._local_key(key)', self._local_key(key))
         return self(self._local_key(key), create=create, default=default)
 
     def get_server_directory(self, key, year=None, create=False, default=None):

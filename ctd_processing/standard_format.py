@@ -2,6 +2,7 @@ import shutil
 import pathlib
 import datetime
 import os
+import codecs
 
 from ctdpy.core import session as ctdpy_session
 
@@ -11,6 +12,85 @@ from ctd_processing.metadata import MetadataFile
 from ctd_processing.delivery_note import DeliveryNote
 from ctd_processing.data_delivery import DeliveryMetadataFile
 from ctd_processing import exceptions
+
+
+class StandardFormatComments:
+    def __init__(self, file_path):
+        self._path = pathlib.Path(file_path)
+        self._info = {}
+        self._automatic_qc = []
+
+    def save_comment_info(self):
+        self._info = {}
+        with codecs.open(self._path, encoding='cp1252') as fid:
+            for r, line in enumerate(fid):
+                sline = line.strip()
+                if line.startswith('//'):
+                    if r <= 2:
+                        continue
+                    self._save_comment_line(sline)
+                else:
+                    return
+
+    def _save_comment_line(self, sline):
+        text = sline.strip('/')
+        split_text = text.split(';', 2)
+        self._info.setdefault(split_text[0], {})
+        if len(split_text) == 3:
+            self._info[split_text[0]][split_text[1]] = split_text[2]
+            date = self._automatic_qc_datetime_from_comment_line(sline)
+            if date:
+                self._automatic_qc.append(date)
+        elif split_text[1].startswith('#'):
+            self._info[split_text[0]].setdefault('from_cnv', [])
+            self._info[split_text[0]]['from_cnv'].append(split_text[1])
+
+    def _automatic_qc_matches_today(self):
+        # Finds the information in self._automatic_qc
+        for dtime in self._automatic_qc:
+            if dtime.date() == datetime.datetime.today().date():
+                return True
+        return False
+
+    def has_automatic_qc_today(self):
+        if self._info:
+            return self._automatic_qc_matches_today()
+        else:
+            with open(self._path) as fid:
+                for line in fid:
+                    if not line.startswith('//'):
+                        return False
+                    if not line.startswith('//COMNT_QC; AUTOMATIC QC'):
+                        continue
+                    date = self._automatic_qc_date_from_comment_line(line)
+                    if date == datetime.datetime.today().date():
+                        return True
+                return False
+
+    @staticmethod
+    def _automatic_qc_datetime_from_comment_line(line):
+        if not line.startswith('//COMNT_QC; AUTOMATIC QC'):
+            return
+        split_line = line.split(';')
+        time_str = split_line[2].split()[-1]
+        dtime = datetime.datetime.strptime(time_str, '%Y%m%d%H%M')
+        return dtime
+
+    @staticmethod
+    def _automatic_qc_date_from_comment_line(line):
+        dtime = StandardFormatComments._automatic_qc_datetime_from_comment_line(line)
+        if not dtime:
+            return
+        return dtime.date()
+
+    @property
+    def info_tags(self):
+        return sorted(self._info)
+
+    def get_automatic_qc_datetimes(self):
+        return self._automatic_qc
+
+
 
 
 class CreateStandardFormat:
@@ -117,16 +197,7 @@ class CreateStandardFormat:
             shutil.copy2(source_path, target_path)
 
 
-def has_automatic_qc_today(file_path):
-    with open(file_path) as fid:
-        for line in fid:
-            if line.startswith('//COMNT_QC; AUTOMATIC QC'):
-                split_line = line.split(';')
-                time_str = split_line[2].split()[-1]
-                date = datetime.datetime.strptime(time_str, '%Y%m%d%H%M').date()
-                today = datetime.datetime.today().date()
-                return date == today
-
 
 if __name__ == '__main__':
-    print(has_automatic_qc_today(r'C:\mw\temp_ctd_pre_system_data_root\data/SBE09_1387_20210415_1647_77SE_00_0293.txt'))
+    sf = StandardFormatComments(r'C:\mw\temp_ctd_pre_system_data_root\data/SBE09_1387_20210413_1113_77SE_00_0278.txt')
+    # print(has_automatic_qc_today(r'C:\mw\temp_ctd_pre_system_data_root\data/SBE09_1387_20210415_1647_77SE_00_0293.txt'))
