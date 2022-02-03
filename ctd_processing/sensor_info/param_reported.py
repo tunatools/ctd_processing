@@ -24,7 +24,7 @@ class ParamReported:
         #   b: kontrollera om sensor 1 eller 2
         for name in self.cnv_reported_names:
             # print('NAME', ':', instrument_info['CNV_NAME'], ':', name, ':', parameter)
-            print('parameter', parameter, name)
+            # print('parameter', parameter, name)
             if name.startswith(parameter):
                 print('OK parameter', parameter, name)
                 return name

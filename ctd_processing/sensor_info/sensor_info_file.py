@@ -56,10 +56,14 @@ class SensorInfoFile:
             row_list = []
             instrument_info = self.instrument_file.get_info_for_parameter_and_sensor_id(parameter=info['parameter'],
                                                                                         sensor_id=info['serial_number'])
+
             if not instrument_info:
-                print('NOT', info['serial_number'], info['parameter'])
+                # print('NOT', info['serial_number'], info['parameter'])
                 continue
-            print('instrument_info', instrument_info)
+
+            reported_name = par_reported.get_reported_name(info['parameter'], info['serial_number'])
+
+            # print('instrument_info', instrument_info)
             for col in columns:
                 # print('col', col)
                 value = str(instrument_info.get(col, ''))
@@ -72,10 +76,13 @@ class SensorInfoFile:
                     if value:
                         value = value.strftime('%Y-%m-%d')
                 elif col == 'PARAM_REPORTED':
-                    value = par_reported.get_reported_name(info['parameter'], info['serial_number'])
+                    value = reported_name
                     # print('value:PARAM_REPORTED', value, info['parameter'])
                 elif value:
-                    if info['parameter'][-1] == '2':
+                    if col == 'PARAM_SIMPLE':
+                        print('VALUE', col, value, '===', info['parameter'])
+                    # if info['parameter'][-1] == '2':
+                    if reported_name.split('[')[0].replace(' ', '').endswith(',2'):
                         if col == 'PARAM_SIMPLE':
                             value = value + '2'
                         elif col == 'PARAM':
