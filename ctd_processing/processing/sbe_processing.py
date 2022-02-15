@@ -2,8 +2,9 @@ import pathlib
 import shutil
 
 from ctd_processing import psa
-from ctd_processing import ctd_files
+# from ctd_processing import ctd_files
 from ctd_processing import sensor_info
+from sharkpylib import seabird
 
 from ctd_processing.processing.sbe_setup_file import SBESetupFile
 from ctd_processing.processing.sbe_batch_file import SBEBatchFile
@@ -87,7 +88,8 @@ class SBEProcessing:
         if not path.exists():
             raise FileNotFoundError(path)
         self._file_path = path
-        self._ctd_files = ctd_files.get_ctd_files_object(path)
+        # self._ctd_files = ctd_files.get_ctd_files_object(path)
+        self._ctd_files = seabird.get_package_for_file(path)
         self._paths.set_year(self.year)
         # self._paths.set_raw_file_path(self._ctd_files.file_path)
         # self._paths.set_config_suffix(self._ctd_files.config_file_suffix)
@@ -101,17 +103,20 @@ class SBEProcessing:
             raise PermissionError('Confirmed file is not the same as the selected!')
         # Copying files and load instrument files object
         new_path = self._copy_all_files_with_same_file_stem_to_working_dir(path)
-        self._ctd_files = ctd_files.get_ctd_files_object(new_path)
-        self._ctd_files.rename_files(overwrite=True)
-        self._processing_paths.set_raw_file_path(self._ctd_files.file_path)
-        self._processing_paths.set_config_suffix(self._ctd_files.config_file_suffix)
+        # self._ctd_files = ctd_files.get_ctd_files_object(new_path)
+        self._ctd_files = seabird.get_package_for_file(new_path)
+        self._ctd_files = seabird.rename_package(self._ctd_files, overwrite=True)
+        # self._ctd_files.rename_files(overwrite=True)
+        # self._processing_paths.set_raw_file_path(self._ctd_files.file_path)
+        self._processing_paths.set_raw_file_path(self._ctd_files['hex'])
+        self._processing_paths.set_config_suffix(self._ctd_files('config_file_suffix'))
         self._setup_file = SBESetupFile(paths=self._paths,
                                         processing_paths=self._processing_paths,
                                         instrument_files=self._ctd_files)
         self._batch_file = SBEBatchFile(paths=self._paths,
                                         processing_paths=self._processing_paths)
         self._confirmed = True
-        return self._ctd_files.file_path
+        return self._ctd_files['hex']
 
     def _copy_raw_files_to_local(self):
         target_directory = self._paths.get_local_directory('raw', create=True)
@@ -173,10 +178,10 @@ class SBEProcessing:
         self._setup_file.create_file()
         self._batch_file.create_file()
         self._batch_file.run_file()
-        print('='*50)
-        for key, value in self._ctd_files.all_files.items():
-            print(key, value)
-        self._ctd_files.add_processed_file_paths()
+
+        seabird.update_package_with_files_in_directory(self._ctd_files, self._paths.get_local_directory('temp'))
+        seabird.modify_package(self._ctd_files, overwrite=self._overwrite)
+        # self._ctd_files.add_processed_file_paths()
         self._ctd_files.modify_and_save_cnv_file(save_directory=self._paths.get_local_directory('cnv', create=True),
                                                  overwrite=self._overwrite)
         self._copy_processed_files_to_local()
