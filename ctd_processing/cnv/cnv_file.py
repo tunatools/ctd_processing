@@ -178,11 +178,11 @@ class CNVfile:
                     if not has_set_value_length:
                         tot_len = len(line.rstrip())
                         value_length = tot_len / len(split_line)
-                        int_value_lenght = int(value_length)
-                        if int_value_lenght != value_length:
+                        int_value_length = int(value_length)
+                        if int_value_length != value_length:
                             raise ValueError('Something is wrong in the file!')
                         for i, value in enumerate(split_line):
-                            self.parameters[i].set_value_length(int_value_lenght)
+                            self.parameters[i].set_value_length(int_value_length)
                         has_set_value_length = True
                     for i, value in enumerate(split_line):
                         self.parameters[i].add_data(value)

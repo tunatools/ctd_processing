@@ -27,9 +27,9 @@ class CNVparameter:
         if len(self._data):
             return_list.append(f'{blanks}{"Sample value":<20}{self.sample_value}')
             if self.use_cnv_info_format:
-                form = f'{self.format} (from info file)'
+                form = f'{self.get_format()} (from info file)'
             else:
-                form = f'{self.format} (calculated from data)'
+                form = f'{self.get_format()} (calculated from data)'
             return_list.append(f'{blanks}{"Value format":<20}{form}')
         return '\n'.join(return_list)
 
@@ -45,14 +45,16 @@ class CNVparameter:
                 self._nr_decimals = nr
                 self.sample_value = float(value_str)
 
-    @property
-    def format(self):
+    def get_format(self, value=None):
         if self.use_cnv_info_format:
             return self.cnv_info_object.format
         if self._nr_decimals is None:
             form = f'{self._tot_value_length}{self._value_format}'
         else:
-            form = f'{self._tot_value_length}.{self._nr_decimals}{self._value_format}'
+            if value and self._value_format == 'e' and str(value).startswith('-'):
+                form = f'{self._tot_value_length}.{self._nr_decimals-1}{self._value_format}'
+            else:
+                form = f'{self._tot_value_length}.{self._nr_decimals}{self._value_format}'
         return form
 
     def set_value_length(self, length):
@@ -86,7 +88,7 @@ class CNVparameter:
         self.name = new_name
 
     def get_value_as_string_for_index(self, index):
-        return '{:{}}'.format(self.data[index], self.format)
+        return '{:{}}'.format(self.data[index], self.get_format(self.data[index]))
 
     def set_active(self, is_active):
         self.active = is_active

@@ -8,6 +8,7 @@ from ctd_processing import sensor_info
 from ctd_processing.processing.sbe_setup_file import SBESetupFile
 from ctd_processing.processing.sbe_batch_file import SBEBatchFile
 
+
 class SBEProcessing:
     """
     Config file paths are hard coded based on the root catalogue. Consider putting this info in config file (yaml, json)
@@ -115,7 +116,7 @@ class SBEProcessing:
     def _copy_raw_files_to_local(self):
         target_directory = self._paths.get_local_directory('raw', create=True)
         file_paths = [value for key, value in self._ctd_files.all_files.items() if
-                      key in self._ctd_files.raw_files_extensions]
+                      key.lower() in self._ctd_files.raw_files_extensions]
         for file_path in file_paths:
             self._copy_file(file_path, target_directory, overwrite=self._overwrite)
 
@@ -130,6 +131,9 @@ class SBEProcessing:
             self._copy_file(file_path, target_directory, overwrite=self._overwrite)
 
     def _copy_processed_files_to_local(self):
+        print('-' * 50)
+        for key, value in self._ctd_files.all_files.items():
+            print(key, value)
         self._copy_raw_files_to_local()
         self._copy_cnv_files_to_local()
         self._copy_plot_files_to_local()
@@ -169,6 +173,9 @@ class SBEProcessing:
         self._setup_file.create_file()
         self._batch_file.create_file()
         self._batch_file.run_file()
+        print('='*50)
+        for key, value in self._ctd_files.all_files.items():
+            print(key, value)
         self._ctd_files.add_processed_file_paths()
         self._ctd_files.modify_and_save_cnv_file(save_directory=self._paths.get_local_directory('cnv', create=True),
                                                  overwrite=self._overwrite)

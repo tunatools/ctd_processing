@@ -7,7 +7,7 @@ from ctd_processing.cnv import CNVfileInfo
 
 
 class SBECTDFiles(CTDFiles):
-    raw_files_extensions = ['.bl', '.btl', '.hdr', '.hex', '.ros', '.XMLCON', '.CON']
+    raw_files_extensions = ['.bl', '.btl', '.hdr', '.hex', '.ros', '.xmlcon', '.con']
 
     @property
     @abstractmethod
@@ -74,7 +74,7 @@ class SBECTDFiles(CTDFiles):
                 continue
             if suffix == '.jpg':
                 self._plot_files.append(path)
-            elif suffix in ['.bl', '.btl', '.ros']:
+            elif suffix.lower() in ['.bl', '.btl', '.ros', '.xmlcon', '.hdr', '.hex']:
                 self._files[suffix] = path
             elif suffix == '.cnv':
                 if path.name.lower().startswith('sbe'):
