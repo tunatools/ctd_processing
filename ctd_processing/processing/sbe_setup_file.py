@@ -11,7 +11,7 @@ class SBESetupFile:
         """
         self._proc_paths = processing_paths
         self._paths = paths
-        self._ctd_files = instrument_files
+        self._package = instrument_files
 
     def _get_lines(self):
 
@@ -26,16 +26,16 @@ class SBESetupFile:
         lines['bottlesum'] = self._get_bottle_sum_line()
         lines['split'] = f'split /p{self._proc_paths("psa_split")} /i{self._proc_paths("cnv")} /o%1'
 
-        lines['plot1'] = f'seaplot /p{self._proc_paths("psa_1-seaplot")} /i{self._proc_paths("cnv_down")} /a_{self._ctd_files.station} /o{self._paths("working_dir")} /f{self._ctd_files.proper_stem}'
-        lines['plot2'] = f'seaplot /p{self._proc_paths("psa_2-seaplot")} /i{self._proc_paths("cnv_down")} /a_TS_diff_{self._ctd_files.station} /o{self._paths("working_dir")} /f{self._ctd_files.proper_stem}'
-        lines['plot3'] = f'seaplot /p{self._proc_paths("psa_3-seaplot")} /i{self._proc_paths("cnv_down")} /a_oxygen_diff_{self._ctd_files.station} /o{self._paths("working_dir")} /f{self._ctd_files.proper_stem}'
-        lines['plot4'] = f'seaplot /p{self._proc_paths("psa_4-seaplot")} /i{self._proc_paths("cnv_down")} /a_fluor_turb_par_{self._ctd_files.station} /o{self._paths("working_dir")} /f{self._ctd_files.proper_stem}'
+        lines['plot1'] = f'seaplot /p{self._proc_paths("psa_1-seaplot")} /i{self._proc_paths("cnv_down")} /a_{self._package("station")} /o{self._paths("working_dir")} /f{self._package.key}'
+        lines['plot2'] = f'seaplot /p{self._proc_paths("psa_2-seaplot")} /i{self._proc_paths("cnv_down")} /a_TS_diff_{self._package("station")} /o{self._paths("working_dir")} /f{self._package.key}'
+        lines['plot3'] = f'seaplot /p{self._proc_paths("psa_3-seaplot")} /i{self._proc_paths("cnv_down")} /a_oxygen_diff_{self._package("station")} /o{self._paths("working_dir")} /f{self._package.key}'
+        lines['plot4'] = f'seaplot /p{self._proc_paths("psa_4-seaplot")} /i{self._proc_paths("cnv_down")} /a_fluor_turb_par_{self._package("station")} /o{self._paths("working_dir")} /f{self._package.key}'
 
         return list(lines.values())
 
     def _get_bottle_sum_line(self):
         bottlesum = ''
-        if self._ctd_files.number_of_bottles and self._proc_paths("ros"):
+        if self._package('number_of_bottles') and self._proc_paths("ros"):
             bottlesum = f'bottlesum /p{self._proc_paths("psa_bottlesum")} /i{self._proc_paths("ros")} /c{self._proc_paths("config")} /o%1 '
         else:
             # 'No bottles fired, will not create .btl or .ros file'
@@ -57,5 +57,5 @@ class SBESetupFile:
         #    print(key)
         for p in range(1, 5):
             obj = psa.PlotPSAfile(self._proc_paths(f"psa_{p}-seaplot"))
-            obj.title = self._ctd_files.station
+            obj.title = self._package('station')
             obj.save()

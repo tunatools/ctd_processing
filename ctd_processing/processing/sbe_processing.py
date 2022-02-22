@@ -1,8 +1,8 @@
 import pathlib
 import shutil
+import os
 
 from ctd_processing import psa
-# from ctd_processing import ctd_files
 from ctd_processing import sensor_info
 from sharkpylib import seabird
 
@@ -11,9 +11,6 @@ from ctd_processing.processing.sbe_batch_file import SBEBatchFile
 
 
 class SBEProcessing:
-    """
-    Config file paths are hard coded based on the root catalogue. Consider putting this info in config file (yaml, json)
-    """
 
     def __init__(self, sbe_paths=None, sbe_processing_paths=None):
         self._paths = sbe_paths
@@ -22,7 +19,7 @@ class SBEProcessing:
         self._file_path = None
         self._confirmed = False
         self._overwrite = False
-        self._ctd_files = None
+        self._package = None
 
     @property
     def platform(self):
@@ -39,9 +36,9 @@ class SBEProcessing:
 
     @property
     def year(self):
-        if not self._ctd_files:
+        if not self._package:
             return None
-        return self._ctd_files.year
+        return self._package('year')
 
     def get_platform_options(self):
         return self._processing_paths.platforms
@@ -88,11 +85,11 @@ class SBEProcessing:
         if not path.exists():
             raise FileNotFoundError(path)
         self._file_path = path
-        # self._ctd_files = ctd_files.get_ctd_files_object(path)
-        self._ctd_files = seabird.get_package_for_file(path)
+        # self._package = ctd_files.get_ctd_files_object(path)
+        self._package = seabird.get_package_for_file(path)
         self._paths.set_year(self.year)
-        # self._paths.set_raw_file_path(self._ctd_files.file_path)
-        # self._paths.set_config_suffix(self._ctd_files.config_file_suffix)
+        # self._paths.set_raw_file_path(self._package.file_path)
+        # self._paths.set_config_suffix(self._package.config_file_suffix)
         self._confirmed = False
 
     def confirm_file(self, file_path):
@@ -103,42 +100,37 @@ class SBEProcessing:
             raise PermissionError('Confirmed file is not the same as the selected!')
         # Copying files and load instrument files object
         new_path = self._copy_all_files_with_same_file_stem_to_working_dir(path)
-        # self._ctd_files = ctd_files.get_ctd_files_object(new_path)
-        self._ctd_files = seabird.get_package_for_file(new_path)
-        self._ctd_files = seabird.rename_package(self._ctd_files, overwrite=True)
-        # self._ctd_files.rename_files(overwrite=True)
-        # self._processing_paths.set_raw_file_path(self._ctd_files.file_path)
-        self._processing_paths.set_raw_file_path(self._ctd_files['hex'])
-        self._processing_paths.set_config_suffix(self._ctd_files('config_file_suffix'))
+        # self._package = ctd_files.get_ctd_files_object(new_path)
+        self._package = seabird.get_package_for_file(new_path)
+        self._package = seabird.rename_package(self._package, overwrite=True)
+        # self._package.rename_files(overwrite=True)
+        # self._processing_paths.set_raw_file_path(self._package.file_path)
+        self._processing_paths.set_raw_file_path(self._package['hex'])
+        self._processing_paths.set_config_suffix(self._package('config_file_suffix'))
         self._setup_file = SBESetupFile(paths=self._paths,
                                         processing_paths=self._processing_paths,
-                                        instrument_files=self._ctd_files)
+                                        instrument_files=self._package)
         self._batch_file = SBEBatchFile(paths=self._paths,
                                         processing_paths=self._processing_paths)
         self._confirmed = True
-        return self._ctd_files['hex']
+        return self._package['hex']
 
     def _copy_raw_files_to_local(self):
         target_directory = self._paths.get_local_directory('raw', create=True)
-        file_paths = [value for key, value in self._ctd_files.all_files.items() if
-                      key.lower() in self._ctd_files.raw_files_extensions]
-        for file_path in file_paths:
-            self._copy_file(file_path, target_directory, overwrite=self._overwrite)
+        for file in self._package.get_raw_files():
+            self._copy_file(file, target_directory, overwrite=self._overwrite)
 
     def _copy_cnv_files_to_local(self):
         """ Copies cnv-up file to local directory """
         target_directory = self._paths.get_local_directory('cnv_up', create=True)
-        return self._copy_file(self._ctd_files('cnv_up'), target_directory, overwrite=self._overwrite)
+        return self._copy_file(self._package.get_file(suffix='.cnv', prefix='u'), target_directory, overwrite=self._overwrite)
 
     def _copy_plot_files_to_local(self):
         target_directory = self._paths.get_local_directory('plot', create=True)
-        for file_path in self._ctd_files.plot_files:
-            self._copy_file(file_path, target_directory, overwrite=self._overwrite)
+        for file in self._package.get_plot_files():
+            self._copy_file(file, target_directory, overwrite=self._overwrite)
 
     def _copy_processed_files_to_local(self):
-        print('-' * 50)
-        for key, value in self._ctd_files.all_files.items():
-            print(key, value)
         self._copy_raw_files_to_local()
         self._copy_cnv_files_to_local()
         self._copy_plot_files_to_local()
@@ -152,10 +144,19 @@ class SBEProcessing:
                 return_path = self._copy_file(path, target_directory, overwrite=True)
         return return_path
 
-    def _copy_file(self, source_file_path, target_directory, overwrite=False):
-        target_file_path = pathlib.Path(target_directory, source_file_path.name)
-        if target_file_path.exists() and not overwrite:
-            raise FileExistsError(target_file_path)
+    def _copy_file(self, source_file, target_directory, overwrite=False):
+        if isinstance(source_file, seabird.file.SeabirdFile):
+            source_file_path = source_file.path
+            target_file_path = source_file.get_proper_path(target_directory)
+        else:  # pathlib.Path
+            source_file_path = source_file
+            target_file_path = pathlib.Path(target_directory, source_file.name)
+
+        if target_file_path.exists():
+            if not overwrite:
+                raise FileExistsError(target_file_path)
+            else:
+                os.remove(target_file_path)
         shutil.copy2(source_file_path, target_file_path)
         return target_file_path
 
@@ -179,15 +180,20 @@ class SBEProcessing:
         self._batch_file.create_file()
         self._batch_file.run_file()
 
-        seabird.update_package_with_files_in_directory(self._ctd_files, self._paths.get_local_directory('temp'))
-        seabird.modify_package(self._ctd_files, overwrite=self._overwrite)
-        # self._ctd_files.add_processed_file_paths()
-        self._ctd_files.modify_and_save_cnv_file(save_directory=self._paths.get_local_directory('cnv', create=True),
-                                                 overwrite=self._overwrite)
+        seabird.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('temp'))
+        seabird.modify_cnv_down_file(self._package,
+                                     directory=self._paths.get_local_directory('cnv', create=True),
+                                     overwrite=self._overwrite)
+        seabird.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('cnv'), replace=True)
+        # self._package.add_processed_file_paths()
+        # self._package.modify_and_save_cnv_file(save_directory=self._paths.get_local_directory('cnv', create=True),
+        #                                          overwrite=self._overwrite)
         self._copy_processed_files_to_local()
+        self._package = seabird.get_package_for_file(self._package, directory=self._paths.get_local_directory('root'),
+                                                           exclude_directory='temp')
+        # seabird.rename_package(self._package_after, overwrite=overwrite)
 
     def create_sensorinfo_file(self):
-        if not self._ctd_files('local_cnv'):
-            return
+        file = self._package.get_file(suffix='.cnv', prefix=None)
         sensor_info_obj = sensor_info.get_sensor_info_object(self._paths('instrumentinfo_file'))
-        sensor_info_obj.create_file_from_cnv_file(self._ctd_files('local_cnv'))
+        sensor_info_obj.create_file_from_cnv_file(file.path)
