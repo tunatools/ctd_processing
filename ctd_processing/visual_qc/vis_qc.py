@@ -25,7 +25,8 @@ class VisQC:
         kwargs = {
             'data_directory': str(self.data_directory),
             'visualize_setting': self.visualize_setting,
-            'filters': self.filters
+            'filters': self.filters,
+            'export_folder': str(self.data_directory)
         }
         with open(self.settings_argument_file_path, "w") as fid:
             json.dump(kwargs, fid, indent=4)

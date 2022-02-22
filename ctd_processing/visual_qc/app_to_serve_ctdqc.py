@@ -38,9 +38,14 @@ def bokeh_qc_tool():
     with open(session_settings_path, 'r') as f:
         kwargs = json.load(f)
 
+    export_folder = None
+    if 'export_folder' in kwargs:
+        export_folder = kwargs.pop('export_folder')
+
     s = Session(**kwargs)
     s.setup_datahandler()
-    layout = s.run_tool(return_layout=True)
+    layout = s.run_tool(return_layout=True,
+                        export_folder=export_folder)
     return layout
 
 
