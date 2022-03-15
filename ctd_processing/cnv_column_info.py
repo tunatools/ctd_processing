@@ -28,6 +28,7 @@ class CnvSensorInfo(dict):
     def file(self):
         return self._file_path.stem
 
+
 class CnvInfoFile:
     def __init__(self, file_path):
         self.file_path = Path(file_path)

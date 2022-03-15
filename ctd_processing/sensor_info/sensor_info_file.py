@@ -1,14 +1,13 @@
-import pathlib
 import datetime
+import pathlib
 
-# from .instrument_file import InstrumentFile
-from .sensor_info_item import SensorInfoItem
-from .func import get_sensor_info_columns
-
-from ctd_processing import cnv
-from ctd_processing import xmlcon
-from ctd_processing import ctd_files
+import file_explorer
+from ctd_processing.modify_cnv import ModifyCnv
 from ctd_processing.sensor_info import param_reported
+from file_explorer import seabird
+
+from .func import get_sensor_info_columns
+from .sensor_info_item import SensorInfoItem
 
 
 class SensorInfoFile:
@@ -35,12 +34,13 @@ class SensorInfoFile:
         self._save_file()
 
     def _save_xml_data_from_cnv(self, path):
+        cnv_file = ModifyCnv(path)
+        self.cnv_info = []
+        self.cnv_info.extend(cnv_file.get_sensor_info())
+        self._add_header_information_to_cnv_info(cnv_file)
+
         self._data = []
-        self.cnv_info = xmlcon.CNVfileXML(path).get_sensor_info()
-        self._add_header_information_to_cnv_info(path)
-        # channel_mapping = cnv.get_sensor_id_and_parameter_mapping_from_cnv(path)
-        # print('channel_mapping', channel_mapping)
-        ctd_file_obj = ctd_files.get_ctd_files_object(path)
+        ctd_file_obj = file_explorer.get_package_for_file(path)
 
         par_reported = param_reported.ParamReported(path, self.instrument_file)
 
@@ -48,11 +48,6 @@ class SensorInfoFile:
         columns = [col for col in get_sensor_info_columns() if col not in ['VALIDFR', 'VALIDTO']]
         self._data.append('\t'.join(columns))
         for info in self.cnv_info:
-            # if info['parameter'] != 'sal11':
-            #     continue
-            # print('='*50)
-            # print(info['parameter'])
-            # print('-' * 50)
             row_list = []
             instrument_info = self.instrument_file.get_info_for_parameter_and_sensor_id(parameter=info['parameter'],
                                                                                         sensor_id=info['serial_number'])
@@ -91,21 +86,21 @@ class SensorInfoFile:
                             value = '_'.join(split_value)
                 else:
                     if col == 'INSTRUMENT_ID':
-                        value = instrument + ctd_file_obj.instrument_number
+                        value = instrument + ctd_file_obj('instrument_number')
                     elif col == 'INSTRUMENT_PROD':
                         if instrument.startswith('SBE'):
                             value = 'Seabird'
                     elif col == 'INSTRUMENT_MOD':
                         value = '911plus'
                     elif col == 'INSTRUMENT_SERIE':
-                        value = ctd_file_obj.instrument_number
+                        value = ctd_file_obj('instrument_number')
                     elif col == 'TIME':
-                        value = ctd_file_obj.time.strftime('%Y-%m-%d')
+                        value = ctd_file_obj.datetime.strftime('%Y-%m-%d')
                 row_list.append(value)
             self._data.append('\t'.join(row_list))
 
-    def _add_header_information_to_cnv_info(self, path):
-        names = cnv.get_reported_names_in_cnv(path)
+    def _add_header_information_to_cnv_info(self, cnv_file):
+        names = cnv_file.get_reported_names()
         for name in names:
             cnv_code = name.split(':')[0].strip()
             info = {'parameter': cnv_code,
@@ -137,10 +132,6 @@ class SensorInfoFiles:
                         continue
                     data = dict(zip(header, split_line))
                     key = SensorInfoItem.get_key(data)
-                    # obj = self._sensor_info_items.setdefault(key, SensorInfoItem())
-                    # obj.add_data(data)
-                    # =============================
-                    print('key', key)
                     par = key[1]
                     self._sensor_info_items.setdefault(par, [])
                     if not self._sensor_info_items[par] or self._sensor_info_items[par][-1]['key'] != key:
@@ -155,7 +146,7 @@ class SensorInfoFiles:
         columns = get_sensor_info_columns()
         lines = []
         lines.append('\t'.join(columns))
-        for par in sorted(self._sensor_info_items):
+        for par in self._sensor_info_items.keys():
             for item in self._sensor_info_items[par]:
                 info = item['obj'].get_info()
                 lines.append('\t'.join([info.get(col, '') for col in columns]))
@@ -163,18 +154,4 @@ class SensorInfoFiles:
         with open(path, 'w') as fid:
             fid.write('\n'.join(lines))
         return path
-
-    def old_write_summary_to_file(self, directory=None):
-        if not directory:
-            directory = self._directory
-        path = pathlib.Path(directory, 'sensorinfo.txt')
-        columns = get_sensor_info_columns()
-        lines = []
-        lines.append('\t'.join(columns))
-        for key in sorted(self._sensor_info_items):
-            info = self._sensor_info_items[key].get_info()
-            lines.append('\t'.join([info.get(col, '') for col in columns]))
-
-        with open(path, 'w') as fid:
-            fid.write('\n'.join(lines))
 

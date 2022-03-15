@@ -1,13 +1,15 @@
+import os
 import pathlib
 import shutil
-import os
 
-from ctd_processing import psa
+import file_explorer
+from file_explorer import psa
+from file_explorer import seabird
+
+from ctd_processing import modify_cnv
 from ctd_processing import sensor_info
-from sharkpylib import seabird
-
-from ctd_processing.processing.sbe_setup_file import SBESetupFile
 from ctd_processing.processing.sbe_batch_file import SBEBatchFile
+from ctd_processing.processing.sbe_setup_file import SBESetupFile
 
 
 class SBEProcessing:
@@ -73,7 +75,6 @@ class SBEProcessing:
             raise Exception('Invalid surfacesoak option')
 
     def _get_derive_psa_obj(self):
-        # file_paths = self.get_file_paths()
         return psa.DerivePSAfile(self._processing_paths('psa_derive'))
 
     def set_tau_state(self, state):
@@ -85,11 +86,8 @@ class SBEProcessing:
         if not path.exists():
             raise FileNotFoundError(path)
         self._file_path = path
-        # self._package = ctd_files.get_ctd_files_object(path)
-        self._package = seabird.get_package_for_file(path)
+        self._package = file_explorer.get_package_for_file(path)
         self._paths.set_year(self.year)
-        # self._paths.set_raw_file_path(self._package.file_path)
-        # self._paths.set_config_suffix(self._package.config_file_suffix)
         self._confirmed = False
 
     def confirm_file(self, file_path):
@@ -100,11 +98,8 @@ class SBEProcessing:
             raise PermissionError('Confirmed file is not the same as the selected!')
         # Copying files and load instrument files object
         new_path = self._copy_all_files_with_same_file_stem_to_working_dir(path)
-        # self._package = ctd_files.get_ctd_files_object(new_path)
-        self._package = seabird.get_package_for_file(new_path)
-        self._package = seabird.rename_package(self._package, overwrite=True)
-        # self._package.rename_files(overwrite=True)
-        # self._processing_paths.set_raw_file_path(self._package.file_path)
+        self._package = file_explorer.get_package_for_file(new_path)
+        self._package = file_explorer.rename_package(self._package, overwrite=True)
         self._processing_paths.set_raw_file_path(self._package['hex'])
         self._processing_paths.set_config_suffix(self._package('config_file_suffix'))
         self._setup_file = SBESetupFile(paths=self._paths,
@@ -145,7 +140,7 @@ class SBEProcessing:
         return return_path
 
     def _copy_file(self, source_file, target_directory, overwrite=False):
-        if isinstance(source_file, seabird.file.SeabirdFile):
+        if isinstance(source_file, file_explorer.file.InstrumentFile):
             source_file_path = source_file.path
             target_file_path = source_file.get_proper_path(target_directory)
         else:  # pathlib.Path
@@ -164,14 +159,6 @@ class SBEProcessing:
         directory = self._paths.get_server_directory(subfolder)
         return [path.name for path in directory.iterdir()]
 
-    # def get_local_directory(self, subfolder=None, create=False):
-    #     key = f'local_dir_{subfolder}'
-    #     return self._paths(key, create=create)
-    #
-    # def get_server_directory(self, subfolder=None, create=False):
-    #     key = f'server_dir_{subfolder}'
-    #     return self._paths(key, create=create)
-
     def run_process(self, overwrite=False):
         if not self._confirmed:
             raise Exception('No file confirmed!')
@@ -180,18 +167,14 @@ class SBEProcessing:
         self._batch_file.create_file()
         self._batch_file.run_file()
 
-        seabird.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('temp'))
-        seabird.modify_cnv_down_file(self._package,
+        file_explorer.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('temp'))
+        modify_cnv.modify_cnv_down_file(self._package,
                                      directory=self._paths.get_local_directory('cnv', create=True),
                                      overwrite=self._overwrite)
-        seabird.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('cnv'), replace=True)
-        # self._package.add_processed_file_paths()
-        # self._package.modify_and_save_cnv_file(save_directory=self._paths.get_local_directory('cnv', create=True),
-        #                                          overwrite=self._overwrite)
+        file_explorer.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('cnv'), replace=True)
         self._copy_processed_files_to_local()
-        self._package = seabird.get_package_for_file(self._package, directory=self._paths.get_local_directory('root'),
+        self._package = file_explorer.get_package_for_file(self._package, directory=self._paths.get_local_directory('root'),
                                                            exclude_directory='temp')
-        # seabird.rename_package(self._package_after, overwrite=overwrite)
 
     def create_sensorinfo_file(self):
         file = self._package.get_file(suffix='.cnv', prefix=None)

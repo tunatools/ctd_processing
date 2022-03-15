@@ -1,8 +1,6 @@
 import pathlib
 
-from ctd_processing import cnv
-from ctd_processing import ctd_files
-
+from ctd_processing import modify_cnv
 
 class MetadataRow:
     def __init__(self):
@@ -16,7 +14,7 @@ class MetadataRow:
         return self.get_info()
 
     def _save_metadata(self):
-        header_form_info = cnv.get_header_form_information(self._path)
+        header_form_info = modify_cnv.get_header_form_information(self._path)
         ctd_info = ctd_files.get_ctd_files_object(self._path)
         self._metadata = {}
         for col in self._metadata_columns:
@@ -113,4 +111,4 @@ if __name__ == '__main__':
     mdf = MetadataFile(r'C:\mw\temp_ctd_pre_system_data_root\cnv')
     mdf.write_to_file()
 
-    hfi = cnv.get_header_form_information(r'C:\mw\temp_ctd_pre_system_data_root\cnv/SBE09_1387_20210413_1113_77SE_00_0278.cnv')
+    hfi = modify_cnv.get_header_form_information(r'C:\mw\temp_ctd_pre_system_data_root\cnv/SBE09_1387_20210413_1113_77SE_00_0278.cnv')

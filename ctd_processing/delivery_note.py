@@ -1,8 +1,7 @@
-import pathlib
 import datetime
+import pathlib
 
-from ctd_processing import cnv
-from ctd_processing import ctd_files
+from ctd_processing import modify_cnv
 
 
 class DeliveryNote:
@@ -35,7 +34,7 @@ class DeliveryNote:
         proj_set = set()
         orderer_set = set()
         for path in self._paths:
-            header_form_info = cnv.get_header_form_information(path)
+            header_form_info = modify_cnv.get_header_form_information(path)
             ctd_info = ctd_files.get_ctd_files_object(path)
             mprog_set.add(header_form_info.get('MPROG', ''))
             proj_set.add(header_form_info.get('PROJ', ''))

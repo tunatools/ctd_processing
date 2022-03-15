@@ -1,6 +1,6 @@
 import codecs
 
-from ctd_processing import psa
+from file_explorer import psa
 
 
 class SBESetupFile:
