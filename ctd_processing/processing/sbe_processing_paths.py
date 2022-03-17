@@ -1,9 +1,10 @@
-import pathlib 
 import os
+import pathlib
+
 
 class SBEProcessingPaths:
     """
-    Class holds paths used in the SBESetupFile class. SBEProsessingPaths are based on structure of the ctd_config repo.
+    Class holds paths used in the SBESetupFile class. SBEProcessingPaths are based on structure of the ctd_config repo.
     For the moment the paths are hardcoded according. Consider putting this information in a config file.
 
     """

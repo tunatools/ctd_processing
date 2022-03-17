@@ -146,6 +146,8 @@ class SBEProcessing:
         else:  # pathlib.Path
             source_file_path = source_file
             target_file_path = pathlib.Path(target_directory, source_file.name)
+        print('-- SOURCE', source_file_path)
+        print('-- TARGET', target_file_path)
 
         if target_file_path.exists():
             if not overwrite:
@@ -166,15 +168,24 @@ class SBEProcessing:
         self._setup_file.create_file()
         self._batch_file.create_file()
         self._batch_file.run_file()
-
+        print('KEY KEY:', self._package.key)
         file_explorer.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('temp'))
+        print('KEY KEY:', self._package.key)
         modify_cnv.modify_cnv_down_file(self._package,
                                      directory=self._paths.get_local_directory('cnv', create=True),
                                      overwrite=self._overwrite)
         file_explorer.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('cnv'), replace=True)
+        print()
+        print('$' * 30)
+        for file in self._package.files:
+            print(file.path)
         self._copy_processed_files_to_local()
         self._package = file_explorer.get_package_for_file(self._package, directory=self._paths.get_local_directory('root'),
                                                            exclude_directory='temp')
+        print()
+        print('@'*30)
+        for file in self._package.files:
+            print(file.path)
 
     def create_sensorinfo_file(self):
         file = self._package.get_file(suffix='.cnv', prefix=None)

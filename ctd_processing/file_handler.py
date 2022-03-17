@@ -104,6 +104,7 @@ class SBEFileHandler:
             return paths[0]
         return paths
 
+
 class File:
     def __init__(self, file_path):
         self.path = Path(file_path)

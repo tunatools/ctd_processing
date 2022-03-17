@@ -17,6 +17,7 @@ class HeaderName:
     _index = None
     _code = None
     _parameter = None
+    _description = None
 
     def __init__(self, string):
         self._string = string.strip()
@@ -34,6 +35,7 @@ class HeaderName:
         split_par = split_line[1].split(':')
         self._code = split_par[0].strip()
         self._parameter = split_par[1].strip()
+        self._description = split_line[-1].strip()
 
     @property
     def index(self):
@@ -46,6 +48,10 @@ class HeaderName:
     @property
     def parameter(self):
         return self._parameter
+
+    @property
+    def description(self):
+        return self._description
 
 
 class Header:
@@ -258,6 +264,7 @@ class ModifyCnv(CnvFile):
         self._header_cruise_info = {}
 
         self.xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>\n']
+        print('print(len(self.xml_lines))', len(self.xml_lines))
         is_xml = False
 
         header = True
@@ -374,8 +381,7 @@ class ModifyCnv(CnvFile):
 
     def _get_comment_for_channel(self, channel):
         channel_str = f'Channel="{channel}"'
-        xml_lines = self.xmlstring.split('\n')
-        for row1, row2 in zip(xml_lines[:-1], xml_lines[1:]):
+        for row1, row2 in zip(self.xml_lines[:-1], self.xml_lines[1:]):
             if channel_str not in row1:
                 continue
             comment = row2.split(',', 1)[-1][:-4].strip()
@@ -474,7 +480,7 @@ class ModifyCnv(CnvFile):
     def get_reported_names(self):
         names = []
         for head in self._header_names:
-            names.append(head.parameter)
+            names.append(head.description)
         return sorted(names)
 
     def _set_lines(self):
@@ -590,8 +596,8 @@ class ModifyCnv(CnvFile):
     def _get_calculated_true_depth(self):
         prdM_data = self.pressure_data
         sigT_data = self.density_data
-        print(prdM_data[:10])
-        print(sigT_data[:10])
+        # print(prdM_data[:10])
+        # print(sigT_data[:10])
 
         # Beräkning av truedepth # Ersätt depFM med true depth i headern
         # Start params
@@ -656,6 +662,7 @@ class ModifyCnv(CnvFile):
 
 def modify_cnv_down_file(package, directory=None, overwrite=False):
     file = ModifyCnv(package.get_file(prefix='d', suffix='.cnv').path)
+    file.key = package.key
     try:
         file.modify()
     except InvalidFileToModify:

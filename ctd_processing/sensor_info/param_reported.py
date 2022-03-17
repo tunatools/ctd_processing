@@ -31,6 +31,8 @@ class ParamReported:
             print('name0', ':', instrument_info['CNV_NAME'], ':', name, ':', parameter)
             for cnv_code in instrument_info['cnv_codes']:
                 print(cnv_code, self._parameter_is_sensor_1(parameter), self._reported_name_is_sensor_1(name))
+                print(name)
+                print(cnv_code)
                 if not self._reported_name_matches_cnv_code(name, cnv_code):
                     continue
                 print('OK')
