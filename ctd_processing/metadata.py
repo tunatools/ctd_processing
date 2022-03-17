@@ -1,6 +1,21 @@
 import pathlib
 
 from ctd_processing import modify_cnv
+import file_explorer
+
+
+MAPPING = {'MYEAR': 'year',
+           'SDATE': 'date',
+           'STIME': 'time',
+           'SHIPC': 'ship',
+           'CRUISE_NO': 'cruise',
+           'SERNO': 'serno',
+           'STATN': 'station',
+           'LATIT': 'lat',
+           'LONGI': 'lon',
+           'FILE_NAME': 'name',
+           'INSTRUMENT_SERIE': 'instrument_number'}
+
 
 class MetadataRow:
     def __init__(self):
@@ -14,9 +29,23 @@ class MetadataRow:
         return self.get_info()
 
     def _save_metadata(self):
+        file = file_explorer.get_file_object_for_path(self._path)
+        self._metadata = {}
+        for col in self._metadata_columns:
+            if col == 'POSYS':
+                value = 'GPS'
+            elif col == 'SMTYP':
+                value = 'CTD'
+            else:
+                print(col, MAPPING.get(col, col), file(MAPPING.get(col, col)))
+                value = file(MAPPING.get(col, col)) or ''
+            self._metadata[col] = value
+
+    def old_save_metadata(self):
         header_form_info = modify_cnv.get_header_form_information(self._path)
         ctd_info = ctd_files.get_ctd_files_object(self._path)
         self._metadata = {}
+
         for col in self._metadata_columns:
             value = header_form_info.get(col, '')
             if col == 'MYEAR':

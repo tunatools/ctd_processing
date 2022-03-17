@@ -51,7 +51,7 @@ class SBEProcessingPaths:
 
     def _save_platform_paths(self):
         """
-        Platform paths are based on directories under <congif path>/SBE/proseccing_psa.
+        Platform paths are based on directories under <config path>/SBE/processing_psa.
         Files in the subfolders are specific for the corresponding "platform"
         """
         self._platform_paths = {}

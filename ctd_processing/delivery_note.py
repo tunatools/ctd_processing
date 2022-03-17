@@ -3,6 +3,8 @@ import pathlib
 
 from ctd_processing import modify_cnv
 
+import file_explorer
+
 
 class DeliveryNote:
 
@@ -34,12 +36,19 @@ class DeliveryNote:
         proj_set = set()
         orderer_set = set()
         for path in self._paths:
-            header_form_info = modify_cnv.get_header_form_information(path)
-            ctd_info = ctd_files.get_ctd_files_object(path)
-            mprog_set.add(header_form_info.get('MPROG', ''))
-            proj_set.add(header_form_info.get('PROJ', ''))
-            year_set.add(str(ctd_info.year))
-            orderer_set.add(header_form_info.get('ORDERER', ''))
+            file = file_explorer.get_file_object_for_path(path)
+            mprog_set.add(file('mprog') or '')
+            proj_set.add(file('proj') or '')
+            year_set.add(file('year') or '')
+            orderer_set.add(file('orderer') or '')
+
+
+            # header_form_info = modify_cnv.get_header_form_information(path)
+            # ctd_info = ctd_files.get_ctd_files_object(path)
+            # mprog_set.add(header_form_info.get('MPROG', ''))
+            # proj_set.add(header_form_info.get('PROJ', ''))
+            # year_set.add(str(ctd_info.year))
+            # orderer_set.add(header_form_info.get('ORDERER', ''))
 
         mprog_set.discard('')
         proj_set.discard('')
@@ -49,7 +58,7 @@ class DeliveryNote:
         for ord in orderer_set:
             all_orderers.extend([item.strip() for item in ord.split(',')])
 
-        self._data = {}
+        self._data = dict()
         self._data['MYEAR'] = ', '.join(sorted(year_set))
         self._data['DTYPE'] = 'PROFILE'
         self._data['MPROG'] = ', '.join(sorted(mprog_set))

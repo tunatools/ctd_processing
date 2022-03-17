@@ -40,9 +40,12 @@ class SensorInfoFile:
         self._add_header_information_to_cnv_info(cnv_file)
 
         self._data = []
-        ctd_file_obj = file_explorer.get_package_for_file(path)
+        file = file_explorer.get_file_object_for_path(path)
 
         par_reported = param_reported.ParamReported(path, self.instrument_file)
+
+        pressure_instrument_info = self.instrument_file.get_info_for_parameter_and_sensor_id(parameter='Pressure',
+                                                                                             sensor_id=file('instrument_number'))
 
         instrument = path.name.split('_')[0]
         columns = [col for col in get_sensor_info_columns() if col not in ['VALIDFR', 'VALIDTO']]
@@ -73,9 +76,11 @@ class SensorInfoFile:
                 elif col == 'PARAM_REPORTED':
                     value = reported_name
                     # print('value:PARAM_REPORTED', value, info['parameter'])
+                elif col == 'CALCULATED':
+                    value = value or 'No'
                 elif value:
-                    if col == 'PARAM_SIMPLE':
-                        print('VALUE', col, value, '===', info['parameter'])
+                    # if col == 'PARAM_SIMPLE':
+                    #     print('VALUE', col, value, '===', info['parameter'])
                     # if info['parameter'][-1] == '2':
                     if reported_name.split('[')[0].replace(' ', '').endswith(',2'):
                         if col == 'PARAM_SIMPLE':
@@ -86,16 +91,15 @@ class SensorInfoFile:
                             value = '_'.join(split_value)
                 else:
                     if col == 'INSTRUMENT_ID':
-                        value = instrument + ctd_file_obj('instrument_number')
+                        value = file('instrument_id')
                     elif col == 'INSTRUMENT_PROD':
-                        if instrument.startswith('SBE'):
-                            value = 'Seabird'
+                        value = pressure_instrument_info.get('INSTRUMENT_PROD', '')
                     elif col == 'INSTRUMENT_MOD':
-                        value = '911plus'
+                        value = pressure_instrument_info.get('INSTRUMENT_MOD', '')
                     elif col == 'INSTRUMENT_SERIE':
-                        value = ctd_file_obj('instrument_number')
+                        value = file('instrument_serie')
                     elif col == 'TIME':
-                        value = ctd_file_obj.datetime.strftime('%Y-%m-%d')
+                        value = file('date')
                 row_list.append(value)
             self._data.append('\t'.join(row_list))
 
