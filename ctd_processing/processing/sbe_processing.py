@@ -182,7 +182,6 @@ class SBEProcessing:
         self._package = file_explorer.get_package_for_file(self._package['hex'], directory=self._paths.get_local_directory('root'),
                                                            exclude_directory='temp')
 
-
     def create_sensorinfo_file(self):
         file = self._package.get_file(suffix='.cnv', prefix=None)
         sensor_info_obj = sensor_info.get_sensor_info_object(self._paths('instrumentinfo_file'))

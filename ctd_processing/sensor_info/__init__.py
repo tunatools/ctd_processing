@@ -12,6 +12,7 @@ def create_sensor_info_files_from_cnv_files_in_directory(directory, instrument_f
             continue
         sensor_info.create_file_from_cnv_file(path, output_dir)
 
+
 def create_sensor_info_files_from_cnv_files(cnv_files, instrument_file_path, output_dir=None):
     sensor_info = get_sensor_info_object(instrument_file_path)
     for path in cnv_files:

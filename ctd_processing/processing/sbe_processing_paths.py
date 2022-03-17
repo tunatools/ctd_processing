@@ -132,13 +132,7 @@ class SBEProcessingPaths:
         Always checking directory ctd_config/SBE/processing_psa/Common
         """
         all_paths = self._get_all_psa_paths()
-        for name in self._psa_names:
-            for path in all_paths:
-                if name in path.name.lower():
-                    self._paths[f'psa_{name}'] = path
-                    break
-            else:
-                raise Exception(f'Could not find psa file associated with: {name}')
+        self.set_psa_paths(all_paths)
 
     def _build_loopedit_file_paths(self):
         self._loopedit_paths = []
@@ -177,3 +171,32 @@ class SBEProcessingPaths:
 
     def get_psa_paths(self):
         return [value for key, value in self._paths.items() if key.startswith('psa_')]
+
+    def set_psa_paths(self, psa_paths):
+        for name in self._psa_names:
+            for path in psa_paths:
+                if name not in path.name.lower():
+                    continue
+                self._paths[f'psa_{name}'] = path
+                break
+            else:
+                raise Exception(f'Could not find psa file associated with: {name}')
+
+    def old_set_psa_paths(self, psa_paths):
+        for name in self._psa_names:
+            print('NAME', name)
+            for path in psa_paths:
+                print(path.name, path.name.lower())
+                if name in path.name.lower():
+                    self._paths[f'psa_{name}'] = path
+                    print('   Found')
+                    break
+            else:
+                raise Exception(f'Could not find psa file associated with: {name}')
+
+    def load_psa_config_zip(self, zip_path):
+        target_dir = pathlib.Path(self.sbe_paths.get_local_directory('temp'), zip_path.stem)
+        from zipfile import ZipFile
+        with ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(target_dir)
+        self.set_psa_paths(list(target_dir.iterdir()))
