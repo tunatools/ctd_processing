@@ -2,54 +2,7 @@
 
 title Class diagram: ctd_processing
 
-class _old_ctd_sbe9_processing.CtdProcessing #1559F3 {
-	+alignctd
-	+batch_file
-	+binavg
-	+bottlesum
-	+celltm
-	+cnty
-	+cnv_column_info
-	+ctdNo
-	+ctd_data
-	+ctdconfig, @ca
-	+ctdmodule_file
-	+ctdnumber, @ca
-	+data_directory
-	+datacnv
-	+deep_surfacesoak, @ca
-	+derive
-	+filter
-	+if, @ca
-	+loopedit
-	+manuell_surfacesoak, @ca
-	+new_fname
-	+number_of_bottles
-	+plot1
-	+plot2
-	+plot3
-	+plot4
-	+plot_directory
-	+raw_files_directory
-	+serie
-	+ship
-	+split
-	+stationname
-	+working_directory
-	+year
-==
-	+check_bl()
-	+copy_files_to_server()
-	+create_batch_file()
-	+get_file()
-	+get_string_for_data_file()
-	+get_string_for_shark_file()
-	+load_options()
-	+modify_cnv_file()
-	+run_seabird()
-}
-
-class bl_file.BlFile #C2530C {
+class bl_file.BlFile #DF6ED8 {
 	+file_path
 	-_number_of_bottles
 	number_of_bottles, @p
@@ -57,7 +10,7 @@ class bl_file.BlFile #C2530C {
 	-_save_number_of_bottles()
 }
 
-class bokeh_server.CTDBokehQC #9A9BC7 {
+class bokeh_server.CTDBokehQC #4C2BE8 {
 	-_bokeh_server
 	-_run_bokeh_server_bat_file
 	-_run_bokeh_server_file
@@ -68,7 +21,7 @@ class bokeh_server.CTDBokehQC #9A9BC7 {
 	+stop_bokeh_server()
 }
 
-class cnv_column_info.CnvInfoFile #7C1673 {
+class cnv_column_info.CnvInfoFile #3C860B {
 	+file_path
 	+file_stem
 	+sensor_info
@@ -78,7 +31,7 @@ class cnv_column_info.CnvInfoFile #7C1673 {
 	-_load_file()
 }
 
-class cnv_column_info.CnvInfoFiles #7C1673 {
+class cnv_column_info.CnvInfoFiles #3C860B {
 	+directory
 	-_files
 	files, @p
@@ -88,7 +41,7 @@ class cnv_column_info.CnvInfoFiles #7C1673 {
 	-_load_files()
 }
 
-class cnv_column_info.CnvSensorInfo #7C1673 {
+class cnv_column_info.CnvSensorInfo #3C860B {
 	-_file_path
 	file, @p
 	name, @p
@@ -96,7 +49,7 @@ class cnv_column_info.CnvSensorInfo #7C1673 {
 	-__repr__()
 }
 
-class cnv_file.CNVfile #334928 {
+class cnv_file.CNVfile #C514A0 {
 	+cnv_info_object
 	+col_dens
 	+col_dens2
@@ -147,7 +100,7 @@ class cnv_file.CNVfile #334928 {
 	-_set_active_parameters()
 }
 
-class cnv_file.CNVfileInfo #334928 {
+class cnv_file.CNVfileInfo #C514A0 {
 	+date_format_in_file
 	-_lat
 	-_lon
@@ -162,7 +115,7 @@ class cnv_file.CNVfileInfo #334928 {
 	-_get_info_from_file()
 }
 
-class cnv_file.CNVfileXML #0A1B3D {
+class cnv_file.CNVfileXML #C7A863 {
 	+path
 	+tree
 	+xmlstring
@@ -173,7 +126,7 @@ class cnv_file.CNVfileXML #0A1B3D {
 	-_get_comment_for_channel()
 }
 
-class cnv_header.CNVheader #CC676D {
+class cnv_header.CNVheader #C89EA8 {
 	+linebreak
 	+rows
 ==
@@ -185,7 +138,7 @@ class cnv_header.CNVheader #CC676D {
 	+replace_string_at_index()
 }
 
-class cnv_parameter.CNVparameter #E05D5B {
+class cnv_parameter.CNVparameter #BD90F3 {
 	+active
 	+cnv_info_object
 	+info
@@ -208,7 +161,7 @@ class cnv_parameter.CNVparameter #E05D5B {
 	-_set_nr_decimals()
 }
 
-class data_delivery.DeliveryMetadataFile #FD8F82 {
+class data_delivery.DeliveryMetadataFile #A8D9DE {
 	+template_path
 	+wb
 	-_metadata
@@ -235,7 +188,7 @@ class data_delivery.DeliveryMetadataFile #FD8F82 {
 	-_write_sensorinfo()
 }
 
-class delivery_note.DeliveryNote #0AE46A {
+class delivery_note.DeliveryNote #303DFC {
 	-_comment
 	-_contact
 	-_data
@@ -250,7 +203,7 @@ class delivery_note.DeliveryNote #0AE46A {
 	-_save_info()
 }
 
-class derive.DerivePSAfile #D96DC9 {
+class derive.DerivePSAfile #1CF267 {
 	
 ==
 	+set_tau_correction()
@@ -258,91 +211,7 @@ class derive.DerivePSAfile #D96DC9 {
 	+turn_tau_correction_on()
 }
 
-class exceptions.CTDException #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.FileExists #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.InvalidCountryCode #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.InvalidDateFormat #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.InvalidFileNameFormat #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.InvalidInstrumentName #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.InvalidInstrumentSerialNumber #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.InvalidParameterIndex #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.InvalidSerialNumber #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.InvalidSurfacesoak #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.InvalidTimeFormat #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.MissingAttribute #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.PathError #CD29E7 {
-	
-==
-	
-}
-
-class exceptions.UnrecognizedFileName #CD29E7 {
-	
-==
-	
-}
-
-class file_handler.File #A68ACF {
+class file_handler.File #7B21EA {
 	+path
 	name, @p
 	suffix, @p
@@ -352,7 +221,7 @@ class file_handler.File #A68ACF {
 	-__str__()
 }
 
-class file_handler.SBEFileHandler #A68ACF {
+class file_handler.SBEFileHandler #7B21EA {
 	+local_files
 	+paths
 	+server_files
@@ -369,7 +238,7 @@ class file_handler.SBEFileHandler #A68ACF {
 	-_not_updated_on_server()
 }
 
-class file_pattern_nodc.NODCSBECTDFiles #4AF337 {
+class file_pattern_nodc.NODCSBECTDFiles #FCDAEB {
 	+name, @ca
 	+pattern, @ca
 	+pattern_example, @ca
@@ -381,7 +250,7 @@ class file_pattern_nodc.NODCSBECTDFiles #4AF337 {
 	-_get_proper_file_stem()
 }
 
-class file_pattern_old_processing_script.OldSBECTDFiles #E05B83 {
+class file_pattern_old_processing_script.OldSBECTDFiles #5EF571 {
 	+name, @ca
 	+pattern, @ca
 	+pattern_example, @ca
@@ -393,367 +262,7 @@ class file_pattern_old_processing_script.OldSBECTDFiles #E05B83 {
 	-_get_proper_file_stem()
 }
 
-class former_cnv.CNVfile #355B3F {
-	+cnv_info_object
-	+col_dens
-	+col_dens2
-	+col_depth
-	+col_pres
-	+col_sv
-	+ctd_processing_object
-	+ctry
-	+data
-	+file_path
-	+g
-	+header
-	+linebreak
-	+missing_value
-	+missing_value_str
-	+nr_data_lines
-	+parameters
-	+serie
-	+ship
-	+use_cnv_info_format
-	+year
-==
-	+modify()
-	+save_file()
-	-_change_parameter_name()
-	-_check_index()
-	-_get_calculated_true_depth()
-	-_get_data_rows()
-	-_get_density_data()
-	-_get_depth_data()
-	-_get_mean_sound_velocity()
-	-_get_parameter_name_matching_string()
-	-_get_pressure_data()
-	-_get_sound_velocity_data()
-	-_load_ctd_processing_object_info()
-	-_load_info()
-	-_modify_depth()
-	-_modify_fluorescence()
-	-_modify_header_information()
-	-_modify_irradiance()
-	-_modify_span()
-	-_save_columns()
-	-_set_active_parameters()
-}
-
-class former_cnv.CNVheader #355B3F {
-	+linebreak
-	+rows
-==
-	+add_row()
-	+append_to_row()
-	+get_row_index_for_matching_string()
-	+insert_row_after()
-	+replace_row()
-	+replace_string_at_index()
-}
-
-class former_cnv.CNVparameter #355B3F {
-	+active
-	+cnv_info_object
-	+info
-	+name
-	+sample_value
-	+use_cnv_info_format
-	-_data
-	-_nr_decimals
-	-_tot_value_length
-	-_value_format
-	data, @p
-	format, @p
-==
-	+add_data()
-	+change_name()
-	+get_value_as_string_for_index()
-	+set_active()
-	+set_value_length()
-	-__repr__()
-	-_set_nr_decimals()
-}
-
-class former_processing.BatchFile #2D7AB4 {
-	+batch_file_path
-	+parent
-	+setup_file_path
-	+working_dir
-==
-	+create_file()
-	+run_file()
-}
-
-class former_processing.CtdProcessing #2D7AB4 {
-	+batch_file_object
-	+cnv_column_info_directory
-	+cnv_info_files
-	+cnv_info_object
-	+ctd_config_suffix
-	+ctd_number
-	+ctry
-	+logger
-	+logging_format
-	+logging_level
-	+modify_cnv_file_object
-	+name
-	+new_file_stem
-	+number_of_bottles
-	+overwrite
-	+paths
-	+seabird_files
-	+serial_number
-	+setup_file_object
-	+ship
-	+ship_id
-	+ship_short_name
-	+station_name
-	+use_cnv_info_format
-	+year
-	-_ctd_number
-	-_surfacesoak
-	ctd_number, @p
-	ctd_number_options, @p
-	options, @p
-	root_directory, @p
-	surfacesoak, @p
-	surfacesoak_options, @p
-==
-	+copy_files_to_server()
-	+create_setup_and_batch_files()
-	+load_seabird_files()
-	+modify_cnv_file()
-	+move_raw_files()
-	+remove_files()
-	+run_process()
-	+run_seabird()
-	+save_modified_ctd_file()
-	-_copy_seabird_files()
-	-_copy_setup_files()
-	-_load_cnv_info_object()
-	-_save_info_from_seabird_files()
-	-_setup_logger()
-}
-
-class former_processing.Paths #2D7AB4 {
-	+ctdmodule_file
-	+directories
-	+files
-	+root_directory
-	-_file
-	root_directory, @p
-==
-	+get_directory()
-	+get_file_path()
-	-__repr__()
-}
-
-class former_processing.SetupFile #2D7AB4 {
-	+ctd_config_suffix
-	+ctd_number
-	+lines
-	+new_file_stem
-	+number_of_bottles
-	+parent
-	+paths
-	+plot_directory
-	+setup_directory
-	+setup_file_path
-	+ship_id
-	+ship_id_str
-	+station_name
-	+surfacesoak_options
-	+working_directory
-	+year
-	-_parent
-	-_surfacesoak
-	parent, @p
-	surfacesoak, @p
-==
-	+create_file()
-	+get_all_lines()
-	-_add_station_name_to_plots()
-	-_create_lines()
-	-_get_bottle_sum_line()
-	-_save_variables()
-	-_set_paths()
-	-_set_ship_id_str()
-	-_write_lines()
-}
-
-class former_seabird.BlFile #253104 {
-	+file_suffix
-	+number_of_bottles
-==
-	-_save_number_of_bottles()
-}
-
-class former_seabird.BtlFile #253104 {
-	+file_suffix
-==
-	
-}
-
-class former_seabird.ConFile #253104 {
-	+file_suffix
-==
-	
-}
-
-class former_seabird.HdrFile #253104 {
-	+ctd
-	+date
-	+date_format_in_file
-	+datum
-	+file_suffix
-	+new_file_stem
-	+station_name
-	+tid
-==
-	+validate_new_file_stem()
-	-_check_country_code()
-	-_check_date_format()
-	-_check_instrument_name()
-	-_check_instrument_serial_number()
-	-_check_serial_number()
-	-_check_ship_code()
-	-_check_time_format()
-	-_get_info_from_file()
-	-_save_new_file_stem()
-}
-
-class former_seabird.HexFile #253104 {
-	+file_suffix
-==
-	
-}
-
-class former_seabird.RosFile #253104 {
-	+file_suffix
-==
-	
-}
-
-class former_seabird.SeabirdFiles #253104 {
-	+ctd
-	+ctry
-	+date
-	+datum
-	+directory
-	+file_classes, @ca
-	+file_stem
-	+files
-	+new_file_stem
-	+number_of_bottles
-	+serial_number
-	+ship
-	+ship_id
-	+ship_short_name
-	+station_name
-	+tid
-==
-	+move_files()
-	+rename_files()
-	-__repr__()
-	-_load_files()
-	-_load_info()
-}
-
-class former_seabird.SeabirdRawFileBase #253104 {
-	+ctry
-	+directory
-	+file_name
-	+file_path
-	+file_stem
-	+file_suffix
-	+serial_number
-	+ship
-	+ship_id
-	+ship_short_name
-==
-	+move_file()
-	+rename()
-	-__repr__()
-	-_check_validity()
-	-_load_ship()
-	-_load_ship_info()
-	-_save_file_path_info()
-}
-
-class former_seabird.XmlconFile #253104 {
-	+file_suffix
-==
-	
-}
-
-class former_ship.Aranda #5C4520 {
-	+name, @ca
-	+ship_id, @ca
-	+short_name, @ca
-==
-	
-}
-
-class former_ship.Aura #5C4520 {
-	+name, @ca
-	+ship_id, @ca
-	+short_name, @ca
-==
-	
-}
-
-class former_ship.Dana #5C4520 {
-	+name, @ca
-	+ship_id, @ca
-	+short_name, @ca
-	serial_number, @p
-==
-	
-}
-
-class former_ship.FinnishShip #5C4520 {
-	serial_number, @p
-==
-	
-}
-
-class former_ship.Meri #5C4520 {
-	+name, @ca
-	+ship_id, @ca
-	+short_name, @ca
-==
-	
-}
-
-class former_ship.SBE09 #5C4520 {
-	+name, @ca
-	+ship_id
-	+ship_id, @ca
-	+short_name, @ca
-	serial_number, @p
-==
-	-_load_info()
-}
-
-class former_ship.Ship #5C4520 {
-	+fstem
-	+name, @ca
-	+ship_id, @ca
-	+short_name, @ca
-==
-	-__repr__()
-}
-
-class former_ship.Svea #5C4520 {
-	+name, @ca
-	+ship_id, @ca
-	+short_name, @ca
-	serial_number, @p
-==
-	
-}
-
-class hdr_file.HdrFile #1D0326 {
+class hdr_file.HdrFile #62E562 {
 	+date_format_in_file
 	+file_path
 	-_cruise_number
@@ -766,7 +275,7 @@ class hdr_file.HdrFile #1D0326 {
 	-_get_info_from_file()
 }
 
-class instrument_file.InstrumentFile #5A0485 {
+class instrument_file.InstrumentFile #8CD98C {
 	-_info
 	-_path
 	-_sheets
@@ -778,13 +287,13 @@ class instrument_file.InstrumentFile #5A0485 {
 	-_save_info()
 }
 
-class loopedit.LoopeditPSAfile #F070C5 {
+class loopedit.LoopeditPSAfile #73D5D7 {
 	depth, @p
 ==
 	
 }
 
-class metadata.MetadataFile #EF4D3C {
+class metadata.MetadataFile #D91E71 {
 	-_data
 	-_directory
 	-_paths
@@ -796,7 +305,7 @@ class metadata.MetadataFile #EF4D3C {
 	-_save_info()
 }
 
-class metadata.MetadataRow #EF4D3C {
+class metadata.MetadataRow #D91E71 {
 	-_metadata
 	-_metadata_columns
 	-_path
@@ -806,13 +315,13 @@ class metadata.MetadataRow #EF4D3C {
 	-_save_metadata()
 }
 
-class modify.ModifyCTDfiles #D8427A {
+class modify.ModifyCTDfiles #1D0AB7 {
 	
 ==
 	-_modify_and_save_cnv_file()
 }
 
-class param_reported.ParamReported #DACD0E {
+class param_reported.ParamReported #8347DA {
 	+cnv_file_path
 	+cnv_reported_names
 	+instrument_file
@@ -825,7 +334,7 @@ class param_reported.ParamReported #DACD0E {
 	-_reported_name_matches_cnv_code(), @sm
 }
 
-class parent_abc_class.CTDFiles #05FDDF {
+class parent_abc_class.CTDFiles #00D912 {
 	-__proper_pattern, @ca
 	-_file_name_info
 	-_file_name_info, @ca
@@ -870,7 +379,7 @@ class parent_abc_class.CTDFiles #05FDDF {
 	-_save_file_paths()
 }
 
-class paths.SBEPaths #BF3857 {
+class paths.SBEPaths #7EC865 {
 	-_paths
 	-_sub_dir_list_local
 	-_sub_dir_list_server
@@ -894,7 +403,7 @@ class paths.SBEPaths #BF3857 {
 	-_server_key()
 }
 
-class psa_file.PSAfile #C16AE5 {
+class psa_file.PSAfile #6EA8EB {
 	+file_path
 	+tree
 ==
@@ -907,7 +416,7 @@ class psa_file.PSAfile #C16AE5 {
 	-_set_from_tag_list()
 }
 
-class psa_file_with_plot.PSAfileWithPlot #2DB4CD {
+class psa_file_with_plot.PSAfileWithPlot #E2BDE1 {
 	+blueprint_display_parameter_tags
 	+display_depth_tags
 	+display_nr_bins_tags
@@ -924,7 +433,7 @@ class psa_file_with_plot.PSAfileWithPlot #2DB4CD {
 	-_get_tag_list_for_parameter()
 }
 
-class psa_plot_file.PlotPSAfile #16CA71 {
+class psa_plot_file.PlotPSAfile #387859 {
 	+blueprint_display_parameter_tags
 	+display_depth_tags
 	+display_parameter_tags
@@ -936,7 +445,7 @@ class psa_plot_file.PlotPSAfile #16CA71 {
 	
 }
 
-class sbe_batch_file.SBEBatchFile #144E2C {
+class sbe_batch_file.SBEBatchFile #37A71F {
 	-_paths
 	-_processing_paths
 ==
@@ -944,7 +453,7 @@ class sbe_batch_file.SBEBatchFile #144E2C {
 	+run_file()
 }
 
-class sbe_parent_class.SBECTDFiles #E28F13 {
+class sbe_parent_class.SBECTDFiles #307904 {
 	+raw_files_extensions, @ca
 	-_plot_files
 	file_path, @p
@@ -962,7 +471,7 @@ class sbe_parent_class.SBECTDFiles #E28F13 {
 	-_check_hdr_file()
 }
 
-class sbe_processing.SBEProcessing #65FA57 {
+class sbe_processing.SBEProcessing #0A4CE9 {
 	-_batch_file
 	-_confirmed
 	-_ctd_files
@@ -993,7 +502,7 @@ class sbe_processing.SBEProcessing #65FA57 {
 	-_get_derive_psa_obj()
 }
 
-class sbe_processing_paths.SBEProcessingPaths #459B99 {
+class sbe_processing_paths.SBEProcessingPaths #5EC794 {
 	+sbe_paths
 	-_loopedit_paths
 	-_new_file_stem
@@ -1021,7 +530,7 @@ class sbe_processing_paths.SBEProcessingPaths #459B99 {
 	-_save_platform_paths()
 }
 
-class sbe_setup_file.SBESetupFile #BAF9AF {
+class sbe_setup_file.SBESetupFile #F3A90F {
 	-_ctd_files
 	-_paths
 	-_proc_paths
@@ -1033,7 +542,7 @@ class sbe_setup_file.SBESetupFile #BAF9AF {
 	-_write_lines()
 }
 
-class seasave.SeasavePSAfile #44ACCF {
+class seasave.SeasavePSAfile #C68138 {
 	+add_samp_tags
 	+blueprint_display_parameter_tags
 	+cruise_tags
@@ -1070,7 +579,7 @@ class seasave.SeasavePSAfile #44ACCF {
 	
 }
 
-class sensor_info_file.SensorInfoFile #105B45 {
+class sensor_info_file.SensorInfoFile #8E00A6 {
 	+cnv_info
 	+instrument_file
 	-_data
@@ -1084,7 +593,7 @@ class sensor_info_file.SensorInfoFile #105B45 {
 	-_save_xml_data_from_cnv()
 }
 
-class sensor_info_file.SensorInfoFiles #105B45 {
+class sensor_info_file.SensorInfoFiles #8E00A6 {
 	-_directory
 	-_paths
 	-_sensor_info_items
@@ -1094,7 +603,7 @@ class sensor_info_file.SensorInfoFiles #105B45 {
 	-_save_info()
 }
 
-class sensor_info_item.SensorInfoItem #8FF4A7 {
+class sensor_info_item.SensorInfoItem #EA24E3 {
 	-_all_columns
 	-_calibration_dates
 	-_columns
@@ -1119,7 +628,7 @@ class sensor_info_item.SensorInfoItem #8FF4A7 {
 	-_set_valid_to()
 }
 
-class standard_format.CreateStandardFormat #0BED99 {
+class standard_format.CreateStandardFormat #CBFF1A {
 	+delivery_metadata_file_path
 	+paths
 	-_cnv_files
@@ -1140,7 +649,7 @@ class standard_format.CreateStandardFormat #0BED99 {
 	-_create_standard_format_files()
 }
 
-class standard_format.StandardFormatComments #0BED99 {
+class standard_format.StandardFormatComments #CBFF1A {
 	-_automatic_qc
 	-_info
 	-_path
@@ -1155,7 +664,7 @@ class standard_format.StandardFormatComments #0BED99 {
 	-_save_comment_line()
 }
 
-class vis_qc.VisQC #323231 {
+class vis_qc.VisQC #FFD490 {
 	+bokeh_app_file_path
 	+bokeh_child_process
 	+data_directory
@@ -1168,7 +677,7 @@ class vis_qc.VisQC #323231 {
 	-_create_settings_argument_file()
 }
 
-class xmlcon_file.XMLCONfile #AE2690 {
+class xmlcon_file.XMLCONfile #79D869 {
 	+file_path
 	+tree
 	serial_number, @p
@@ -1179,64 +688,6 @@ class xmlcon_file.XMLCONfile #AE2690 {
 
 
 cnv_column_info.CnvSensorInfo <|-- dict
-
-exceptions.CTDException <|-- Exception
-
-exceptions.MissingAttribute <|-- exceptions.CTDException
-
-exceptions.UnrecognizedFileName <|-- exceptions.CTDException
-
-exceptions.InvalidInstrumentName <|-- exceptions.CTDException
-
-exceptions.InvalidInstrumentSerialNumber <|-- exceptions.CTDException
-
-exceptions.InvalidDateFormat <|-- exceptions.CTDException
-
-exceptions.InvalidTimeFormat <|-- exceptions.CTDException
-
-exceptions.InvalidCountryCode <|-- exceptions.CTDException
-
-exceptions.InvalidSerialNumber <|-- exceptions.CTDException
-
-exceptions.InvalidFileNameFormat <|-- exceptions.CTDException
-
-exceptions.PathError <|-- exceptions.CTDException
-
-exceptions.InvalidSurfacesoak <|-- exceptions.CTDException
-
-exceptions.InvalidParameterIndex <|-- exceptions.CTDException
-
-exceptions.FileExists <|-- exceptions.CTDException
-
-former_seabird.BlFile <|-- former_seabird.SeabirdRawFileBase
-
-former_seabird.BtlFile <|-- former_seabird.SeabirdRawFileBase
-
-former_seabird.HdrFile <|-- former_seabird.SeabirdRawFileBase
-
-former_seabird.HexFile <|-- former_seabird.SeabirdRawFileBase
-
-former_seabird.RosFile <|-- former_seabird.SeabirdRawFileBase
-
-former_seabird.XmlconFile <|-- former_seabird.SeabirdRawFileBase
-
-former_seabird.ConFile <|-- former_seabird.SeabirdRawFileBase
-
-former_ship.FinnishShip <|-- former_ship.Ship
-
-former_ship.SBE09 <|-- former_ship.Ship
-
-former_ship.Dana <|-- former_ship.Ship
-
-former_ship.Aranda <|-- former_ship.FinnishShip
-
-former_ship.Aura <|-- former_ship.FinnishShip
-
-former_ship.Meri <|-- former_ship.FinnishShip
-
-former_ship.Svea <|-- former_ship.Ship
-
-_old_ctd_sbe9_processing.CtdProcessing <|-- object
 
 parent_abc_class.CTDFiles <|-- ABC
 
@@ -1265,35 +716,11 @@ cnv_column_info.CnvInfoFiles o-- cnv_column_info.CnvInfoFile
 file_handler.SBEFileHandler o-- file_handler.File
 file_handler.SBEFileHandler o-- file_handler.File
 
-former_cnv.CNVfile o-- former_cnv.CNVheader
-former_cnv.CNVfile o-- former_cnv.CNVparameter
-former_cnv.CNVfile o-- cnv_header.CNVheader
-former_cnv.CNVfile o-- cnv_parameter.CNVparameter
-
-former_processing.CtdProcessing o-- former_processing.Paths
-former_processing.CtdProcessing o-- former_processing.SetupFile
-former_processing.CtdProcessing o-- former_processing.BatchFile
-former_processing.CtdProcessing o-- cnv_column_info.CnvInfoFiles
-former_processing.CtdProcessing o-- former_cnv.CNVfile
-former_processing.CtdProcessing o-- former_seabird.SeabirdFiles
-former_processing.CtdProcessing o-- cnv_file.CNVfile
-
-former_seabird.SeabirdFiles o-- former_seabird.BlFile
-former_seabird.SeabirdFiles o-- bl_file.BlFile
-
 metadata.MetadataFile o-- metadata.MetadataRow
 
 standard_format.StandardFormatComments o-- standard_format.StandardFormatComments
 
-_old_ctd_sbe9_processing.CtdProcessing o-- _old_ctd_sbe9_processing.CtdProcessing
-_old_ctd_sbe9_processing.CtdProcessing o-- file_handler.File
-_old_ctd_sbe9_processing.CtdProcessing o-- former_processing.CtdProcessing
-_old_ctd_sbe9_processing.CtdProcessing o-- former_ship.Dana
-_old_ctd_sbe9_processing.CtdProcessing o-- former_ship.Svea
-
 cnv_file.CNVfile o-- cnv_column_info.CnvInfoFiles
-cnv_file.CNVfile o-- former_cnv.CNVheader
-cnv_file.CNVfile o-- former_cnv.CNVparameter
 cnv_file.CNVfile o-- cnv_header.CNVheader
 cnv_file.CNVfile o-- cnv_parameter.CNVparameter
 
@@ -1302,13 +729,8 @@ standard_format.CreateStandardFormat o-- delivery_note.DeliveryNote
 standard_format.CreateStandardFormat o-- metadata.MetadataFile
 standard_format.CreateStandardFormat o-- sensor_info_file.SensorInfoFiles
 
-former_processing.SetupFile o-- file_handler.File
-
-modify.ModifyCTDfiles o-- former_cnv.CNVfile
 modify.ModifyCTDfiles o-- cnv_file.CNVfile
 
-sbe_parent_class.SBECTDFiles o-- former_seabird.HdrFile
-sbe_parent_class.SBECTDFiles o-- former_seabird.BlFile
 sbe_parent_class.SBECTDFiles o-- cnv_file.CNVfileInfo
 sbe_parent_class.SBECTDFiles o-- bl_file.BlFile
 sbe_parent_class.SBECTDFiles o-- hdr_file.HdrFile
