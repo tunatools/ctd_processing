@@ -112,7 +112,9 @@ class SBEProcessing:
 
     def _copy_raw_files_to_local(self):
         target_directory = self._paths.get_local_directory('raw', create=True)
+        print(':::', '_copy_raw_files_to_local'.upper())
         for file in self._package.get_raw_files():
+            print('FILE :::::', file)
             self._copy_file(file, target_directory, overwrite=self._overwrite)
 
     def _copy_cnv_files_to_local(self):
@@ -146,8 +148,6 @@ class SBEProcessing:
         else:  # pathlib.Path
             source_file_path = source_file
             target_file_path = pathlib.Path(target_directory, source_file.name)
-        print('-- SOURCE', source_file_path)
-        print('-- TARGET', target_file_path)
 
         if target_file_path.exists():
             if not overwrite:
@@ -168,26 +168,30 @@ class SBEProcessing:
         self._setup_file.create_file()
         self._batch_file.create_file()
         self._batch_file.run_file()
-        print('KEY KEY:', self._package.key)
+
+        key = self._package.key
+
         file_explorer.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('temp'))
-        print('KEY KEY:', self._package.key)
+
         modify_cnv.modify_cnv_down_file(self._package,
                                      directory=self._paths.get_local_directory('cnv', create=True),
                                      overwrite=self._overwrite)
-        file_explorer.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('cnv'), replace=True)
-        print()
-        print('$' * 30)
-        for file in self._package.files:
-            print(file.path)
+        self._package = file_explorer.get_package_for_key(key, directory=self._paths.get_local_directory('temp'))
+
         self._copy_processed_files_to_local()
-        self._package = file_explorer.get_package_for_file(self._package, directory=self._paths.get_local_directory('root'),
+        self._package = file_explorer.get_package_for_file(self._package['hex'], directory=self._paths.get_local_directory('root'),
                                                            exclude_directory='temp')
-        print()
-        print('@'*30)
-        for file in self._package.files:
-            print(file.path)
+
 
     def create_sensorinfo_file(self):
         file = self._package.get_file(suffix='.cnv', prefix=None)
         sensor_info_obj = sensor_info.get_sensor_info_object(self._paths('instrumentinfo_file'))
         sensor_info_obj.create_file_from_cnv_file(file.path)
+
+    def create_zip_with_psa_files(self):
+        from zipfile import ZipFile
+        hex_file = self._package.get_file(suffix='.hex')
+        path = pathlib.Path(hex_file.path.parent, f'{self._package.key}_psa_config.zip')
+        with ZipFile(path, 'w') as zip_obj:
+            for psa_path in self._processing_paths.get_psa_paths():
+                zip_obj.write(str(psa_path), psa_path.name)

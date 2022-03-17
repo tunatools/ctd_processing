@@ -174,3 +174,6 @@ class SBEProcessingPaths:
 
     def set_config_suffix(self, suffix):
         self._paths['config'] = pathlib.Path(self.sbe_paths('working_dir'), f'{self._new_file_stem}{suffix}')
+
+    def get_psa_paths(self):
+        return [value for key, value in self._paths.items() if key.startswith('psa_')]
