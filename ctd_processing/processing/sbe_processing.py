@@ -112,9 +112,7 @@ class SBEProcessing:
 
     def _copy_raw_files_to_local(self):
         target_directory = self._paths.get_local_directory('raw', create=True)
-        print(':::', '_copy_raw_files_to_local'.upper())
         for file in self._package.get_raw_files():
-            print('FILE :::::', file)
             self._copy_file(file, target_directory, overwrite=self._overwrite)
 
     def _copy_cnv_files_to_local(self):
@@ -181,6 +179,7 @@ class SBEProcessing:
         self._copy_processed_files_to_local()
         self._package = file_explorer.get_package_for_file(self._package['hex'], directory=self._paths.get_local_directory('root'),
                                                            exclude_directory='temp')
+        return self._package
 
     def create_sensorinfo_file(self):
         file = self._package.get_file(suffix='.cnv', prefix=None)

@@ -10,7 +10,6 @@ from ctd_processing.sensor_info import create_sensor_info_files_from_cnv_files
 from ctd_processing.sensor_info.sensor_info_file import SensorInfoFiles
 from ctd_processing.metadata import MetadataFile
 from ctd_processing.delivery_note import DeliveryNote
-from ctd_processing.data_delivery import DeliveryMetadataFile
 from ctd_processing import exceptions
 
 
@@ -91,8 +90,6 @@ class StandardFormatComments:
         return self._automatic_qc
 
 
-
-
 class CreateStandardFormat:
 
     def __init__(self, paths_object):
@@ -108,7 +105,7 @@ class CreateStandardFormat:
 
         self.delivery_metadata_file_path = None
 
-    def create_files_from_cnv(self, cnv_file_list, overwrite=False):
+    def create_files_from_cnv(self, cnv_file_list, overwrite=False, **kwargs):
         if not cnv_file_list:
             return
 
@@ -123,9 +120,7 @@ class CreateStandardFormat:
 
         self._create_sensorinfo_file()
         self._create_metadata_file()
-        self._create_deliverynote_file()
-        # self._create_delivery_metadata_file()
-        #
+        self._create_deliverynote_file(**kwargs)
         self._create_standard_format_files()
         self._copy_standard_format_files_to_local()
 
@@ -140,31 +135,12 @@ class CreateStandardFormat:
         metadata = MetadataFile(file_list=self._cnv_files)
         self._metadata_file_path = metadata.write_to_file(self._output_dir)
 
-    def _create_deliverynote_file(self):
+    def _create_deliverynote_file(self, **kwargs):
         delivery = DeliveryNote(file_list=self._cnv_files,
-                                contact='Magnus',
-                                comment='Detta är ett test',
-                                description='Testdataset')
+                                contact=kwargs.get('contact', ''),
+                                comment=kwargs.get('comment', ''),
+                                description=kwargs.get('description', ''))
         self._deliverynote_file_path = delivery.write_to_file(self._output_dir)
-
-    def old_create_delivery_metadata_file(self):
-        dmeta = DeliveryMetadataFile()
-        dmeta.add_sensorinfo_from_file(self._sensorinfo_file_path)
-        dmeta.add_metadata_from_file(self._metadata_file_path)
-        dmeta.save_file(pathlib.Path(self.delivery_metadata_file_path))
-
-    # def _old_create_metadata_file(self):
-    #     session = ctdpy_session.Session(filepaths=self._cnv_files,
-    #                                     reader='smhi')
-    #     datasets = session.read()
-    #     dataset = datasets[0]
-    #     session.update_metadata(datasets=dataset,
-    #                             metadata={},
-    #                             overwrite=self._overwrite)
-    #     metadata_path = session.save_data(dataset,
-    #                                       writer='metadata_template',
-    #                                       return_data_path=True)
-    #     self._metadata_path = pathlib.Path(metadata_path)
 
     def _create_standard_format_files(self):
         all_file_paths = self._cnv_files + [self._sensorinfo_file_path, self._metadata_file_path, self._deliverynote_file_path]
@@ -186,8 +162,6 @@ class CreateStandardFormat:
         target_dir = self.paths.get_local_directory('nsf', create=True)
         cnv_file_stems = [path.stem for path in self._cnv_files]
 
-
-
         for source_path in self._export_directory.iterdir():
             if source_path.stem not in cnv_file_stems:
                 continue
@@ -196,8 +170,3 @@ class CreateStandardFormat:
                 raise exceptions.FileExists(target_path)
             shutil.copy2(source_path, target_path)
 
-
-
-if __name__ == '__main__':
-    sf = StandardFormatComments(r'C:\mw\temp_ctd_pre_system_data_root\data/SBE09_1387_20210413_1113_77SE_00_0278.txt')
-    # print(has_automatic_qc_today(r'C:\mw\temp_ctd_pre_system_data_root\data/SBE09_1387_20210415_1647_77SE_00_0293.txt'))

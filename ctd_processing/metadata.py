@@ -41,41 +41,6 @@ class MetadataRow:
                 value = file(MAPPING.get(col, col)) or ''
             self._metadata[col] = value
 
-    def old_save_metadata(self):
-        header_form_info = modify_cnv.get_header_form_information(self._path)
-        ctd_info = ctd_files.get_ctd_files_object(self._path)
-        self._metadata = {}
-
-        for col in self._metadata_columns:
-            value = header_form_info.get(col, '')
-            if col == 'MYEAR':
-                value = str(ctd_info.year)
-            elif col == 'SDATE':
-                value = ctd_info.time.strftime('%Y-%m-%d')
-            elif col == 'STIME':
-                value = ctd_info.time.strftime('%H:%S')
-            elif col == 'SHIPC':
-                value = header_form_info.get('Cruise').split('-')[0]
-            elif col == 'CRUISE_NO':
-                value = header_form_info.get('Cruise')
-            elif col == 'SERNO':
-                value = ctd_info.serno
-            elif col == 'STATN':
-                value = ctd_info.station
-            elif col == 'LATIT':
-                value = ctd_info.lat
-            elif col == 'LONGI':
-                value = ctd_info.lon
-            elif col == 'POSYS':
-                value = 'GPS'
-            elif col == 'ADS_SMP':
-                value = header_form_info.get('Additional Sampling')
-            elif col == 'FILE_NAME':
-                value = self._path.name
-            elif col == 'INSTRUMENT_SERIE':
-                value = ctd_info.instrument_number
-            self._metadata[col] = value
-
     def get_info(self):
         return self._metadata.copy()
 

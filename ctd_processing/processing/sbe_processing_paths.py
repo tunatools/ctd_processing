@@ -182,17 +182,13 @@ class SBEProcessingPaths:
             else:
                 raise Exception(f'Could not find psa file associated with: {name}')
 
-    def old_set_psa_paths(self, psa_paths):
+    def update_psa_paths(self, psa_paths):
         for name in self._psa_names:
-            print('NAME', name)
             for path in psa_paths:
-                print(path.name, path.name.lower())
-                if name in path.name.lower():
-                    self._paths[f'psa_{name}'] = path
-                    print('   Found')
-                    break
-            else:
-                raise Exception(f'Could not find psa file associated with: {name}')
+                if name not in path.name.lower():
+                    continue
+                self._paths[f'psa_{name}'] = path
+                break
 
     def load_psa_config_zip(self, zip_path):
         target_dir = pathlib.Path(self.sbe_paths.get_local_directory('temp'), zip_path.stem)
