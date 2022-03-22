@@ -47,7 +47,6 @@ class SBEProcessing:
 
     def get_surfacesoak_options(self):
         options = {}
-        print('self._processing_paths', self._processing_paths)
         for path in self._processing_paths.loopedit_paths:
             name = path.name.lower()
             obj = psa.LoopeditPSAfile(path)
@@ -159,9 +158,21 @@ class SBEProcessing:
         directory = self._paths.get_server_directory(subfolder)
         return [path.name for path in directory.iterdir()]
 
-    def run_process(self, overwrite=False):
+    def _check_files_mismatch(self):
+        from file_explorer.seabird import compare
+        datcnv = self._processing_paths.get_psa_path('datcnv')
+        if not datcnv:
+            raise FileNotFoundError('Could not find datcnv-file')
+        mismatch = compare.get_datcnv_and_xmlcon_pars_mismatch(datcnv=datcnv,
+                                                               xmlcon=self._package.get_file_path(suffix=self._package('config_file_suffix')))
+        if mismatch:
+            raise compare.MismatchWarning(data=mismatch)
+
+    def run_process(self, overwrite=False, ignore_mismatch=False):
         if not self._confirmed:
             raise Exception('No file confirmed!')
+        if not ignore_mismatch:
+            self._check_files_mismatch()
         self._overwrite = bool(overwrite)
         self._setup_file.create_file()
         self._batch_file.create_file()

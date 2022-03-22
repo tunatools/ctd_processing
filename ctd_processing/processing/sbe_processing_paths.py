@@ -172,6 +172,10 @@ class SBEProcessingPaths:
     def get_psa_paths(self):
         return [value for key, value in self._paths.items() if key.startswith('psa_')]
 
+    def get_psa_path(self, key):
+        full_key = f'psa_{key}'
+        return self._paths.get(full_key)
+
     def set_psa_paths(self, psa_paths):
         for name in self._psa_names:
             for path in psa_paths:
