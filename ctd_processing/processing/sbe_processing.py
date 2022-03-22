@@ -131,10 +131,10 @@ class SBEProcessing:
 
     def _copy_all_files_with_same_file_stem_to_working_dir(self, file_path):
         target_directory = self._paths('working_dir', create=True)
-        stem = file_path.stem
+        stem = file_path.stem.lower()
         return_path = None
         for path in file_path.parent.iterdir():
-            if path.stem == stem:
+            if path.stem.lower() == stem:
                 return_path = self._copy_file(path, target_directory, overwrite=True)
         return return_path
 
