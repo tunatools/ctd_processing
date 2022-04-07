@@ -7,6 +7,8 @@ from file_explorer.seabird.cnv_file import CnvFile
 
 from ctd_processing import utils
 
+from ctd_processing.value_format import ValueFormat
+
 
 class InvalidFileToModify(Exception):
     pass
@@ -131,14 +133,18 @@ class Header:
 
 
 class Parameter:
-    def __init__(self, use_cnv_info_format=False, cnv_info_object=None, index=None, name=None, **kwargs):
+    def __init__(self, use_value_format=False, value_format=None, index=None, name=None, description=None, **kwargs):
+    # def __init__(self, use_cnv_info_format=False, cnv_info_object=None, index=None, name=None, **kwargs):
 
         self.info = {'index': index,
-                     'name': name}
+                     'name': name,
+                     'description': description}
         self.info.update(kwargs)
 
-        self.use_cnv_info_format = use_cnv_info_format
-        self.cnv_info_object = cnv_info_object
+        # self.use_cnv_info_format = use_cnv_info_format
+        # self.cnv_info_object = cnv_info_object
+        self.use_value_format = use_value_format
+        self.value_format = value_format
         self._tot_value_length = 11
         self._value_format = 'd'
         self._nr_decimals = None
@@ -180,8 +186,9 @@ class Parameter:
                 self.sample_value = float(value_str)
 
     def get_format(self, value=None):
-        if self.use_cnv_info_format:
-            return self.cnv_info_object.format
+        if self.use_value_format:
+            print('--', self.name, self.value_format(self.description))
+            return self.value_format(self.description)
         if self._nr_decimals is None:
             form = f'{self._tot_value_length}{self._value_format}'
         else:
@@ -190,6 +197,18 @@ class Parameter:
             else:
                 form = f'{self._tot_value_length}.{self._nr_decimals}{self._value_format}'
         return form
+
+    # def get_format(self, value=None):
+    #     if self.use_cnv_info_format:
+    #         return self.cnv_info_object.format
+    #     if self._nr_decimals is None:
+    #         form = f'{self._tot_value_length}{self._value_format}'
+    #     else:
+    #         if value and self._value_format == 'e' and str(value).startswith('-'):
+    #             form = f'{self._tot_value_length}.{self._nr_decimals - 1}{self._value_format}'
+    #         else:
+    #             form = f'{self._tot_value_length}.{self._nr_decimals}{self._value_format}'
+    #     return form
 
     def set_value_length(self, length):
         self._tot_value_length = length
@@ -233,6 +252,11 @@ class ModifyCnv(CnvFile):
     missing_value = -9.990e-29
     missing_value_str = '-9.990e-29'
     g = 9.818  # g vid 60 gr nord (dblg)
+
+    def __init__(self, *args, **kwargs):
+        self._use_value_format = kwargs.pop('use_value_format', True)
+        self._value_format_object = ValueFormat(value_format_path=kwargs.pop('value_format_path', None))
+        super().__init__(*args, **kwargs)
 
     def modify(self):
         self._validate()
@@ -297,9 +321,14 @@ class ModifyCnv(CnvFile):
                 elif strip_line.startswith('# name'):
                     hn = HeaderName(line)
                     self._header_names.append(hn)
-                    obj = Parameter(use_cnv_info_format=False,
-                                    cnv_info_object=None,
-                                    index=hn.index, name=hn.parameter)
+                    obj = Parameter(use_value_format=self._use_value_format,
+                                    value_format=self._value_format_object,
+                                    index=hn.index,
+                                    name=hn.parameter,
+                                    description=hn.description)
+                    # obj = Parameter(use_cnv_info_format=False,
+                    #                 cnv_info_object=None,
+                    #                 index=hn.index, name=hn.parameter)
                     self._parameters[obj.index] = obj
 
                 # XML
