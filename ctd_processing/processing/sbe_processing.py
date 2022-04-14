@@ -4,11 +4,15 @@ import shutil
 
 import file_explorer
 from file_explorer import psa
-from file_explorer import seabird
+from file_explorer.seabird import paths
 
+from ctd_processing import delivery_note
+from ctd_processing import metadata
 from ctd_processing import modify_cnv
 from ctd_processing import sensor_info
+from ctd_processing import standard_format
 from ctd_processing.processing.sbe_batch_file import SBEBatchFile
+from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
 from ctd_processing.processing.sbe_setup_file import SBESetupFile
 
 
@@ -192,11 +196,6 @@ class SBEProcessing:
                                                            exclude_directory='temp')
         return self._package
 
-    def create_sensorinfo_file(self):
-        file = self._package.get_file(suffix='.cnv', prefix=None)
-        sensor_info_obj = sensor_info.get_sensor_info_object(self._paths('instrumentinfo_file'))
-        sensor_info_obj.create_file_from_cnv_file(file.path)
-
     def create_zip_with_psa_files(self):
         from zipfile import ZipFile
         hex_file = self._package.get_file(suffix='.hex')
@@ -204,3 +203,126 @@ class SBEProcessing:
         with ZipFile(path, 'w') as zip_obj:
             for psa_path in self._processing_paths.get_psa_paths():
                 zip_obj.write(str(psa_path), psa_path.name)
+
+
+class SBEPostProcessing:
+    """
+    Class to handle post processing tasks.
+    This class is not intended to be used directly.
+    It can be tricky to call all methods in the right order.
+    Use a function below that suits your needs.
+    """
+
+    def __init__(self, package, target_root_directory, **kwargs):
+        if not isinstance(package, file_explorer.Package):
+            raise ValueError(f'{package} is not of class file_explorer.Package')
+        self._pack = package
+        self._kwargs = kwargs
+
+        self._sbe_paths = paths.SBEPaths()
+        if target_root_directory:
+            self._sbe_paths.set_local_root_directory(target_root_directory)
+
+        self._sbe_paths.set_year(self._pack('year'))
+
+        # self._output_dir = kwargs.get('output_dir') or pathlib.Path(self._sbe_paths.get_local_directory('temp'),
+        #                                                             'post_processing',
+        #                                                             datetime.datetime.now().strftime('%Y%m%d%H%M'))
+        # self._output_dir.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def pack(self):
+        return self._pack
+
+    def set_config_root_directory(self, config_root_directory):
+        self._sbe_paths.set_config_root_directory(config_root_directory)
+
+    def create_all_files(self):
+        self.create_sensorinfo_files()
+        self.create_metadata_file()
+        self.create_deliverynote_file()
+        self.update_package()
+        self.create_standard_format_file()
+        return self._pack
+
+    def create_sensorinfo_files(self):
+        sensor_info.create_sensor_info_files_from_package(self._pack,
+                                                          self._sbe_paths('instrumentinfo_file'))
+
+    def create_metadata_file(self):
+        meta = metadata.CreateMetadataFile(package=self._pack, **self._kwargs)
+        meta.write_to_file()
+
+    def create_deliverynote_file(self):
+        delivery = delivery_note.CreateDeliveryNote(package=self._pack, **self._kwargs)
+        delivery.write_to_file()
+
+    def update_package(self):
+        file_explorer.update_package_with_files_in_directory(self._pack, self._pack.get_file_path(prefix=None, suffix='.cnv').parent)
+
+    def create_standard_format_file(self):
+        obj = standard_format.CreateStandardFormat(paths_object=self._sbe_paths, **self._kwargs)
+        obj.create_from_package(self._pack)
+        file_explorer.update_package_with_files_in_directory(self._pack, self._sbe_paths.get_local_directory('nsf'))
+
+
+class SBEProcessingHandler:
+    """
+    This class is not intended to be used directly.
+    It can be tricky to call all methods in the right order.
+    Use a function below that suits your needs.
+    """
+
+    def __init__(self, target_root_directory, **kwargs):
+        self.target_root_directory = target_root_directory
+        self._overwrite = kwargs.get('overwrite', False)
+        self.config_root_directory = None
+        self.file_path = None
+        self._pack = None
+        self.post = None
+
+        self.sbe_paths = paths.SBEPaths()
+        self.sbe_paths.set_local_root_directory(target_root_directory)
+        self.sbe_processing_paths = SBEProcessingPaths(self.sbe_paths)
+        self.sbe_processing = SBEProcessing(sbe_paths=self.sbe_paths,
+                                            sbe_processing_paths=self.sbe_processing_paths)
+
+    @property
+    def pack(self):
+        return self._pack
+
+    def set_config_root_directory(self, config_root_directory=None):
+        if not config_root_directory:
+            return
+        self.sbe_paths.set_config_root_directory(config_root_directory)
+        self.config_root_directory = config_root_directory
+
+    def select_and_confirm_file(self, file_path=None):
+        self.file_path = pathlib.Path(file_path)
+        self._pack = file_explorer.get_package_for_file(file_path)
+        self.sbe_processing.select_file(self._pack['hex'])
+        self.sbe_processing.confirm_file(self._pack['hex'])
+
+    def load_psa_config_zip(self):
+        if not self._pack['zip']:
+            raise Exception('No zip file with psa files found')
+        self.sbe_processing_paths.load_psa_config_zip(self._pack['zip'])
+
+    def load_psa_config_list(self, psa_paths=None):
+        self.sbe_processing_paths.update_psa_paths(psa_paths or [])
+
+    def reload_package(self, exclude_directory=None):
+        if not self._pack:
+            return
+        self._pack = file_explorer.get_package_for_key(self._pack.key,
+                                                      directory=self.sbe_paths.get_local_directory('root'),
+                                                      exclude_directory=exclude_directory)
+
+    def set_options(self, **kwargs):
+        self.sbe_processing_paths.platform = kwargs.get('platform', 'sbe09')
+        self.sbe_processing.set_surfacesoak(kwargs.get('surfacesoak', 'normal'))
+        self.sbe_processing.set_tau_state(kwargs.get('tau', False))
+
+    def process_file(self, **kwargs):
+        self._pack = self.sbe_processing.run_process(overwrite=kwargs.get('overwrite', self._overwrite))
+        self.sbe_processing.create_zip_with_psa_files()

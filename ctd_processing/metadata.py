@@ -17,19 +17,15 @@ MAPPING = {'MYEAR': 'year',
            'INSTRUMENT_SERIE': 'instrument_number'}
 
 
-class MetadataRow:
-    def __init__(self):
-        self._path = None
+class PackageMetadata:
+    def __init__(self, package, **kwargs):
+        self._pack = package
+        self._cnv = self._pack.get_file(prefix=None, suffix='.cnv')
         self._metadata = {}
         self._metadata_columns = get_metadata_columns()
+        self._save_metadata(**kwargs)
 
-    def get_metadata_row_from_cnv_file(self, path):
-        self._path = pathlib.Path(path)
-        self._save_metadata()
-        return self.get_info()
-
-    def _save_metadata(self):
-        file = file_explorer.get_file_object_for_path(self._path)
+    def _save_metadata(self, **kwargs):
         self._metadata = {}
         for col in self._metadata_columns:
             if col == 'POSYS':
@@ -37,53 +33,78 @@ class MetadataRow:
             elif col == 'SMTYP':
                 value = 'CTD'
             else:
-                print(col, MAPPING.get(col, col), file(MAPPING.get(col, col)))
-                value = file(MAPPING.get(col, col)) or ''
+                value = self._cnv(MAPPING.get(col, col)) or kwargs.get(col) or ''
             self._metadata[col] = value
 
-    def get_info(self):
+    def get_metadata(self):
         return self._metadata.copy()
 
 
-class MetadataFile:
+class CreateMetadataFile:
 
-    def __init__(self, directory=None, file_list=None):
-        if directory:
-            self._directory = pathlib.Path(directory)
-            self._paths = [path for path in self._directory.iterdir() if path.suffix == '.cnv']
-        elif file_list:
-            self._paths = []
-            for file_path in file_list:
-                path = pathlib.Path(file_path)
-                if path.suffix != '.cnv':
-                    continue
-                self._paths.append(path)
-        else:
-            raise Exception('No info given to class MetadataFile')
+    def __init__(self, package, **kwargs):
+        self._pack = package
         self._stem = None
         self._save_path = None
         self._data = None
 
-        self._save_info()
+        self._save_info(**kwargs)
 
     def __str__(self):
-        return f'MetadataFile'
+        return f'CreateMetadataFile'
 
-    def _save_info(self):
-        self._data = {}
-        for path in self._paths:
-            metarow = MetadataRow()
-            self._data[path] = metarow.get_metadata_row_from_cnv_file(path)
+    def _save_info(self, **kwargs):
+        metarow = PackageMetadata(self._pack, **kwargs)
+        self._data = metarow.get_metadata()
 
-    def write_to_file(self, output_dir=None):
-        if not output_dir:
-            output_dir = self._directory
-        path = pathlib.Path(output_dir, 'metadata.txt')
+    def write_to_file(self):
+        file_path = self._pack.get_file_path(prefix=None, suffix='.cnv')
+        if not file_path:
+            file_path = self._pack.get_file_path(suffix='.txt')
+        if not file_path:
+            raise FileNotFoundError(f'No cnv or standard format file found in package: {self._pack.key}')
+
+        path = pathlib.Path(file_path.parent, f'{file_path.stem}.metadata')
         columns = get_metadata_columns()
         lines = []
         lines.append('\t'.join(columns))
-        for info in self._data.values():
-            lines.append('\t'.join([info.get(key, '') for key in columns]))
+        lines.append('\t'.join([self._data.get(key, '') for key in columns]))
+        with open(path, 'w') as fid:
+            fid.write('\n'.join(lines))
+        return path
+
+
+class CreateMetadataSummaryFile:
+
+    def __init__(self, directory):
+        self._directory = pathlib.Path(directory)
+        self._paths = [path for path in self._directory.iterdir() if path.suffix == '.metadata']
+        self._metadata = []
+        self._save_info()
+
+    def _save_info(self):
+        for path in self._paths:
+            header = None
+            with open(path) as fid:
+                for line in fid:
+                    if not line.strip():
+                        continue
+                    split_line = [item.strip() for item in line.split('\t')]
+                    if not header:
+                        header = split_line
+                        continue
+                    meta = dict(zip(header, split_line))
+                    self._metadata.append(meta)
+
+    def write_summary_to_file(self, directory=None):
+        if not directory:
+            directory = self._directory
+        path = pathlib.Path(directory, 'metadata.txt')
+        columns = get_metadata_columns()
+        lines = []
+        lines.append('\t'.join(columns))
+        for meta in self._metadata:
+            lines.append('\t'.join(meta))
         with open(path, 'w') as fid:
             fid.write('\n'.join(lines))
         return path
@@ -102,7 +123,7 @@ def get_metadata_columns():
 
 
 if __name__ == '__main__':
-    mdf = MetadataFile(r'C:\mw\temp_ctd_pre_system_data_root\cnv')
+    mdf = CreateMetadataFile(r'C:\mw\temp_ctd_pre_system_data_root\cnv')
     mdf.write_to_file()
 
     hfi = modify_cnv.get_header_form_information(r'C:\mw\temp_ctd_pre_system_data_root\cnv/SBE09_1387_20210413_1113_77SE_00_0278.cnv')

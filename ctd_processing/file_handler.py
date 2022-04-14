@@ -5,6 +5,28 @@ import filecmp
 
 from ctd_processing import exceptions
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+PREFIX_SUFFIX_SUBFOLDER_MAPPING = {
+    (None, '.cnv'): 'cnv',
+    (None, '.sensorinfo'): 'cnv',
+    (None, '.metadata'): 'cnv',
+    (None, '.deliverynote'): 'cnv',
+    ('u', '.cnv'): 'cnv_up',
+    (None, '.jpg'): 'plot',
+    (None, '.bl'): 'raw',
+    (None, '.btl'): 'raw',
+    (None, '.hdr'): 'raw',
+    (None, '.hex'): 'raw',
+    (None, '.xmlcon'): 'raw',
+    (None, '.con'): 'raw',
+    (None, '.zip'): 'raw',
+    (None, '.txt'): 'nsf',
+}
+
 
 class SBEFileHandler:
     def __init__(self, paths_object):
@@ -129,12 +151,36 @@ class File:
         return self.path.suffix
 
 
-if __name__ == '__main__':
-    sbe_paths = SBEPaths()
-    sbe_paths.set_local_root_directory(r'C:\mw\temp_ctd_pre_system_data_root')
-    sbe_paths.set_server_root_directory(r'C:\mw\temp_ctd_pre_system_data_root_server')
-    sbe_paths.create_server_paths()
+def copy_package_to_local(pack, path_object, overwrite=False, rename=False):
+    """
+    Copy all files in package to local. Returning new package.
+    """
+    import file_explorer
+    path_object.set_year(pack('year'))
+    for file in pack.get_files():
+        path = file.path
+        key1 = (file.prefix, file.suffix)
+        key2 = (None, file.suffix)
+        key = PREFIX_SUFFIX_SUBFOLDER_MAPPING.get(key1) or PREFIX_SUFFIX_SUBFOLDER_MAPPING.get(key2)
+        if not key:
+            logger.info(f'Can not find destination subfolder for file: {path}')
+            continue
+        target_dir = path_object.get_local_directory(key, year=pack('year'), create=True)
+        if rename:
+            target_path = Path(target_dir, f'{file.key}{file.suffix}')
+        else:
+            target_path = Path(target_dir, path.name)
+        if target_path.exists() and not overwrite:
+            raise FileExistsError(target_path)
+        shutil.copy2(path, target_path)
 
-    f = SBEFileHandler(paths_object=sbe_paths)
-    f.select_file(file_stem='SBE09_1387_20210414_0058_77SE_00_0284')
-    f.copy_files_to_server()
+    return file_explorer.get_package_for_key(pack.key, path_object.get_local_directory('root'), exclude_directory='temp')
+
+
+def copy_package_to_temp(pack, path_object, overwrite=False, rename=False):
+    import file_explorer
+    path_object.set_year(pack('year'))
+    return file_explorer.copy_package_to_directory(pack,
+                                                   path_object.get_local_directory('temp'),
+                                                   overwrite=overwrite,
+                                                   rename=rename)

@@ -1,16 +1,15 @@
-import datetime
+import os
 import pathlib
 
 import file_explorer
+
 from ctd_processing.modify_cnv import ModifyCnv
 from ctd_processing.sensor_info import param_reported
-from file_explorer import seabird
-
 from .func import get_sensor_info_columns
 from .sensor_info_item import SensorInfoItem
 
 
-class SensorInfoFile:
+class CreateSensorInfoFile:
     def __init__(self, instrument_file):
         self.instrument_file = instrument_file
         self._stem = None
@@ -18,20 +17,19 @@ class SensorInfoFile:
         self._data = None
 
     def __str__(self):
-        return f'SensorInfoFile: {self._stem}'
+        return f'CreateSensorInfoFile: {self._stem}'
 
-    def create_file_from_cnv_file(self, cnv_file_path, output_dir=None):
+    def create_file_from_cnv_file(self, cnv_file_path, overwrite=False):
         """
         Created a sensor info file with information in given cnv file.
         The sensor info file is created at the same location as the cnv file.
         """
         path = pathlib.Path(cnv_file_path)
         self._stem = path.stem
-        if not output_dir:
-            output_dir = path.parent
+        output_dir = path.parent
         self._save_path = pathlib.Path(output_dir, f'{self._stem}.sensorinfo')
         self._save_xml_data_from_cnv(path)
-        self._save_file()
+        self._save_file(overwrite=overwrite)
 
     def _save_xml_data_from_cnv(self, path):
         cnv_file = ModifyCnv(path)
@@ -111,12 +109,14 @@ class SensorInfoFile:
                     'serial_number': None}
             self.cnv_info.append(info)
 
-    def _save_file(self):
+    def _save_file(self, overwrite=False):
+        if self._save_path.exists() and overwrite:
+            os.remove(self._save_path)
         with open(self._save_path, 'w') as fid:
             fid.write('\n'.join(self._data))
 
 
-class SensorInfoFiles:
+class CreateSensorInfoSummaryFile:
 
     def __init__(self, directory):
         self._directory = pathlib.Path(directory)
