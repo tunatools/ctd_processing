@@ -42,6 +42,6 @@ def get_sensor_info_object(instrumentinfo_file):
     return sensor_info
 
 
-def create_sensor_info_summary_file_from_directory(directory, output_directory=None):
-    sensorinfo = CreateSensorInfoSummaryFile(directory)
-    return sensorinfo.write_summary_to_file(directory=output_directory)
+def create_sensor_info_summary_file_from_packages(packs, output_dir=None, **kwargs):
+    sensorinfo = CreateSensorInfoSummaryFile()
+    return sensorinfo.create_from_packages(packs, output_dir=output_dir, **kwargs)

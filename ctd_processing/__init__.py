@@ -8,6 +8,7 @@ from ctd_processing import file_handler
 from ctd_processing import metadata
 from ctd_processing import sensor_info
 from ctd_processing import standard_format
+from ctd_processing import data_delivery
 from ctd_processing.processing.sbe_processing import SBEPostProcessing
 from ctd_processing.processing.sbe_processing import SBEProcessing
 from ctd_processing.processing.sbe_processing import SBEProcessingHandler
@@ -45,7 +46,8 @@ def process_sbe_file(path,
                      surfacesoak='normal',
                      tau=False,
                      overwrite=False,
-                     psa_paths=None):
+                     psa_paths=None,
+                     **kwargs):
     """
     Process seabird file using default psa files.
     Option to override psa files in psa_files
@@ -56,7 +58,7 @@ def process_sbe_file(path,
     cont.select_and_confirm_file(path)
     cont.load_psa_config_list(psa_paths)
     cont.set_options(tau=tau, platform=platform, surfacesoak=surfacesoak)
-    cont.process_file()
+    cont.process_file(**kwargs)
     return cont.pack
 
 
@@ -114,11 +116,17 @@ def create_standard_format_for_packages(packs,
     return new_packs
 
 
-def create_dv_delivery(directory, output_dir):
-    packs = file_explorer.get_packages_in_directory(directory, as_list=True)
-    postp = SBEPostProcessing(packs, overwrite=True, output_dir=output_dir)
-    postp.create_sensorinfo_summary_file()
-    postp.create_metadata_file()
+def create_dv_delivery_for_packages(packs, output_dir, **kwargs):
+    for pack in packs:
+        try:
+            meta = metadata.CreateMetadataFile(package=pack, overwrite=False)
+            path = meta.write_to_file()
+            file_explorer.add_path_to_package(path, pack, replace=False)
+        except FileExistsError:
+            continue
+    data_delivery.create_dv_data_delivery_for_packages(packs, output_dir=output_dir, **kwargs)
+
+
 
 
 

@@ -150,7 +150,7 @@ class Parameter:
         self._nr_decimals = None
         self.sample_value = None
         self._data = []
-        self.active = False
+        self.active = True
 
     def __getitem__(self, item):
         return self.info.get(item)
@@ -187,7 +187,7 @@ class Parameter:
 
     def get_format(self, value=None):
         if self.use_value_format:
-            print('--', self.name, self.value_format(self.description))
+            # print('--', self.name, self.value_format(self.description))
             return self.value_format(self.description)
         if self._nr_decimals is None:
             form = f'{self._tot_value_length}{self._value_format}'
@@ -197,18 +197,6 @@ class Parameter:
             else:
                 form = f'{self._tot_value_length}.{self._nr_decimals}{self._value_format}'
         return form
-
-    # def get_format(self, value=None):
-    #     if self.use_cnv_info_format:
-    #         return self.cnv_info_object.format
-    #     if self._nr_decimals is None:
-    #         form = f'{self._tot_value_length}{self._value_format}'
-    #     else:
-    #         if value and self._value_format == 'e' and str(value).startswith('-'):
-    #             form = f'{self._tot_value_length}.{self._nr_decimals - 1}{self._value_format}'
-    #         else:
-    #             form = f'{self._tot_value_length}.{self._nr_decimals}{self._value_format}'
-    #     return form
 
     def set_value_length(self, length):
         self._tot_value_length = length
@@ -625,8 +613,6 @@ class ModifyCnv(CnvFile):
     def _get_calculated_true_depth(self):
         prdM_data = self.pressure_data
         sigT_data = self.density_data
-        # print(prdM_data[:10])
-        # print(sigT_data[:10])
 
         # Beräkning av truedepth # Ersätt depFM med true depth i headern
         # Start params

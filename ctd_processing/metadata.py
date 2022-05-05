@@ -47,14 +47,15 @@ class CreateMetadataFile:
         self._stem = None
         self._save_path = None
         self._data = None
+        self._kwargs = kwargs
 
-        self._save_info(**kwargs)
+        self._save_info()
 
     def __str__(self):
         return f'CreateMetadataFile'
 
-    def _save_info(self, **kwargs):
-        metarow = PackageMetadata(self._pack, **kwargs)
+    def _save_info(self):
+        metarow = PackageMetadata(self._pack, **self._kwargs)
         self._data = metarow.get_metadata()
 
     def write_to_file(self):
@@ -65,6 +66,8 @@ class CreateMetadataFile:
             raise FileNotFoundError(f'No cnv or standard format file found in package: {self._pack.key}')
 
         path = pathlib.Path(file_path.parent, f'{file_path.stem}.metadata')
+        if path.exists() and not self._kwargs.get('overwrite'):
+            raise FileExistsError(path)
         columns = get_metadata_columns()
         lines = []
         lines.append('\t'.join(columns))
@@ -76,11 +79,24 @@ class CreateMetadataFile:
 
 class CreateMetadataSummaryFile:
 
-    def __init__(self, directory):
-        self._directory = pathlib.Path(directory)
-        self._paths = [path for path in self._directory.iterdir() if path.suffix == '.metadata']
+    def __init__(self):
+        self._paths = []
         self._metadata = []
+
+    def create_from_packages(self, packs, output_dir, **kwargs):
+        self._paths = self._get_paths_from_packages(packs)
         self._save_info()
+        self.write_summary_to_file(output_dir, **kwargs)
+
+    @staticmethod
+    def _get_paths_from_packages(packs):
+        paths = []
+        for pack in packs:
+            path = pack.get_file_path(suffix='.metadata')
+            if not path:
+                raise FileNotFoundError(f'No .metadata file for package {pack.key}')
+            paths.append(path)
+        return sorted(paths)
 
     def _save_info(self):
         for path in self._paths:
@@ -96,15 +112,18 @@ class CreateMetadataSummaryFile:
                     meta = dict(zip(header, split_line))
                     self._metadata.append(meta)
 
-    def write_summary_to_file(self, directory=None):
-        if not directory:
-            directory = self._directory
+    def write_summary_to_file(self, directory, **kwargs):
         path = pathlib.Path(directory, 'metadata.txt')
+        if path.exists() and not kwargs.get('overwrite'):
+            raise FileExistsError(path)
         columns = get_metadata_columns()
         lines = []
         lines.append('\t'.join(columns))
         for meta in self._metadata:
-            lines.append('\t'.join(meta))
+            line = []
+            for key in columns:
+                line.append(meta.get(key, ''))
+            lines.append('\t'.join(line))
         with open(path, 'w') as fid:
             fid.write('\n'.join(lines))
         return path
@@ -122,8 +141,6 @@ def get_metadata_columns():
     return columns
 
 
-if __name__ == '__main__':
-    mdf = CreateMetadataFile(r'C:\mw\temp_ctd_pre_system_data_root\cnv')
-    mdf.write_to_file()
-
-    hfi = modify_cnv.get_header_form_information(r'C:\mw\temp_ctd_pre_system_data_root\cnv/SBE09_1387_20210413_1113_77SE_00_0278.cnv')
+def create_metadata_summary_file_from_packages(packs, output_dir=None, **kwargs):
+    metadata = CreateMetadataSummaryFile()
+    return metadata.create_from_packages(packs, output_dir=output_dir, **kwargs)

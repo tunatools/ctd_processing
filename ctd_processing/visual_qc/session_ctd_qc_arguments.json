@@ -1,6 +1,6 @@
 {
-    "data_directory": "C:\\mw\\temmp\\temp_ctd_pre_system_data_root\\2020\\standard_format",
+    "data_directory": "C:\\mw\\svea_ctd_dumps\\svea_ctd_april\\mw_for_testing\\local\\2022\\standard_format",
     "visualize_setting": "smhi_expedition_vis",
     "filters": null,
-    "export_folder": "C:\\mw\\temmp\\temp_ctd_pre_system_data_root\\2020\\standard_format"
+    "export_folder": "C:\\mw\\svea_ctd_dumps\\svea_ctd_april\\mw_for_testing\\local\\2022\\standard_format"
 }

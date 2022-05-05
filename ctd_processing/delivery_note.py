@@ -4,13 +4,14 @@ import pathlib
 
 class CreateSummaryDeliveryNote:
 
-    def __init__(self, package, **kwargs):
-        self._pack = package
-        self._stem = None
-        self._save_path = None
+    def __init__(self):
+        self._packs = None
         self._data = None
 
+    def create_from_packages(self, packs, output_dir, **kwargs):
+        self._packs = packs
         self._save_info(**kwargs)
+        self.write_to_file(output_dir, **kwargs)
 
     def __str__(self):
         return f'CreateDeliveryNote'
@@ -37,7 +38,7 @@ class CreateSummaryDeliveryNote:
         self._data = dict()
         self._data['MYEAR'] = ', '.join(sorted(year_set)) or kwargs.get('MYEAR', '')
         self._data['DTYPE'] = 'PROFILE'
-        self._data['MPROG'] = ', '.join(sorted(mprog_set)) or kwargs.get('MPROG', '')
+        self._data['MPROG'] = ', '.join(sorted(mprog_set)) or kwargs.get('mprog', '') or kwargs.get('MPROG', '')
         self._data['ORDERER'] = ', '.join(sorted(set(all_orderers))) or kwargs.get('ORDERER', '')
         self._data['PROJ'] = ', '.join(sorted(proj_set)) or kwargs.get('PROJ', '')
         self._data['RLABO'] = kwargs.get('RLABO', '') or 'SMHI'
@@ -59,8 +60,10 @@ class CreateSummaryDeliveryNote:
         # self._data['kontaktperson'] = self._contact
         # self._data['kommentar'] = self._comment
 
-    def write_to_file(self, directory):
+    def write_to_file(self, directory, **kwargs):
         path = pathlib.Path(directory, 'delivery_note.txt')
+        if path.exists() and not kwargs.get('overwrite'):
+            raise FileExistsError(path)
         lines = []
         for key, value in self._data.items():
             lines.append(f'{key}: {value}')
@@ -76,23 +79,24 @@ class CreateDeliveryNote:
         self._stem = None
         self._save_path = None
         self._data = None
+        self._kwargs = kwargs
 
-        self._save_info(**kwargs)
+        self._save_info()
 
     def __str__(self):
         return f'CreateDeliveryNote'
 
-    def _save_info(self, **kwargs):
+    def _save_info(self):
         self._data = dict()
-        self._data['MYEAR'] = self._pack('year') or kwargs.get('MYEAR', '')
+        self._data['MYEAR'] = self._pack('year') or self._kwargs.get('MYEAR', '')
         self._data['DTYPE'] = 'PROFILE'
-        self._data['MPROG'] = self._pack('mprog') or kwargs.get('MPROG', '')
-        self._data['ORDERER'] = self._pack('orderer') or kwargs.get('ORDERER', '')
-        self._data['PROJ'] = self._pack('proj') or kwargs.get('PROJ', '')
-        self._data['RLABO'] = kwargs.get('RLABO', '') or 'SMHI'
-        self._data['REPBY'] = kwargs.get('contact', '') or kwargs.get('REPBY', '')
-        self._data['COMNT_DN'] = kwargs.get('comment', '') or kwargs.get('COMNT_DN', '')
-        self._data['DESCR'] = kwargs.get('description', '') or kwargs.get('DESCR', '')
+        self._data['MPROG'] = self._pack('mprog') or self._kwargs.get('MPROG', '')
+        self._data['ORDERER'] = self._pack('orderer') or self._kwargs.get('ORDERER', '')
+        self._data['PROJ'] = self._pack('proj') or self._kwargs.get('PROJ', '')
+        self._data['RLABO'] = self._kwargs.get('RLABO', '') or 'SMHI'
+        self._data['REPBY'] = self._kwargs.get('contact', '') or self._kwargs.get('REPBY', '')
+        self._data['COMNT_DN'] = self._kwargs.get('comment', '') or self._kwargs.get('COMNT_DN', '')
+        self._data['DESCR'] = self._kwargs.get('description', '') or self._kwargs.get('DESCR', '')
         self._data['FORMAT'] = 'PROFILE'
         self._data['VERSION'] = datetime.datetime.now().strftime('%Y-%m-%d')
 
@@ -111,6 +115,8 @@ class CreateDeliveryNote:
     def write_to_file(self):
         cnv = self._pack.get_file_path(prefix=None, suffix='.cnv')
         path = pathlib.Path(cnv.parent, f'{cnv.stem}.deliverynote')
+        if path.exists() and not self._kwargs.get('overwrite'):
+            raise FileExistsError(path)
         lines = []
         for key, value in self._data.items():
             lines.append(f'{key}: {value}')
@@ -119,3 +125,6 @@ class CreateDeliveryNote:
         return path
 
 
+def create_deliverynote_summary_file_from_packages(packs, output_dir=None, **kwargs):
+    summary = CreateSummaryDeliveryNote()
+    return summary.create_from_packages(packs, output_dir=output_dir, **kwargs)

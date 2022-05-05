@@ -22,6 +22,7 @@ active	format	parameter
 1	11.4f	sigma-t11: Density, 2 [sigma-t, kg/m^3 ]
 1	11.3f	depSM: Depth [salt water, m], lat
 1	11.3f	depFM: Depth [true depth, m], lat
+1	11.3f	depFM: Depth [fresh water, m], lat
 1	11.2f	svCM: Sound Velocity [Chen-Millero, m/s]
 1	11.2f	svCM1: Sound Velocity, 2 [Chen-Millero, m/s]
 1	11.4f	sbeox0ML/L: Oxygen, SBE 43 [ml/l], WS = 2

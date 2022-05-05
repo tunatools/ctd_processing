@@ -62,7 +62,7 @@ class CreateSensorInfoFile:
             # print('instrument_info', instrument_info)
             for col in columns:
                 # print('col', col)
-                value = str(instrument_info.get(col, ''))
+                value = str(instrument_info.get(col, '')).strip()
                 if col == 'SENSOR_ID':
                     value = info.get('serial_number', '')
                     if value is None:
@@ -82,11 +82,19 @@ class CreateSensorInfoFile:
                     # if info['parameter'][-1] == '2':
                     if reported_name.split('[')[0].replace(' ', '').endswith(',2'):
                         if col == 'PARAM_SIMPLE':
-                            value = value + '2'
+                            if value.endswith('*'):
+                                value = value.strip('*')
+                            else:
+                                value = value + '2'
                         elif col == 'PARAM':
-                            split_value = value.split('_')
-                            split_value[-2] = split_value[-2] + '2'
-                            value = '_'.join(split_value)
+                            if value.endswith('*'):
+                                value = value.strip('*')
+                            else:
+                                split_value = value.split('_')
+                                split_value[-2] = split_value[-2] + '2'
+                                value = '_'.join(split_value)
+                    else:
+                        value = value.strip('*')
                 else:
                     if col == 'INSTRUMENT_ID':
                         value = file('instrument_id')
@@ -118,11 +126,24 @@ class CreateSensorInfoFile:
 
 class CreateSensorInfoSummaryFile:
 
-    def __init__(self, directory):
-        self._directory = pathlib.Path(directory)
-        self._paths = [path for path in self._directory.iterdir() if path.suffix == '.sensorinfo']
+    def __init__(self):
+        self._paths = None
         self._sensor_info_items = {}
+
+    def create_from_packages(self, packs, output_dir, **kwargs):
+        self._paths = self._get_paths_from_packages(packs)
         self._save_info()
+        self.write_summary_to_file(output_dir, **kwargs)
+
+    @staticmethod
+    def _get_paths_from_packages(packs):
+        paths = []
+        for pack in packs:
+            path = pack.get_file_path(suffix='.sensorinfo')
+            if not path:
+                raise FileNotFoundError(f'No .sensorinfo file for package {pack.key}')
+            paths.append(path)
+        return paths
 
     def _save_info(self):
         self._sensor_info_items = {}
@@ -143,10 +164,10 @@ class CreateSensorInfoSummaryFile:
                                                                  obj=SensorInfoItem()))
                     self._sensor_info_items[par][-1]['obj'].add_data(data)
 
-    def write_summary_to_file(self, directory=None):
-        if not directory:
-            directory = self._directory
+    def write_summary_to_file(self, directory, **kwargs):
         path = pathlib.Path(directory, 'sensorinfo.txt')
+        if path.exists() and not kwargs.get('overwrite'):
+            raise FileExistsError(path)
         columns = get_sensor_info_columns()
         lines = []
         lines.append('\t'.join(columns))

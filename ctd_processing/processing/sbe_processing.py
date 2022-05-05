@@ -14,7 +14,9 @@ from ctd_processing import standard_format
 from ctd_processing.processing.sbe_batch_file import SBEBatchFile
 from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
 from ctd_processing.processing.sbe_setup_file import SBESetupFile
+import logging
 
+logger = logging.getLogger(__name__)
 
 class SBEProcessing:
 
@@ -81,7 +83,7 @@ class SBEProcessing:
         return psa.DerivePSAfile(self._processing_paths('psa_derive'))
 
     def set_tau_state(self, state):
-        self._get_derive_psa_obj().set_tau_correction(bool(bool))
+        self._get_derive_psa_obj().set_tau_correction(bool(state))
 
     def select_file(self, file_path):
         """ Kontrollen för att skriva över bör göras mot raw-mappen istället för mot tempmappen. """
@@ -167,15 +169,27 @@ class SBEProcessing:
         datcnv = self._processing_paths.get_psa_path('datcnv')
         if not datcnv:
             raise FileNotFoundError('Could not find datcnv-file')
+        xmlcon = self._package.get_file_path(suffix=self._package('config_file_suffix'))
         mismatch = compare.get_datcnv_and_xmlcon_pars_mismatch(datcnv=datcnv,
-                                                               xmlcon=self._package.get_file_path(suffix=self._package('config_file_suffix')))
+                                                               xmlcon=xmlcon)
         if mismatch:
             raise compare.MismatchWarning(data=mismatch)
 
-    def run_process(self, overwrite=False, ignore_mismatch=False):
+    def _try_fixing_mismatch(self):
+        from file_explorer.psa.datcnv import ManipulateDatCnv
+        datcnv = self._processing_paths.get_psa_path('datcnv')
+        if not datcnv:
+            raise FileNotFoundError('Could not find datcnv-file')
+        xmlcon = self._package.get_file_path(suffix=self._package('config_file_suffix'))
+        man = ManipulateDatCnv(datcnv)
+        man.remove_parameters_not_in_xmlcon(xmlcon)
+
+    def run_process(self, overwrite=False, ignore_mismatch=False, try_fixing_mismatch=False):
         if not self._confirmed:
             raise Exception('No file confirmed!')
-        if not ignore_mismatch:
+        if try_fixing_mismatch:
+            self._try_fixing_mismatch()
+        elif not ignore_mismatch:
             self._check_files_mismatch()
         self._overwrite = bool(overwrite)
         self._setup_file.create_file()
@@ -324,5 +338,5 @@ class SBEProcessingHandler:
         self.sbe_processing.set_tau_state(kwargs.get('tau', False))
 
     def process_file(self, **kwargs):
-        self._pack = self.sbe_processing.run_process(overwrite=kwargs.get('overwrite', self._overwrite))
+        self._pack = self.sbe_processing.run_process(overwrite=kwargs.get('overwrite', self._overwrite), **kwargs)
         self.sbe_processing.create_zip_with_psa_files()

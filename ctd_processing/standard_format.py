@@ -210,8 +210,9 @@ class CreateStandardFormat:
             shutil.copy2(source_path, target_path)
 
     def _create_standard_format(self):
-        all_file_paths = [str(path) for path in self._temp_dir.iterdir()]
-        s = ctdpy_session.Session(filepaths=all_file_paths,
+        all_file_paths = [path for path in self._temp_dir.iterdir()]
+        stem = [path for path in all_file_paths if path.suffix == '.cnv'][0].stem
+        s = ctdpy_session.Session(filepaths=[str(path) for path in all_file_paths],
                                   reader='smhi')
         datasets = s.read()
 
@@ -222,12 +223,12 @@ class CreateStandardFormat:
 
         # Creation is threaded
         import time
-        time.sleep(.2)
+        time.sleep(.1)
 
         source_dir = pathlib.Path(data_path)
-        source_path = pathlib.Path(source_dir, f'{self._pack.key}.txt')
+        source_path = pathlib.Path(source_dir, f'{stem}.txt')
         target_dir = self.paths.get_local_directory('nsf', create=True)
-        target_path = pathlib.Path(target_dir, source_path.name)
+        target_path = pathlib.Path(target_dir, f'{self._pack.key}.txt')
         if target_path.exists() and not self._kwargs.get('overwrite'):
             raise FileExistsError(target_path)
         shutil.copy2(source_path, target_path)

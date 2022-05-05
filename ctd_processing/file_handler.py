@@ -21,6 +21,7 @@ PREFIX_SUFFIX_SUBFOLDER_MAPPING = {
     (None, '.btl'): 'raw',
     (None, '.hdr'): 'raw',
     (None, '.hex'): 'raw',
+    (None, '.ros'): 'raw',
     (None, '.xmlcon'): 'raw',
     (None, '.con'): 'raw',
     (None, '.zip'): 'raw',
@@ -167,11 +168,12 @@ def copy_package_to_local(pack, path_object, overwrite=False, rename=False):
             continue
         target_dir = path_object.get_local_directory(key, year=pack('year'), create=True)
         if rename:
-            target_path = Path(target_dir, f'{file.key}{file.suffix}')
+            target_path = Path(target_dir, file.get_proper_name())
         else:
             target_path = Path(target_dir, path.name)
         if target_path.exists() and not overwrite:
             raise FileExistsError(target_path)
+        print(target_path)
         shutil.copy2(path, target_path)
 
     return file_explorer.get_package_for_key(pack.key, path_object.get_local_directory('root'), exclude_directory='temp')
