@@ -382,7 +382,9 @@ class ModifyCnv(CnvFile):
 
     @staticmethod
     def get_datetime_object(date_str):
-        if len(date_str) == 8:
+        if len(date_str) == 6:
+            format_str = '%d%m%y'
+        elif len(date_str) == 8 and '-' not in date_str:
             format_str = '%d%m%Y'
         else:
             if '-' in date_str:
@@ -498,7 +500,8 @@ class ModifyCnv(CnvFile):
         names = []
         for head in self._header_names:
             names.append(head.description)
-        return sorted(names)
+        # return sorted(names)
+        return names
 
     def _set_lines(self):
         all_lines = []

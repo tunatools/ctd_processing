@@ -2,6 +2,11 @@ import pandas as pd
 import pathlib
 import openpyxl
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 class InstrumentFile:
     def __init__(self, file_path):
@@ -31,7 +36,7 @@ class InstrumentFile:
             cnv_codes = [item.strip() for item in str(df.iloc[i]['CNV_CODE']).split(',')]
             data['cnv_codes'] = cnv_codes
             sensor_string = str(df.iloc[i]['SENSOR_ID'])
-            if sensor_string is '':
+            if sensor_string == '':
                 for code in cnv_codes:
                     if code == '':
                         continue
@@ -59,13 +64,11 @@ class InstrumentFile:
     def get_info_for_parameter_and_sensor_id(self, parameter, sensor_id=None):
         """ Returns information from self._info. Matches key in self._info where key is part of "parameter" """
         for key, info in self._info.items():
-            # print('¤'*30)
-            # print('key:', key)
-            # print('type(key):', type(key))
-            # print('par:', parameter)
-            # print('sensor_id:', sensor_id)
-            # print()
+            logger.debug(f'key: {key}')
+            logger.debug(f'type(key): {type(key)}')
+            logger.debug(f'par: {parameter}')
+            logger.debug(f'sensor_id: {sensor_id}')
             if key == parameter and sensor_id is None:
                 return info
-            if key in parameter:
+            if key in parameter and sensor_id:
                 return info.get(str(sensor_id))

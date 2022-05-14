@@ -45,7 +45,6 @@ class CreateSensorInfoFile:
         pressure_instrument_info = self.instrument_file.get_info_for_parameter_and_sensor_id(parameter='Pressure',
                                                                                              sensor_id=file('instrument_number'))
 
-        instrument = path.name.split('_')[0]
         columns = [col for col in get_sensor_info_columns() if col not in ['VALIDFR', 'VALIDTO']]
         self._data.append('\t'.join(columns))
         for info in self.cnv_info:
