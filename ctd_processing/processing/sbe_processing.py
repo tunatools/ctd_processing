@@ -5,6 +5,7 @@ import shutil
 import file_explorer
 from file_explorer import psa
 from file_explorer.seabird import paths
+from file_explorer.seabird import edit_cnv
 
 from ctd_processing import delivery_note
 from ctd_processing import metadata
@@ -18,9 +19,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class SBEProcessing:
 
-    def __init__(self, sbe_paths=None, sbe_processing_paths=None):
+    def __init__(self, sbe_paths=None, sbe_processing_paths=None, **kwargs):
         self._paths = sbe_paths
         self._processing_paths = sbe_processing_paths
 
@@ -28,6 +30,7 @@ class SBEProcessing:
         self._confirmed = False
         self._overwrite = False
         self._package = None
+        self._old_key = kwargs.get('old_key', False)
 
     @property
     def platform(self):
@@ -91,7 +94,7 @@ class SBEProcessing:
         if not path.exists():
             raise FileNotFoundError(path)
         self._file_path = path
-        self._package = file_explorer.get_package_for_file(path)
+        self._package = file_explorer.get_package_for_file(path, old_key=self._old_key)
         self._paths.set_year(self.year)
         self._confirmed = False
 
@@ -103,8 +106,8 @@ class SBEProcessing:
             raise PermissionError('Confirmed file is not the same as the selected!')
         # Copying files and load instrument files object
         new_path = self._copy_all_files_with_same_file_stem_to_working_dir(path)
-        self._package = file_explorer.get_package_for_file(new_path)
-        self._package = file_explorer.rename_package(self._package, overwrite=True)
+        self._package = file_explorer.get_package_for_file(new_path, old_key=self._old_key)
+        self._package = file_explorer.rename_package(self._package, overwrite=True, old_key=self._old_key)
         self._processing_paths.set_raw_file_path(self._package['hex'])
         self._processing_paths.set_config_suffix(self._package('config_file_suffix'))
         self._setup_file = SBESetupFile(paths=self._paths,
@@ -184,7 +187,7 @@ class SBEProcessing:
         man = ManipulateDatCnv(datcnv)
         man.remove_parameters_not_in_xmlcon(xmlcon)
 
-    def run_process(self, overwrite=False, ignore_mismatch=False, try_fixing_mismatch=False):
+    def run_process(self, overwrite=False, ignore_mismatch=False, try_fixing_mismatch=False, **kwargs):
         if not self._confirmed:
             raise Exception('No file confirmed!')
         if try_fixing_mismatch:
@@ -203,11 +206,12 @@ class SBEProcessing:
         modify_cnv.modify_cnv_down_file(self._package,
                                      directory=self._paths.get_local_directory('cnv', create=True),
                                      overwrite=self._overwrite)
-        self._package = file_explorer.get_package_for_key(key, directory=self._paths.get_local_directory('temp'))
+        self._package = file_explorer.get_package_for_key(key, directory=self._paths.get_local_directory('temp'),
+                                                          exclude_directory='create_standard_format', **kwargs)
 
         self._copy_processed_files_to_local()
         self._package = file_explorer.get_package_for_file(self._package['hex'], directory=self._paths.get_local_directory('root'),
-                                                           exclude_directory='temp')
+                                                           exclude_directory='temp', **kwargs)
         return self._package
 
     def create_zip_with_psa_files(self):
@@ -272,12 +276,12 @@ class SBEPostProcessing:
         delivery.write_to_file()
 
     def update_package(self):
-        file_explorer.update_package_with_files_in_directory(self._pack, self._pack.get_file_path(prefix=None, suffix='.cnv').parent)
+        file_explorer.update_package_with_files_in_directory(self._pack, self._pack.get_file_path(prefix=None, suffix='.cnv').parent, **self._kwargs)
 
     def create_standard_format_file(self):
         obj = standard_format.CreateStandardFormat(paths_object=self._sbe_paths, **self._kwargs)
         obj.create_from_package(self._pack)
-        file_explorer.update_package_with_files_in_directory(self._pack, self._sbe_paths.get_local_directory('nsf'))
+        file_explorer.update_package_with_files_in_directory(self._pack, self._sbe_paths.get_local_directory('nsf'), **self._kwargs)
 
 
 class SBEProcessingHandler:
@@ -299,7 +303,7 @@ class SBEProcessingHandler:
         self.sbe_paths.set_local_root_directory(target_root_directory)
         self.sbe_processing_paths = SBEProcessingPaths(self.sbe_paths)
         self.sbe_processing = SBEProcessing(sbe_paths=self.sbe_paths,
-                                            sbe_processing_paths=self.sbe_processing_paths)
+                                            sbe_processing_paths=self.sbe_processing_paths, **kwargs)
 
     @property
     def pack(self):
@@ -311,9 +315,9 @@ class SBEProcessingHandler:
         self.sbe_paths.set_config_root_directory(config_root_directory)
         self.config_root_directory = config_root_directory
 
-    def select_and_confirm_file(self, file_path=None):
+    def select_and_confirm_file(self, file_path=None, **kwargs):
         self.file_path = pathlib.Path(file_path)
-        self._pack = file_explorer.get_package_for_file(file_path)
+        self._pack = file_explorer.get_package_for_file(file_path, **kwargs)
         self.sbe_processing.select_file(self._pack['hex'])
         self.sbe_processing.confirm_file(self._pack['hex'])
 

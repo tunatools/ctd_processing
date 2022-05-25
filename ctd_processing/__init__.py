@@ -53,9 +53,9 @@ def process_sbe_file(path,
     Option to override psa files in psa_files
     """
     path = pathlib.Path(path)
-    cont = SBEProcessingHandler(target_root_directory=target_root_directory, overwrite=overwrite)
+    cont = SBEProcessingHandler(target_root_directory=target_root_directory, overwrite=overwrite, **kwargs)
     cont.set_config_root_directory(config_root_directory)
-    cont.select_and_confirm_file(path)
+    cont.select_and_confirm_file(path, **kwargs)
     cont.load_psa_config_list(psa_paths)
     cont.set_options(tau=tau, platform=platform, surfacesoak=surfacesoak)
     cont.process_file(**kwargs)
@@ -88,6 +88,7 @@ def create_standard_format_for_packages(packs,
                                         config_root_directory=None,
                                         overwrite=False,
                                         sharkweb_btl_row_file=None,
+                                        old_key=False, 
                                         **kwargs):
     """
     Use to create standard format. Creates sensorinfo file.
@@ -109,7 +110,7 @@ def create_standard_format_for_packages(packs,
                 logger.info(f'No metadata in sharkweb_btl_file {sharkweb_btl_row_file} for path {pack.key}')
             else:
                 meta.update(webmeta)
-        post = SBEPostProcessing(pack, target_root_directory=target_root_directory, overwrite=overwrite, **meta)
+        post = SBEPostProcessing(pack, target_root_directory=target_root_directory, overwrite=overwrite, old_key=old_key, **meta)
         post.set_config_root_directory(config_root_directory)
         post.create_all_files()
         new_packs.append(post.pack)

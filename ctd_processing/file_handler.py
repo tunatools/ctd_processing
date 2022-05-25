@@ -38,11 +38,14 @@ class SBEFileHandler:
     def select_file(self, path):
         """ This will load all files matching the file_paths file stem. Loading files in paths_object. """
         file_stem = Path(path).stem
-        if not file_stem.startswith('SBE'):
+        self.select_stem(file_stem)
+
+    def select_stem(self, stem):
+        if not stem.startswith('SBE'):
             raise exceptions.InvalidFileNameFormat('Not a valid file')
-        year = file_stem.split('_')[2][:4]
+        year = stem.split('_')[2][:4]
         self.paths.set_year(year)
-        self._load_files(file_stem)
+        self._load_files(stem)
 
     def _load_files(self, file_stem):
         self._load_local_files(file_stem)

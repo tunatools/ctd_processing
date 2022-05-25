@@ -4,6 +4,7 @@ import time
 from file_explorer import patterns
 from file_explorer.seabird import xmlcon_parser
 from file_explorer.seabird.cnv_file import CnvFile
+from file_explorer.seabird import edit_cnv
 
 from ctd_processing import utils
 
@@ -686,7 +687,8 @@ def modify_cnv_down_file(package, directory=None, overwrite=False):
     except InvalidFileToModify:
         pass
     else:
-        file.save_file(directory, overwrite=overwrite)
+        target_path = file.save_file(directory, overwrite=overwrite)
+        edit_cnv.add_lims_job(target_path, overwrite=True)
         return file
 
 
