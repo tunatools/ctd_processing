@@ -47,6 +47,10 @@ class SBEFileHandler:
         self.paths.set_year(year)
         self._load_files(stem)
 
+    def select_pack(self, pack):
+        self.paths.set_year(pack('year'))
+        self._load_files(pack.pattern)
+
     def _load_files(self, file_stem):
         self._load_local_files(file_stem)
         self._load_server_files(file_stem)
