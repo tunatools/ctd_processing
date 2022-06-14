@@ -106,7 +106,7 @@ class SBEProcessing:
             raise PermissionError('Confirmed file is not the same as the selected!')
         # Copying files and load instrument files object
         new_path = self._copy_all_files_with_same_file_stem_to_working_dir(path)
-        self._package = file_explorer.get_package_for_file(new_path, old_key=self._old_key)
+        self._package = file_explorer.get_package_for_file(new_path, old_key=self._old_key, no_datetime_from_file_name=True)
         self._package = file_explorer.rename_package(self._package, overwrite=True, old_key=self._old_key)
         self._processing_paths.set_raw_file_path(self._package['hex'])
         self._processing_paths.set_config_suffix(self._package('config_file_suffix'))

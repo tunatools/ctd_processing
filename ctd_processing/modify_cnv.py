@@ -561,7 +561,7 @@ class ModifyCnv(CnvFile):
         if fluo_xml_index_2 and (fluo_xml_index_2 + 2) in serial_index_2:
             if not par_name_2:
                 raise Exception(
-                    'Fluorometer parameter finns i xml-delen men inte i parameterlistan. Kan vara missmatch mellan DataCnv och xmlcon. ')
+                    f'Fluorometer parameter finns i xml-delen ({fluo_xml_index_2}) men inte i parameterlistan. Kan vara missmatch mellan DataCnv och xmlcon: \n{self.path}')
             Header.replace_string_at_index(self._header_lines, fluo_xml_index_2, 'Fluorometer',
                                            'Phycocyanin Fluorometer')
             Header.replace_string_at_index(self._header_lines, fluo_index_2, 'Fluorescence', 'Phycocyanin Fluorescence')

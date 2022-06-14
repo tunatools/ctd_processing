@@ -1,4 +1,7 @@
 from ctd_processing.modify_cnv import ModifyCnv
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ParamReported:
@@ -14,6 +17,10 @@ class ParamReported:
         # 1: Hitta instrumentinformation baserat på parameter och sensor_id
         instrument_info = self.instrument_file.get_info_for_parameter_and_sensor_id(parameter=parameter,
                                                                                     sensor_id=sensor_id)
+        
+        if parameter == 'PAR/Irradiance, Biospherical/Licor':
+            logger.warning(f'Stripping parameter "{parameter}" to match later in code')
+            parameter = parameter[:-1]
 
         # 2: Matcha CNV_CODE i instrumentinformationen mot rapporterade name i cnv-filen
         #   a: Matcha CNV_CODE
@@ -30,9 +37,6 @@ class ParamReported:
             # print('self.cnv_file_path', self.cnv_file_path)
             # print('name0', ':', instrument_info['CNV_NAME'], ':', name, ':', parameter)
             for cnv_code in instrument_info['cnv_codes']:
-                # print(cnv_code, self._parameter_is_sensor_1(parameter), self._reported_name_is_sensor_1(name))
-                # print(name)
-                # print(cnv_code)
                 if not self._reported_name_matches_cnv_code(name, cnv_code):
                     continue
                 # print('OK')
