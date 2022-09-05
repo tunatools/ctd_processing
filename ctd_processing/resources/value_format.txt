@@ -18,6 +18,8 @@ active	format	parameter
 1	11.4f	sal11: Salinity, Practical, 2 [PSU]
 1	11.4f	secS-priS: Salinity, Practical, Difference, 2 - 1 [PSU]
 1	11.4f	T2-T190C: Temperature Difference, 2 - 1 [ITS-90, deg C]
+1	11.4f	density00: Density [density, kg/m^3]
+1	11.4f	density11: Density, 2 [density, kg/m^3]
 1	11.4f	sigma-t00: Density [sigma-t, kg/m^3 ]
 1	11.4f	sigma-t11: Density, 2 [sigma-t, kg/m^3 ]
 1	11.3f	depSM: Depth [salt water, m], lat

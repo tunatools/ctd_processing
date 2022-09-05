@@ -116,6 +116,7 @@ class CreateDeliveryNote:
         cnv = self._pack.get_file_path(prefix=None, suffix='.cnv')
         path = pathlib.Path(cnv.parent, f'{cnv.stem}.deliverynote')
         if path.exists() and not self._kwargs.get('overwrite'):
+            return
             raise FileExistsError(path)
         lines = []
         for key, value in self._data.items():

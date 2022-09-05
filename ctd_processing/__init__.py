@@ -2,13 +2,12 @@ import logging
 import pathlib
 
 import file_explorer
-
+from ctd_processing import data_delivery
 from ctd_processing import delivery_note
 from ctd_processing import file_handler
 from ctd_processing import metadata
 from ctd_processing import sensor_info
 from ctd_processing import standard_format
-from ctd_processing import data_delivery
 from ctd_processing.processing.sbe_processing import SBEPostProcessing
 from ctd_processing.processing.sbe_processing import SBEProcessing
 from ctd_processing.processing.sbe_processing import SBEProcessingHandler
@@ -50,7 +49,7 @@ def process_sbe_file(path,
                      **kwargs):
     """
     Process seabird file using default psa files.
-    Option to override psa files in psa_files
+    Option to override psa files in psa_paths
     """
     path = pathlib.Path(path)
     cont = SBEProcessingHandler(target_root_directory=target_root_directory, overwrite=overwrite, **kwargs)

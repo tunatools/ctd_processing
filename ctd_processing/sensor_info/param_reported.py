@@ -13,10 +13,17 @@ class ParamReported:
         self.cnv_reported_names = self.cnv_file.get_reported_names()
 
     def get_reported_name(self, parameter, sensor_id=None):
-        # print('PARAMETER:', parameter)
+        logger.info("=" * 50)
+        logger.info(f"PARAMETER: {parameter}")
+        logger.info(f"SENSOR_ID: {sensor_id}")
+        logger.info("_" * 50)
         # 1: Hitta instrumentinformation baserat på parameter och sensor_id
         instrument_info = self.instrument_file.get_info_for_parameter_and_sensor_id(parameter=parameter,
                                                                                     sensor_id=sensor_id)
+        logger.info('INSTRUMENT_INFO:')
+        for key, value in instrument_info.items():
+            logger.info(f'    {key}: {value}')
+        logger.info("_" * 50)
         
         if parameter == 'PAR/Irradiance, Biospherical/Licor':
             logger.warning(f'Stripping parameter "{parameter}" to match later in code')
@@ -26,25 +33,26 @@ class ParamReported:
         #   a: Matcha CNV_CODE
         #   b: kontrollera om sensor 1 eller 2
         for name in self.cnv_reported_names:
-            # print('NAME', ':', instrument_info['CNV_NAME'], ':', name, ':', parameter)
-            # print('parameter', parameter, name)
+            logger.info("-"*30)
+            logger.info(f"NAME: {instrument_info['CNV_NAME']}: {name}: {parameter}")
+            logger.info(f"parameter' {parameter}, {name}")
             if name.startswith(parameter):
-                # print('OK parameter', parameter, name)
+                logger.info(f"OK parameter, {parameter}, {name}")
                 return name
 
             if instrument_info['CNV_NAME'] not in name:
                 continue
-            # print('self.cnv_file_path', self.cnv_file_path)
-            # print('name0', ':', instrument_info['CNV_NAME'], ':', name, ':', parameter)
+            logger.info(f"self.cnv_file_path, {self.cnv_file_path}")
+            logger.info(f"name0: {instrument_info['CNV_NAME']}: {name}: {parameter}")
             for cnv_code in instrument_info['cnv_codes']:
                 if not self._reported_name_matches_cnv_code(name, cnv_code):
                     continue
-                # print('OK')
+                logger.info(f"OK")
                 if self._parameter_is_sensor_1(parameter) and self._reported_name_is_sensor_1(name):
-                    # print('name1', cnv_code, name, parameter)
+                    logger.info(f"name1, {cnv_code}, {name}, {parameter}")
                     return name
                 if self._parameter_is_sensor_2(parameter) and self._reported_name_is_sensor_2(name):
-                    # print('name2', cnv_code, name, parameter)
+                    logger.info(f"name2, {cnv_code}, {name}, {parameter}")
                     return name
         raise Exception(f'No reported name found in for parameter "{parameter}" in cnv file: {self.cnv_file_path}')
 

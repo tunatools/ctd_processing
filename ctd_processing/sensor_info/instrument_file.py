@@ -65,7 +65,7 @@ class InstrumentFile:
         """ Returns information from self._info. Matches key in self._info where key is part of "parameter" """
         for key, info in self._info.items():
             logger.debug(f'key: {key}')
-            logger.debug(f'type(key): {type(key)}')
+            # logger.debug(f'type(key): {type(key)}')
             logger.debug(f'par: {parameter}')
             logger.debug(f'sensor_id: {sensor_id}')
             if key == parameter and sensor_id is None:

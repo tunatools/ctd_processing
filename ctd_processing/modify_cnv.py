@@ -290,6 +290,7 @@ class ModifyCnv(CnvFile):
                 if line.startswith('* System UTC'):
                     self._header_datetime = datetime.datetime.strptime(line.split('=')[1].strip(), self.header_date_format)
                 elif line.startswith('* NMEA Latitude'):
+                    print(self.path)
                     self._header_lat = line.split('=')[1].strip()[:-1].replace(' ', '')
                 elif line.startswith('* NMEA Longitude'):
                     self._header_lon = line.split('=')[1].strip()[:-1].replace(' ', '')

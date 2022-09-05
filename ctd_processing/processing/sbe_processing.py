@@ -128,6 +128,11 @@ class SBEProcessing:
         target_directory = self._paths.get_local_directory('cnv_up', create=True)
         return self._copy_file(self._package.get_file(suffix='.cnv', prefix='u'), target_directory, overwrite=self._overwrite)
 
+    def _copy_zip_file_to_local(self):
+        target_directory = self._paths.get_local_directory('raw', create=True)
+        return self._copy_file(self._package.get_file(suffix='.zip'), target_directory,
+                               overwrite=self._overwrite)
+
     def _copy_plot_files_to_local(self):
         target_directory = self._paths.get_local_directory('plot', create=True)
         for file in self._package.get_plot_files():
@@ -136,6 +141,7 @@ class SBEProcessing:
     def _copy_processed_files_to_local(self):
         self._copy_raw_files_to_local()
         self._copy_cnv_files_to_local()
+        self._copy_zip_file_to_local()
         self._copy_plot_files_to_local()
 
     def _copy_all_files_with_same_file_stem_to_working_dir(self, file_path):
@@ -204,11 +210,14 @@ class SBEProcessing:
         file_explorer.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('temp'))
 
         modify_cnv.modify_cnv_down_file(self._package,
-                                     directory=self._paths.get_local_directory('cnv', create=True),
-                                     overwrite=self._overwrite)
-        self._package = file_explorer.get_package_for_key(key, directory=self._paths.get_local_directory('temp'),
-                                                          exclude_directory='create_standard_format', **kwargs)
+                                        directory=self._paths.get_local_directory('cnv', create=True),
+                                        overwrite=self._overwrite)
 
+        self.create_zip_with_psa_files()
+        self._package = file_explorer.get_package_for_key(key, directory=self._paths.get_local_directory('temp'),
+                                                          exclude_directory='create_standard_format',
+                                                          exclude_string='ctd_std_fmt',
+                                                          **kwargs)
         self._copy_processed_files_to_local()
         self._package = file_explorer.get_package_for_file(self._package['hex'], directory=self._paths.get_local_directory('root'),
                                                            exclude_directory='temp', **kwargs)
@@ -265,7 +274,8 @@ class SBEPostProcessing:
 
     def create_sensorinfo_files(self):
         sensor_info.create_sensor_info_files_from_package(self._pack,
-                                                          self._sbe_paths('instrumentinfo_file'))
+                                                          self._sbe_paths('instrumentinfo_file'),
+                                                          **self._kwargs)
 
     def create_metadata_file(self):
         meta = metadata.CreateMetadataFile(package=self._pack, **self._kwargs)
@@ -343,4 +353,4 @@ class SBEProcessingHandler:
 
     def process_file(self, **kwargs):
         self._pack = self.sbe_processing.run_process(overwrite=kwargs.get('overwrite', self._overwrite), **kwargs)
-        self.sbe_processing.create_zip_with_psa_files()
+        # self.sbe_processing.create_zip_with_psa_files()

@@ -67,6 +67,7 @@ class CreateMetadataFile:
 
         path = pathlib.Path(file_path.parent, f'{file_path.stem}.metadata')
         if path.exists() and not self._kwargs.get('overwrite'):
+            return
             raise FileExistsError(path)
         columns = get_metadata_columns()
         lines = []
@@ -115,6 +116,7 @@ class CreateMetadataSummaryFile:
     def write_summary_to_file(self, directory, **kwargs):
         path = pathlib.Path(directory, 'metadata.txt')
         if path.exists() and not kwargs.get('overwrite'):
+            return
             raise FileExistsError(path)
         columns = get_metadata_columns()
         lines = []

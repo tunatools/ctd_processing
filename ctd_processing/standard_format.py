@@ -148,9 +148,6 @@ class old_CreateStandardFormat:
         s = ctdpy_session.Session(filepaths=all_file_paths,
                                   reader='smhi')
         datasets = s.read()
-        print('#'*50)
-        for f in sorted(all_file_paths):
-            print(f)
 
         data_path = s.save_data(datasets,
                                 writer='ctd_standard_template',
@@ -206,6 +203,7 @@ class CreateStandardFormat:
             source_path, name = item
             target_path = pathlib.Path(self._temp_dir, name)
             if target_path.exists() and not self._kwargs.get('overwrite'):
+                return
                 raise FileExistsError(target_path)
             shutil.copy2(source_path, target_path)
 
@@ -230,6 +228,7 @@ class CreateStandardFormat:
         target_dir = self.paths.get_local_directory('nsf', create=True)
         target_path = pathlib.Path(target_dir, f'{self._pack.key}.txt')
         if target_path.exists() and not self._kwargs.get('overwrite'):
+            return
             raise FileExistsError(target_path)
         shutil.copy2(source_path, target_path)
 

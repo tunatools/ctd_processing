@@ -19,7 +19,7 @@ class CreateSensorInfoFile:
     def __str__(self):
         return f'CreateSensorInfoFile: {self._stem}'
 
-    def create_file_from_cnv_file(self, cnv_file_path, overwrite=False):
+    def create_file_from_cnv_file(self, cnv_file_path, **kwargs):
         """
         Created a sensor info file with information in given cnv file.
         The sensor info file is created at the same location as the cnv file.
@@ -29,7 +29,7 @@ class CreateSensorInfoFile:
         output_dir = path.parent
         self._save_path = pathlib.Path(output_dir, f'{self._stem}.sensorinfo')
         self._save_xml_data_from_cnv(path)
-        self._save_file(overwrite=overwrite)
+        self._save_file(overwrite=kwargs.get('overwrite'))
 
     def _save_xml_data_from_cnv(self, path):
         cnv_file = ModifyCnv(path)
@@ -117,8 +117,10 @@ class CreateSensorInfoFile:
             self.cnv_info.append(info)
 
     def _save_file(self, overwrite=False):
-        if self._save_path.exists() and overwrite:
-            os.remove(self._save_path)
+        if self._save_path.exists() and not overwrite:
+            return 
+        # if self._save_path.exists() and overwrite:
+        #     os.remove(self._save_path)
         with open(self._save_path, 'w') as fid:
             fid.write('\n'.join(self._data))
 
