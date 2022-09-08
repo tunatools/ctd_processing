@@ -24,6 +24,7 @@ def bokeh_qc_tool():
         filters (dict | None): As of now only month filter eg. {'month_list': [1,2,3]}.
                                Functionality of filter on ship and/or serno is also possible,
                                but not yet implemented in this script.
+                               Option to filter on file_names /MW 2022-09-06
     }
 
     Filters are advised to be implemented if the datasource is big, (~ >3 months of SMHI-EXP-data)
