@@ -54,10 +54,14 @@ def process_sbe_file(path,
     path = pathlib.Path(path)
     cont = SBEProcessingHandler(target_root_directory=target_root_directory, overwrite=overwrite, **kwargs)
     cont.set_config_root_directory(config_root_directory)
-    cont.select_and_confirm_file(path, **kwargs)
+    cont.select_and_confirm_file(path)
+    # cont.select_and_confirm_file(path, **kwargs)
     cont.load_psa_config_list(psa_paths)
     cont.set_options(tau=tau, platform=platform, surfacesoak=surfacesoak)
-    cont.process_file(**kwargs)
+    cont.process_file()
+    # pack = cont.process_file(**kwargs)
+    if kwargs.get('create_asvp_file'):
+        cont.create_asvp_file()
     return cont.pack
 
 

@@ -12,6 +12,7 @@ from ctd_processing import metadata
 from ctd_processing import modify_cnv
 from ctd_processing import sensor_info
 from ctd_processing import standard_format
+from ctd_processing import asvp_file
 from ctd_processing.processing.sbe_batch_file import SBEBatchFile
 from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
 from ctd_processing.processing.sbe_setup_file import SBESetupFile
@@ -237,7 +238,6 @@ class SBEPostProcessing:
     Class to handle post processing tasks.
     This class is not intended to be used directly.
     It can be tricky to call all methods in the right order.
-    Use a function below that suits your needs.
     """
 
     def __init__(self, package, target_root_directory, **kwargs):
@@ -251,11 +251,6 @@ class SBEPostProcessing:
             self._sbe_paths.set_local_root_directory(target_root_directory)
 
         self._sbe_paths.set_year(self._pack('year'))
-
-        # self._output_dir = kwargs.get('output_dir') or pathlib.Path(self._sbe_paths.get_local_directory('temp'),
-        #                                                             'post_processing',
-        #                                                             datetime.datetime.now().strftime('%Y%m%d%H%M'))
-        # self._output_dir.mkdir(parents=True, exist_ok=True)
 
     @property
     def pack(self):
@@ -303,6 +298,7 @@ class SBEProcessingHandler:
 
     def __init__(self, target_root_directory, **kwargs):
         self.target_root_directory = target_root_directory
+        self._kwargs = kwargs
         self._overwrite = kwargs.get('overwrite', False)
         self.config_root_directory = None
         self.file_path = None
@@ -313,7 +309,7 @@ class SBEProcessingHandler:
         self.sbe_paths.set_local_root_directory(target_root_directory)
         self.sbe_processing_paths = SBEProcessingPaths(self.sbe_paths)
         self.sbe_processing = SBEProcessing(sbe_paths=self.sbe_paths,
-                                            sbe_processing_paths=self.sbe_processing_paths, **kwargs)
+                                            sbe_processing_paths=self.sbe_processing_paths, **self._kwargs)
 
     @property
     def pack(self):
@@ -327,7 +323,8 @@ class SBEProcessingHandler:
 
     def select_and_confirm_file(self, file_path=None, **kwargs):
         self.file_path = pathlib.Path(file_path)
-        self._pack = file_explorer.get_package_for_file(file_path, **kwargs)
+        self._kwargs.update(kwargs)
+        self._pack = file_explorer.get_package_for_file(file_path, **self._kwargs)
         self.sbe_processing.select_file(self._pack['hex'])
         self.sbe_processing.confirm_file(self._pack['hex'])
 
@@ -347,10 +344,21 @@ class SBEProcessingHandler:
                                                       exclude_directory=exclude_directory)
 
     def set_options(self, **kwargs):
-        self.sbe_processing_paths.platform = kwargs.get('platform', 'sbe09')
-        self.sbe_processing.set_surfacesoak(kwargs.get('surfacesoak', 'normal'))
-        self.sbe_processing.set_tau_state(kwargs.get('tau', False))
+        self._kwargs.update(kwargs)
+        self.sbe_processing_paths.platform = self._kwargs.get('platform', 'sbe09')
+        self.sbe_processing.set_surfacesoak(self._kwargs.get('surfacesoak', 'normal'))
+        self.sbe_processing.set_tau_state(self._kwargs.get('tau', False))
 
     def process_file(self, **kwargs):
-        self._pack = self.sbe_processing.run_process(overwrite=kwargs.get('overwrite', self._overwrite), **kwargs)
-        # self.sbe_processing.create_zip_with_psa_files()
+        self._kwargs.update(kwargs)
+        self._pack = self.sbe_processing.run_process(**self._kwargs)
+
+    def create_asvp_file(self):
+        directory = pathlib.Path(self._kwargs.get('asvp_output_dir', self._pack.get_file_path(prefix=None, suffix='.cnv').parent))
+        if self._kwargs.get('delete_old_asvp_files'):
+            for path in directory.iterdir():
+                if path.suffix != '.asvp':
+                    continue
+                os.remove(str(path))
+        asvp = asvp_file.ASVPfile(self._pack)
+        asvp.write_file(directory, overwrite=self._kwargs.get('overwrite'))
