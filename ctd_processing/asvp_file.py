@@ -1,6 +1,7 @@
 import file_explorer
 import datetime
 import pathlib
+from sharkpylib import geography
 
 
 class ASVPfile:
@@ -47,6 +48,10 @@ class ASVPfile:
     def format_time(dtime):
         return dtime.strftime('%Y%m%d%H%M')
 
+    @staticmethod
+    def format_pos(pos):
+        return str(round(geography.decmin_to_decdeg(pos), 6))
+
     @property
     def version(self):
         return '1.0'
@@ -61,11 +66,11 @@ class ASVPfile:
 
     @property
     def lat(self):
-        return self.file('lat')
+        return self.format_pos(self.file('lat'))
 
     @property
     def lon(self):
-        return self.file('lon')
+        return self.format_pos(self.file('lon'))
 
     @property
     def radii(self):
@@ -81,7 +86,7 @@ class ASVPfile:
 
     @property
     def src(self):
-        return f'CTD-profile: {self.file.name}'
+        return 'CTD'
 
     @property
     def hist(self):

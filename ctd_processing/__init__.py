@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import traceback
 
 import file_explorer
 from ctd_processing import data_delivery
@@ -61,7 +62,10 @@ def process_sbe_file(path,
     cont.process_file()
     # pack = cont.process_file(**kwargs)
     if kwargs.get('create_asvp_file'):
-        cont.create_asvp_file()
+        try:
+            cont.create_asvp_file()
+        except Exception:
+            logger.error(f'Could not create asvp-file: {traceback.format_exc()}')
     return cont.pack
 
 

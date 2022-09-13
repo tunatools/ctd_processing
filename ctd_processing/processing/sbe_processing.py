@@ -360,5 +360,6 @@ class SBEProcessingHandler:
                 if path.suffix != '.asvp':
                     continue
                 os.remove(str(path))
+        logger.info(f'Creating asvp-file for pack: {self.pack.key} at directory {directory}')
         asvp = asvp_file.ASVPfile(self._pack)
         asvp.write_file(directory, overwrite=self._kwargs.get('overwrite'))
