@@ -56,6 +56,8 @@ class SBEProcessingPaths:
         """
         self._platform_paths = {}
         for path in pathlib.Path(self.sbe_paths('config_dir'), 'SBE', 'processing_psa').iterdir():
+            if path.is_file():
+                continue
             self._platform_paths[path.name.lower()] = path
 
     def update_paths(self):
@@ -65,7 +67,6 @@ class SBEProcessingPaths:
             self._paths['file_batch'] = pathlib.Path(self.sbe_paths('working_dir'), 'SBE_batch.bat')
 
         if self.sbe_paths('config_dir'):
-            # print("= self.sbe_paths('config_dir')", self.sbe_paths('config_dir'))
             self._save_platform_paths()
 
         if self._new_file_stem:
