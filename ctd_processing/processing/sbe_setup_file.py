@@ -26,10 +26,10 @@ class SBESetupFile:
         lines['bottlesum'] = self._get_bottle_sum_line()
         lines['split'] = f'split /p{self._proc_paths("psa_split")} /i{self._proc_paths("cnv")} /o%1'
 
-        lines['plot1'] = f'seaplot /p{self._proc_paths("psa_1-seaplot")} /i{self._proc_paths("cnv_down")} /a_{self._package("station")} /o{self._paths("working_dir")} /f{self._package.key}'
-        lines['plot2'] = f'seaplot /p{self._proc_paths("psa_2-seaplot")} /i{self._proc_paths("cnv_down")} /a_TS_diff_{self._package("station")} /o{self._paths("working_dir")} /f{self._package.key}'
-        lines['plot3'] = f'seaplot /p{self._proc_paths("psa_3-seaplot")} /i{self._proc_paths("cnv_down")} /a_oxygen_diff_{self._package("station")} /o{self._paths("working_dir")} /f{self._package.key}'
-        lines['plot4'] = f'seaplot /p{self._proc_paths("psa_4-seaplot")} /i{self._proc_paths("cnv_down")} /a_fluor_turb_par_{self._package("station")} /o{self._paths("working_dir")} /f{self._package.key}'
+        lines['plot1'] = f'seaplot /p{self._proc_paths("psa_1-seaplot")} /i{self._proc_paths("cnv_down")} /a_{self._package("station").replace(" ", "_")} /o{self._paths("working_dir")} /f{self._package.key}'
+        lines['plot2'] = f'seaplot /p{self._proc_paths("psa_2-seaplot")} /i{self._proc_paths("cnv_down")} /a_TS_diff_{self._package("station").replace(" ", "_")} /o{self._paths("working_dir")} /f{self._package.key}'
+        lines['plot3'] = f'seaplot /p{self._proc_paths("psa_3-seaplot")} /i{self._proc_paths("cnv_down")} /a_oxygen_diff_{self._package("station").replace(" ", "_")} /o{self._paths("working_dir")} /f{self._package.key}'
+        lines['plot4'] = f'seaplot /p{self._proc_paths("psa_4-seaplot")} /i{self._proc_paths("cnv_down")} /a_fluor_turb_par_{self._package("station").replace(" ", "_")} /o{self._paths("working_dir")} /f{self._package.key}'
 
         return list(lines.values())
 
