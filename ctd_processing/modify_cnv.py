@@ -1,5 +1,6 @@
 import datetime
 import time
+import logging
 
 from file_explorer import patterns
 from file_explorer.seabird import xmlcon_parser
@@ -9,6 +10,8 @@ from file_explorer.seabird import edit_cnv
 from ctd_processing import utils
 
 from ctd_processing.value_format import ValueFormat
+
+logger = logging.getLogger(__file__)
 
 
 class InvalidFileToModify(Exception):
@@ -104,11 +107,15 @@ class Header:
                 break
 
     @staticmethod
-    def get_row_index_for_matching_string(lines, match_string, as_list=False):
+    def get_row_index_for_matching_string(lines, match_string, as_list=False, ignore_case=False):
         index = []
         for i, value in enumerate(lines):
-            if match_string in value:
-                index.append(i)
+            if ignore_case:
+                if match_string.lower() in value.lower():
+                    index.append(i)
+            else:
+                if match_string in value:
+                    index.append(i)
         if not index:
             return None
         if as_list:
@@ -243,6 +250,7 @@ class ModifyCnv(CnvFile):
     g = 9.818  # g vid 60 gr nord (dblg)
 
     def __init__(self, *args, **kwargs):
+        self._station = kwargs.pop('station', None)
         self._use_value_format = kwargs.pop('use_value_format', True)
         self._value_format_object = ValueFormat(value_format_path=kwargs.pop('value_format_path', None))
         super().__init__(*args, **kwargs)
@@ -265,6 +273,7 @@ class ModifyCnv(CnvFile):
         self._modify_irradiance()
         self._modify_fluorescence()
         self._modify_depth()
+        self._modify_station()
 
         self._set_lines()
 
@@ -598,6 +607,18 @@ class ModifyCnv(CnvFile):
                 new_depth_data.append(round(value, 3))
         self.parameters[self.col_depth].data = new_depth_data
 
+    def _modify_station(self):
+        logger.debug(f'_modify_station: {self._station}')
+        if not self._station:
+            return
+        if self._station == self._header_station:
+            logger.info(f'Given station "{self._header_station}" name is ths same as in header in file: {self.path}')
+            return
+        index = Header.get_row_index_for_matching_string(self._header_lines, 'station', ignore_case=True)
+        Header.replace_string_at_index(self._header_lines, index, self._header_station, self._station,
+                                       ignore_if_present=False)
+        logger.error(f'{self._header_lines[index]=}')
+
     def _get_mean_sound_velocity(self):
         svCM_data = self.sound_velocity_data
         return sum(svCM_data) / len(svCM_data)
@@ -681,16 +702,18 @@ class ModifyCnv(CnvFile):
 
 
 def modify_cnv_down_file(package, directory=None, overwrite=False):
-    file = ModifyCnv(package.get_file(prefix='d', suffix='.cnv').path)
+    file = ModifyCnv(package.get_file(prefix='d', suffix='.cnv').path, station=package('station', pref_suffix='.hdr'))
     file.key = package.key
     try:
         file.modify()
-    except InvalidFileToModify:
-        pass
-    else:
         target_path = file.save_file(directory, overwrite=overwrite)
         edit_cnv.add_lims_job(target_path, overwrite=True)
         return file
+    except InvalidFileToModify:
+        logger.warning(f'Invalid file to modify {file}')
+    except Exception:
+        raise
+
 
 
 def get_parameter_channels_and_names_from_cnv(path):

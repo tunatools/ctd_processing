@@ -57,5 +57,5 @@ class SBESetupFile:
         #    print(key)
         for p in range(1, 5):
             obj = psa.PlotPSAfile(self._proc_paths(f"psa_{p}-seaplot"))
-            obj.title = self._package('station')
+            obj.title = self._package('station', pref_suffix='.hdr')
             obj.save()
