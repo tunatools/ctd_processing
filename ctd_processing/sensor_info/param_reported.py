@@ -47,7 +47,7 @@ class ParamReported:
                     logger.debug(f"OK sensor 1: {parameter=}, {name=}")
                     return name
                 if self._parameter_is_sensor_2(parameter) and self._reported_name_is_sensor_2(name):
-                    logger.debug(f"OK sensor 1: {parameter=}, {name=}")
+                    logger.debug(f"OK sensor 2: {parameter=}, {name=}")
                     return name
         msg = f'No reported name found in for parameter "{parameter}" in cnv file: {self.cnv_file_path}'
         logger.error(msg)
