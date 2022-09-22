@@ -33,28 +33,25 @@ class ParamReported:
         #   a: Matcha CNV_CODE
         #   b: kontrollera om sensor 1 eller 2
         for name in self.cnv_reported_names:
-            logger.info("-"*30)
-            logger.info(f"NAME: {instrument_info['CNV_NAME']}: {name}: {parameter}")
-            logger.info(f"parameter' {parameter}, {name}")
+            logger.debug(f"{instrument_info['CNV_NAME']=}: {name=}: {parameter=}: {self.cnv_file_path=}")
             if name.startswith(parameter):
-                logger.info(f"OK parameter, {parameter}, {name}")
+                logger.debug(f"OK: {parameter=}, {name=}")
                 return name
-
             if instrument_info['CNV_NAME'] not in name:
                 continue
-            logger.info(f"self.cnv_file_path, {self.cnv_file_path}")
-            logger.info(f"name0: {instrument_info['CNV_NAME']}: {name}: {parameter}")
             for cnv_code in instrument_info['cnv_codes']:
                 if not self._reported_name_matches_cnv_code(name, cnv_code):
                     continue
-                logger.info(f"OK")
+                logger.debug(f"OK: {cnv_code=}")
                 if self._parameter_is_sensor_1(parameter) and self._reported_name_is_sensor_1(name):
-                    logger.info(f"name1, {cnv_code}, {name}, {parameter}")
+                    logger.debug(f"OK sensor 1: {parameter=}, {name=}")
                     return name
                 if self._parameter_is_sensor_2(parameter) and self._reported_name_is_sensor_2(name):
-                    logger.info(f"name2, {cnv_code}, {name}, {parameter}")
+                    logger.debug(f"OK sensor 1: {parameter=}, {name=}")
                     return name
-        raise Exception(f'No reported name found in for parameter "{parameter}" in cnv file: {self.cnv_file_path}')
+        msg = f'No reported name found in for parameter "{parameter}" in cnv file: {self.cnv_file_path}'
+        logger.error(msg)
+        raise Exception(msg)
 
     @staticmethod
     def _parameter_is_sensor_1(parameter):
