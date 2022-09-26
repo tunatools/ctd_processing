@@ -1,18 +1,19 @@
-import shutil
-import pathlib
-import datetime
-import os
 import codecs
-
-from ctdpy.core import session as ctdpy_session
-
-from ctd_processing.sensor_info import create_sensor_info_files_from_cnv_files
-from ctd_processing.sensor_info.sensor_info_file import CreateSensorInfoSummaryFile
-from ctd_processing.metadata import CreateMetadataFile
-from ctd_processing.delivery_note import CreateDeliveryNote
-from ctd_processing import exceptions
+import datetime
+import logging
+import os
+import pathlib
+import shutil
 
 import file_explorer
+from ctd_processing import exceptions
+from ctd_processing.delivery_note import CreateDeliveryNote
+from ctd_processing.metadata import CreateMetadataFile
+from ctd_processing.sensor_info import create_sensor_info_files_from_cnv_files
+from ctd_processing.sensor_info.sensor_info_file import CreateSensorInfoSummaryFile
+from ctdpy.core import session as ctdpy_session
+
+logger = logging.getLogger(__file__)
 
 
 class StandardFormatComments:
@@ -237,6 +238,16 @@ class CreateStandardFormat:
         self._set_temp_dir()
         self._copy_files_to_temp_dir()
         self._create_standard_format()
+        self._add_svepa_info(pack)
+
+    def _add_svepa_info(self, pack):
+        try:
+            import svepa
+        except:
+            logger.warning(f'Could not import module svepa to add svepa information')
+            return
+        info = svepa.get_svepa_info(platform=pack.platform, time=pack.datetime)
+        print(f'Svepa {info=}')
 
 
 class temp_CreateStandardFormat:

@@ -64,3 +64,12 @@ def get_dataframe_from_file(file_path, **kwargs):
     df = pd.read_csv(file_path, **kw)
     df = df.fillna('')
     return df
+
+
+def get_metadata_string_from_event_ids(event_ids):
+    string = metadata_dict_to_string(event_ids)
+    return f'EventIDs: {string}'
+
+
+def get_metadata_event_ids_from_string(string):
+    return metadata_string_to_dict(string.split(':', 1)[-1].strip())

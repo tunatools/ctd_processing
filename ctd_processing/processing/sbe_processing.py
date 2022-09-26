@@ -6,6 +6,7 @@ import file_explorer
 from file_explorer import psa
 from file_explorer.seabird import paths
 from file_explorer.seabird import edit_cnv
+import svepa
 
 from ctd_processing import delivery_note
 from ctd_processing import metadata
@@ -286,7 +287,15 @@ class SBEPostProcessing:
     def create_standard_format_file(self):
         obj = standard_format.CreateStandardFormat(paths_object=self._sbe_paths, **self._kwargs)
         obj.create_from_package(self._pack)
-        file_explorer.update_package_with_files_in_directory(self._pack, self._sbe_paths.get_local_directory('nsf'), **self._kwargs)
+        file_explorer.update_package_with_files_in_directory(self._pack, self._sbe_paths.get_local_directory('nsf'),
+                                                             **self._kwargs)
+        self._add_svepa_info()
+        file_explorer.update_package_with_files_in_directory(self._pack, self._sbe_paths.get_local_directory('nsf'),
+                                                             replace=True, **self._kwargs)
+
+    def _add_svepa_info(self):
+        info = svepa.get_svepa_info(platform=self._pack.platform, time=self._pack.datetime)
+        file_explorer.seabird.add_event_id(self._pack, **info, overwrite=self._kwargs.get('overwrite', False))
 
 
 class SBEProcessingHandler:
