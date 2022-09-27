@@ -295,7 +295,10 @@ class SBEPostProcessing:
 
     def _add_svepa_info(self):
         info = svepa.get_svepa_info(platform=self._pack.platform, time=self._pack.datetime)
-        file_explorer.seabird.add_event_id(self._pack, **info, overwrite=self._kwargs.get('overwrite', False))
+        if not info:
+            logger.info(f'No svepa information for file: {self._pack.key}')
+            return
+        file_explorer.seabird.add_event_id(self._pack, **info, overwrite=True)
 
 
 class SBEProcessingHandler:
