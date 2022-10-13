@@ -211,6 +211,7 @@ class CreateStandardFormat:
     def _create_standard_format(self):
         all_file_paths = [path for path in self._temp_dir.iterdir()]
         stem = [path for path in all_file_paths if path.suffix == '.cnv'][0].stem
+        logger.debug(f'{all_file_paths=}')
         s = ctdpy_session.Session(filepaths=[str(path) for path in all_file_paths],
                                   reader='smhi')
         datasets = s.read()
@@ -247,7 +248,11 @@ class CreateStandardFormat:
             logger.warning(f'Could not import module svepa to add svepa information')
             return
         info = svepa.get_svepa_info(platform=pack.platform, time=pack.datetime)
-        print(f'Svepa {info=}')
+        # if not info:
+        #     logger.info(f'No svepa information for file: {pack.key}')
+        #     return
+        # logger.debug(f'Svepa {info=}')
+        # file_explorer.seabird.add_event_id(pack, **info, overwrite=True)
 
 
 class temp_CreateStandardFormat:

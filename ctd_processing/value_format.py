@@ -48,7 +48,7 @@ class ValueFormat:
     def _load_file(self):
         self._parameters = {}
         header = None
-        with open(self._path) as fid:
+        with open(self._path, encoding='cp1252') as fid:
             for line in fid:
                 strip_line = line.strip()
                 if not strip_line:

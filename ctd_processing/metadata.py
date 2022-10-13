@@ -67,7 +67,7 @@ class CreateMetadataFile:
 
         path = pathlib.Path(file_path.parent, f'{file_path.stem}.metadata')
         if path.exists() and not self._kwargs.get('overwrite'):
-            return
+            return path
             raise FileExistsError(path)
         columns = get_metadata_columns()
         lines = []
