@@ -1,6 +1,6 @@
 mprog: ['NATL', 'Other']
 proj: ['BAS', 'COD', 'IBT', 'EKO', 'EXT', 'Other']
-orderer: ['HAV, SMHI', 'SMHI', 'SLUA', 'HAV', 'SGUS', 'Other']
+orderer: ['HAV, SMHI', 'SMHI', 'SLUA', 'SLU', 'HAV', 'SGUS', 'Other']
 slabo: ['SMHI', 'SLU', 'SLUA']
 alabo: ['SMHI', 'SLU', 'SLUA']
 wadep:
