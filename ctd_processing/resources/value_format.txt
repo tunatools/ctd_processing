@@ -31,4 +31,5 @@ active	format	parameter
 1	11.4f	sbeox1ML/L: Oxygen, SBE 43, 2 [ml/l], WS = 2
 1	11.4f	sbeox0PS: Oxygen, SBE 43 [% saturation], WS = 2
 1	11.4f	sbeox1PS: Oxygen, SBE 43, 2 [% saturation], WS = 2
+1	11d	nbin: number of scans per bin
 1	11.3e	flag: flag

@@ -125,10 +125,12 @@ class SBEFileHandler:
                 target_path = Path(server_directory, path.name)
                 shutil.copy2(path(), target_path)
 
-    def get_local_file_path(self, suffix):
+    def get_local_file_path(self, subdir=None, suffix=None):
         paths = []
         for key, file in self.local_files.items():
-            if key[0] in suffix:
+            if key[0] == subdir:
+                if suffix and file.suffix == suffix:
+                    return file.path
                 paths.append(file.path)
         if len(paths) == 1:
             return paths[0]
