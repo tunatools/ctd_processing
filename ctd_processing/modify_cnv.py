@@ -527,7 +527,7 @@ class ModifyCnv(CnvFile):
         now = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
         after_str = '** Ship'
         rows_to_insert = [f'** Average sound velocity: {str("%6.2f" % svMean)} m/s',
-                          f'** True-depth calculation {now}',
+                          f'** True-depth calculation: {now}',
                           # f'** CTD Python Module SMHI /ver 3-12/ feb 2012',
                           # f'** Python Module: ctd_processing, nov 2020'
                           # f'** LIMS Job: {self.year}{self.ctry}{self.ship}-{self.serie}'
