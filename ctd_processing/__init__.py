@@ -17,7 +17,14 @@ from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
 logger = logging.getLogger(__name__)
 
 
-def _get_metadata_from_sharkweb_btl_row_data(path, **kwargs):
+def get_metadata_from_sharkweb_btl_row_data(path, **kwargs):
+    """
+    File requirements:
+    header: "Kortnamn"
+    Decimal/fältavgränsare: Punkt/tabb
+    Radbtytning: Windows
+    Teckenkodning: Windows-1252
+    """
     meta = {}
     metacolumns = metadata.get_metadata_columns()
     mapping = {'SLABO_PHYSCHEM': 'SLABO'}
@@ -102,7 +109,7 @@ def create_standard_format_for_packages(packs,
     """
     sharkweb_meta = {}
     if sharkweb_btl_row_file:
-        sharkweb_meta = _get_metadata_from_sharkweb_btl_row_data(sharkweb_btl_row_file)
+        sharkweb_meta = get_metadata_from_sharkweb_btl_row_data(sharkweb_btl_row_file)
 
     if isinstance(packs, file_explorer.Package):
         packs = [packs]

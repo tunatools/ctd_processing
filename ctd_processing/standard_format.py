@@ -204,7 +204,6 @@ class CreateStandardFormat:
             source_path, name = item
             target_path = pathlib.Path(self._temp_dir, name)
             if target_path.exists() and not self._kwargs.get('overwrite'):
-                return
                 raise FileExistsError(target_path)
             shutil.copy2(source_path, target_path)
 
