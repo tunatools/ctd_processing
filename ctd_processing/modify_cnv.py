@@ -7,6 +7,8 @@ from file_explorer.seabird import xmlcon_parser
 from file_explorer.seabird.cnv_file import CnvFile
 from file_explorer.seabird import edit_cnv
 
+from file_explorer.seabird.utils import get_header_form_information
+
 from ctd_processing import utils
 
 from ctd_processing.value_format import ValueFormat
@@ -745,19 +747,19 @@ def get_reported_names_in_cnv(path):
     return list(name_info.values())
 
 
-def get_header_form_information(path):
-    info = {}
-    with open(path) as fid:
-        for line in fid:
-            if not line.startswith('**'):
-                continue
-            split_line = [part.strip() for part in line.strip('*').split(':', 1)]
-            if len(split_line) != 2:
-                continue
-            info[split_line[0]] = split_line[1]
-            # Special treatment for metadata
-            if 'metadata' in split_line[0].lower():
-                metadata = utils.metadata_string_to_dict(split_line[1])
-                for key, value in metadata.items():
-                    info[key] = value
-    return info
+# def get_header_form_information(path):
+#     info = {}
+#     with open(path) as fid:
+#         for line in fid:
+#             if not line.startswith('**'):
+#                 continue
+#             split_line = [part.strip() for part in line.strip('*').split(':', 1)]
+#             if len(split_line) != 2:
+#                 continue
+#             info[split_line[0]] = split_line[1]
+#             # Special treatment for metadata
+#             if 'metadata' in split_line[0].lower():
+#                 metadata = utils.metadata_string_to_dict(split_line[1])
+#                 for key, value in metadata.items():
+#                     info[key] = value
+#     return info

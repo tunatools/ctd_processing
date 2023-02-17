@@ -3,6 +3,7 @@ import pathlib
 import traceback
 
 import file_explorer
+from file_explorer import sharkweb
 from ctd_processing import data_delivery
 from ctd_processing import delivery_note
 from ctd_processing import file_handler
@@ -17,33 +18,33 @@ from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
 logger = logging.getLogger(__name__)
 
 
-def get_metadata_from_sharkweb_btl_row_data(path, **kwargs):
-    """
-    File requirements:
-    header: "Kortnamn"
-    Decimal/fältavgränsare: Punkt/tabb
-    Radbtytning: Windows
-    Teckenkodning: Windows-1252
-    """
-    meta = {}
-    metacolumns = metadata.get_metadata_columns()
-    mapping = {'SLABO_PHYSCHEM': 'SLABO'}
-    with open(path, encoding=kwargs.get('encoding', 'cp1252')) as fid:
-        header = None
-        for line in fid:
-            strip_line = line.strip()
-            if not strip_line:
-                continue
-            split_line = strip_line.split(kwargs.get('sep', '\t'))
-            if not header:
-                header = split_line
-                continue
-            d = dict(zip(header, split_line))
-            key = (d['MYEAR'], d['SHIPC'], d['VISITID'].zfill(4))
-            if meta.get(key):
-                continue
-            meta[key] = {mapping.get(key, key): value for key, value in d.items() if mapping.get(key, key) in metacolumns}
-    return meta
+# def get_metadata_from_sharkweb_btl_row_data(path, **kwargs):
+#     """
+#     File requirements:
+#     header: "Kortnamn"
+#     Decimal/fältavgränsare: Punkt/tabb
+#     Radbtytning: Windows
+#     Teckenkodning: Windows-1252
+#     """
+#     meta = {}
+#     metacolumns = metadata.get_metadata_columns()
+#     mapping = {'SLABO_PHYSCHEM': 'SLABO'}
+#     with open(path, encoding=kwargs.get('encoding', 'cp1252')) as fid:
+#         header = None
+#         for line in fid:
+#             strip_line = line.strip()
+#             if not strip_line:
+#                 continue
+#             split_line = strip_line.split(kwargs.get('sep', '\t'))
+#             if not header:
+#                 header = split_line
+#                 continue
+#             d = dict(zip(header, split_line))
+#             key = (d['MYEAR'], d['SHIPC'], d['VISITID'].zfill(4))
+#             if meta.get(key):
+#                 continue
+#             meta[key] = {mapping.get(key, key): value for key, value in d.items() if mapping.get(key, key) in metacolumns}
+#     return meta
 
 
 def process_sbe_file(path,
@@ -109,7 +110,9 @@ def create_standard_format_for_packages(packs,
     """
     sharkweb_meta = {}
     if sharkweb_btl_row_file:
-        sharkweb_meta = get_metadata_from_sharkweb_btl_row_data(sharkweb_btl_row_file)
+        metacolumns = metadata.get_metadata_columns()
+        # sharkweb_meta = get_metadata_from_sharkweb_btl_row_data(sharkweb_btl_row_file)
+        sharkweb_meta = sharkweb.get_metadata_from_sharkweb_btl_row_data(sharkweb_btl_row_file, columns=metacolumns)
 
     if isinstance(packs, file_explorer.Package):
         packs = [packs]
