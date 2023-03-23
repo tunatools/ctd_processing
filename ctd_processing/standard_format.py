@@ -171,8 +171,8 @@ class old_CreateStandardFormat:
 
 
 class CreateStandardFormat:
-    def __init__(self, paths_object, **kwargs):
-        self.paths = paths_object
+    def __init__(self, file_handler, **kwargs):
+        self._file_handler = file_handler
         self._pack = None
         self._kwargs = kwargs
 
@@ -188,7 +188,7 @@ class CreateStandardFormat:
         self._pack = pack
 
     def _set_temp_dir(self):
-        self._temp_dir = pathlib.Path(self.paths.get_local_directory('temp'), 'create_standard_format', self._pack.key)
+        self._temp_dir = pathlib.Path(self._file_handler('local', 'temp'), 'create_standard_format', self._pack.key)
         if not self._temp_dir.exists():
             os.makedirs(self._temp_dir)
 
@@ -226,7 +226,7 @@ class CreateStandardFormat:
 
         source_dir = pathlib.Path(data_path)
         source_path = pathlib.Path(source_dir, f'{stem}.txt')
-        target_dir = self.paths.get_local_directory('nsf', create=True)
+        target_dir = self._file_handler('local', 'nsf')
         target_path = pathlib.Path(target_dir, f'{self._pack.key}.txt')
         if target_path.exists() and not self._kwargs.get('overwrite'):
             return

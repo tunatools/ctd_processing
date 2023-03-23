@@ -4,9 +4,9 @@ import traceback
 
 import file_explorer
 from file_explorer import sharkweb
+from file_explorer.file_handler.seabird_ctd import SBEFileHandler
 from ctd_processing import data_delivery
 from ctd_processing import delivery_note
-from ctd_processing import file_handler
 from ctd_processing import metadata
 from ctd_processing import sensor_info
 from ctd_processing import standard_format
@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
 def process_sbe_file(path,
                      target_root_directory=None,
                      config_root_directory=None,
+                     file_handler=None, 
                      platform='sbe09',
                      surfacesoak='normal',
                      tau=False,
@@ -61,7 +62,9 @@ def process_sbe_file(path,
     Option to override psa files in psa_paths
     """
     path = pathlib.Path(path)
-    cont = SBEProcessingHandler(target_root_directory=target_root_directory, overwrite=overwrite, **kwargs)
+    cont = SBEProcessingHandler(target_root_directory=target_root_directory, file_handler=file_handler, 
+                                overwrite=overwrite, 
+    **kwargs)
     cont.set_config_root_directory(config_root_directory)
     cont.select_and_confirm_file(path)
     # cont.select_and_confirm_file(path, **kwargs)
@@ -79,7 +82,8 @@ def process_sbe_file(path,
 
 def reprocess_sbe_file(path,
                        target_root_directory=None,
-                       config_root_directory=None,
+                       config_root_directory=None, 
+                       file_handler=None, 
                        surfacesoak='normal',
                        tau=False,
                        overwrite=False,
@@ -89,7 +93,8 @@ def reprocess_sbe_file(path,
     Option to override psa files in psa_paths
     """
     path = pathlib.Path(path)
-    cont = SBEProcessingHandler(target_root_directory=target_root_directory, overwrite=overwrite)
+    cont = SBEProcessingHandler(target_root_directory=target_root_directory, file_handler=file_handler, 
+                                overwrite=overwrite)
     cont.set_config_root_directory(config_root_directory)
     cont.set_options(tau=tau, surfacesoak=surfacesoak)
     cont.select_and_confirm_file(path)
@@ -99,7 +104,7 @@ def reprocess_sbe_file(path,
 
 
 def create_standard_format_for_packages(packs,
-                                        target_root_directory=None,
+                                        file_handler=None,
                                         config_root_directory=None,
                                         overwrite=False,
                                         sharkweb_btl_row_file=None,
@@ -127,7 +132,7 @@ def create_standard_format_for_packages(packs,
                 logger.info(f'No metadata in sharkweb_btl_file {sharkweb_btl_row_file} for path {pack.key}')
             else:
                 meta.update(webmeta)
-        post = SBEPostProcessing(pack, target_root_directory=target_root_directory, overwrite=overwrite, old_key=old_key, **meta)
+        post = SBEPostProcessing(pack, file_handler=file_handler, overwrite=overwrite, old_key=old_key, **meta)
         post.set_config_root_directory(config_root_directory)
         post.create_all_files()
         new_packs.append(post.pack)

@@ -4,13 +4,13 @@ from file_explorer import psa
 
 
 class SBESetupFile:
-    def __init__(self, paths=None, processing_paths=None, instrument_files=None):
+    def __init__(self, file_handler=None, processing_paths=None, instrument_files=None):
         """
         :param file_paths: SBEProsessingPaths
         :param instrument_files: instrumant_files.InstrumentFiles
         """
         self._proc_paths = processing_paths
-        self._paths = paths
+        self._file_handler = file_handler
         self._package = instrument_files
 
     def _get_lines(self):
@@ -28,13 +28,13 @@ class SBESetupFile:
 
         station = self._package("station").replace(" ", "_").replace("/", "_")
         lines['plot1'] = f'seaplot /p{self._proc_paths("psa_1-seaplot")} /i{self._proc_paths("cnv_down")} /a_' \
-                         f'{station} /o{self._paths("working_dir")} /f{self._package.key}'
+                         f'{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
         lines['plot2'] = f'seaplot /p{self._proc_paths("psa_2-seaplot")} /i{self._proc_paths("cnv_down")} ' \
-                         f'/a_TS_diff_{station} /o{self._paths("working_dir")} /f{self._package.key}'
+                         f'/a_TS_diff_{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
         lines['plot3'] = f'seaplot /p{self._proc_paths("psa_3-seaplot")} /i{self._proc_paths("cnv_down")} ' \
-                         f'/a_oxygen_diff_{station} /o{self._paths("working_dir")} /f{self._package.key}'
+                         f'/a_oxygen_diff_{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
         lines['plot4'] = f'seaplot /p{self._proc_paths("psa_4-seaplot")} /i{self._proc_paths("cnv_down")} ' \
-                         f'/a_fluor_turb_par_{station} /o{self._paths("working_dir")} /f{self._package.key}'
+                         f'/a_fluor_turb_par_{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
 
         return list(lines.values())
 

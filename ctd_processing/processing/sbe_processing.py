@@ -4,7 +4,7 @@ import shutil
 
 import file_explorer
 from file_explorer import psa
-from file_explorer.seabird import paths
+from file_explorer.file_handler.seabird_ctd import get_seabird_file_handler, SBEFileHandler
 from file_explorer.seabird import edit_cnv
 import svepa
 
@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 class SBEProcessing:
 
-    def __init__(self, sbe_paths=None, sbe_processing_paths=None, **kwargs):
-        self._paths = sbe_paths
+    def __init__(self, file_handler: SBEFileHandler=None, sbe_processing_paths: SBEProcessingPaths=None, **kwargs):
+        self._file_handler = file_handler
         self._processing_paths = sbe_processing_paths
 
         self._file_path = None
@@ -97,7 +97,7 @@ class SBEProcessing:
             raise FileNotFoundError(path)
         self._file_path = path
         self._package = file_explorer.get_package_for_file(path, old_key=self._old_key)
-        self._paths.set_year(self.year)
+        self._file_handler.set_year(self.year)
         self._confirmed = False
 
     def confirm_file(self, file_path):
@@ -112,31 +112,31 @@ class SBEProcessing:
         self._package = file_explorer.rename_package(self._package, overwrite=True, old_key=self._old_key)
         self._processing_paths.set_raw_file_path(self._package['hex'])
         self._processing_paths.set_config_suffix(self._package('config_file_suffix'))
-        self._setup_file = SBESetupFile(paths=self._paths,
+        self._setup_file = SBESetupFile(file_handler=self._file_handler,
                                         processing_paths=self._processing_paths,
                                         instrument_files=self._package)
-        self._batch_file = SBEBatchFile(paths=self._paths,
+        self._batch_file = SBEBatchFile(file_handler=self._file_handler,
                                         processing_paths=self._processing_paths)
         self._confirmed = True
         return self._package['hex']
 
     def _copy_raw_files_to_local(self):
-        target_directory = self._paths.get_local_directory('raw', create=True)
+        target_directory = self._file_handler('local', 'raw')
         for file in self._package.get_raw_files():
             self._copy_file(file, target_directory, overwrite=self._overwrite)
 
     def _copy_cnv_files_to_local(self):
         """ Copies cnv-up file to local directory """
-        target_directory = self._paths.get_local_directory('cnv_up', create=True)
+        target_directory = self._file_handler('local', 'upcast')
         return self._copy_file(self._package.get_file(suffix='.cnv', prefix='u'), target_directory, overwrite=self._overwrite)
 
     def _copy_zip_file_to_local(self):
-        target_directory = self._paths.get_local_directory('raw', create=True)
+        target_directory = self._file_handler('local', 'raw')
         return self._copy_file(self._package.get_file(suffix='.zip'), target_directory,
                                overwrite=self._overwrite)
 
     def _copy_plot_files_to_local(self):
-        target_directory = self._paths.get_local_directory('plot', create=True)
+        target_directory = self._file_handler('local', 'plots')
         for file in self._package.get_plot_files():
             self._copy_file(file, target_directory, overwrite=self._overwrite)
 
@@ -147,7 +147,7 @@ class SBEProcessing:
         self._copy_plot_files_to_local()
 
     def _copy_all_files_with_same_file_stem_to_working_dir(self, file_path):
-        target_directory = self._paths('working_dir', create=True)
+        target_directory = self._file_handler('local', 'temp')
         stem = file_path.stem.lower()
         return_path = None
         for path in file_path.parent.iterdir():
@@ -172,7 +172,7 @@ class SBEProcessing:
         return target_file_path
 
     def get_file_names_in_server_directory(self, subfolder=None):
-        directory = self._paths.get_server_directory(subfolder)
+        directory = self._file_handler.get_server_directory(subfolder)
         return [path.name for path in directory.iterdir()]
 
     def _check_files_mismatch(self):
@@ -209,20 +209,26 @@ class SBEProcessing:
 
         key = self._package.key
 
-        file_explorer.update_package_with_files_in_directory(self._package, self._paths.get_local_directory('temp'))
+        print('BEFORE')
+        print(self._file_handler('local', 'temp'))
+        file_explorer.update_package_with_files_in_directory(self._package, self._file_handler('local', 'temp'))
+        print('AFTER')
 
         modify_cnv.modify_cnv_down_file(self._package,
-                                        directory=self._paths.get_local_directory('cnv', create=True),
+                                        directory=self._file_handler('local', 'cnv'),
                                         overwrite=self._overwrite)
 
         self.create_zip_with_psa_files()
-        self._package = file_explorer.get_package_for_key(key, directory=self._paths.get_local_directory('temp'),
+        self._package = file_explorer.get_package_for_key(key, directory=self._file_handler('local', 'temp'),
                                                           exclude_directory='create_standard_format',
                                                           exclude_string='ctd_std_fmt',
                                                           **kwargs)
+        print(f'A {self._package=}')
         self._copy_processed_files_to_local()
-        self._package = file_explorer.get_package_for_file(self._package['hex'], directory=self._paths.get_local_directory('root'),
+        self._package = file_explorer.get_package_for_file(self._package['hex'],
+                                                           directory=self._file_handler('local'),
                                                            exclude_directory='temp', **kwargs)
+        print(f'B {self._package=}')
         return self._package
 
     def create_zip_with_psa_files(self):
@@ -241,24 +247,28 @@ class SBEPostProcessing:
     It can be tricky to call all methods in the right order.
     """
 
-    def __init__(self, package, target_root_directory, **kwargs):
+    def __init__(self, package, file_handler: SBEFileHandler, **kwargs):
         if not isinstance(package, file_explorer.Package):
             raise ValueError(f'{package} is not of class file_explorer.Package')
         self._pack = package
         self._kwargs = kwargs
 
-        self._sbe_paths = paths.SBEPaths()
-        if target_root_directory:
-            self._sbe_paths.set_local_root_directory(target_root_directory)
+        if file_handler:
+            self._file_handler = file_handler
+        elif target_root_directory:
+            self._file_handler = get_seabird_file_handler()
+            self._file_handler.set_root_dir('local', target_root_directory)
+        else:
+            raise AttributeError
 
-        self._sbe_paths.set_year(self._pack('year'))
+        self._file_handler.set_year(self._pack('year'))
 
     @property
     def pack(self):
         return self._pack
 
     def set_config_root_directory(self, config_root_directory):
-        self._sbe_paths.set_config_root_directory(config_root_directory)
+        self._file_handler.set_root_dir('config', config_root_directory)
 
     def create_all_files(self):
         self.create_sensorinfo_files()
@@ -270,7 +280,7 @@ class SBEPostProcessing:
 
     def create_sensorinfo_files(self):
         sensor_info.create_sensor_info_files_from_package(self._pack,
-                                                          self._sbe_paths('instrumentinfo_file'),
+                                                          self._file_handler.instrument_file_path,
                                                           **self._kwargs)
 
     def create_metadata_file(self):
@@ -285,12 +295,12 @@ class SBEPostProcessing:
         file_explorer.update_package_with_files_in_directory(self._pack, self._pack.get_file_path(prefix=None, suffix='.cnv').parent, **self._kwargs)
 
     def create_standard_format_file(self):
-        obj = standard_format.CreateStandardFormat(paths_object=self._sbe_paths, **self._kwargs)
+        obj = standard_format.CreateStandardFormat(file_handler=self._file_handler, **self._kwargs)
         obj.create_from_package(self._pack)
-        file_explorer.update_package_with_files_in_directory(self._pack, self._sbe_paths.get_local_directory('nsf'),
+        file_explorer.update_package_with_files_in_directory(self._pack, self._file_handler('local', 'nsf'),
                                                              **self._kwargs)
         self._add_svepa_info()
-        file_explorer.update_package_with_files_in_directory(self._pack, self._sbe_paths.get_local_directory('nsf'),
+        file_explorer.update_package_with_files_in_directory(self._pack, self._file_handler('local', 'nsf'),
                                                              replace=True, **self._kwargs)
 
     def _add_svepa_info(self):
@@ -305,10 +315,10 @@ class SBEProcessingHandler:
     """
     This class is not intended to be used directly.
     It can be tricky to call all methods in the right order.
-    Use a function below that suits your needs.
+    Use a function in __init__.py that suits your needs.
     """
 
-    def __init__(self, target_root_directory, **kwargs):
+    def __init__(self, target_root_directory=None, file_handler=None, **kwargs):
         self.target_root_directory = target_root_directory
         self._kwargs = kwargs
         self._overwrite = kwargs.get('overwrite', False)
@@ -317,10 +327,16 @@ class SBEProcessingHandler:
         self._pack = None
         self.post = None
 
-        self.sbe_paths = paths.SBEPaths()
-        self.sbe_paths.set_local_root_directory(target_root_directory)
-        self.sbe_processing_paths = SBEProcessingPaths(self.sbe_paths)
-        self.sbe_processing = SBEProcessing(sbe_paths=self.sbe_paths,
+        if file_handler:
+            self._file_handler = file_handler
+        elif target_root_directory:
+            self._file_handler = get_seabird_file_handler()
+            self._file_handler.set_root_dir('local', target_root_directory)
+            self._file_handler.create_dirs('local')
+        else:
+            raise AttributeError
+        self.sbe_processing_paths = SBEProcessingPaths(self._file_handler)
+        self.sbe_processing = SBEProcessing(file_handler=self._file_handler,
                                             sbe_processing_paths=self.sbe_processing_paths, **self._kwargs)
 
     @property
@@ -330,7 +346,7 @@ class SBEProcessingHandler:
     def set_config_root_directory(self, config_root_directory=None):
         if not config_root_directory:
             return
-        self.sbe_paths.set_config_root_directory(config_root_directory)
+        self._file_handler.set_root_dir('config', config_root_directory)
         self.config_root_directory = config_root_directory
 
     def select_and_confirm_file(self, file_path=None, **kwargs):
@@ -352,7 +368,7 @@ class SBEProcessingHandler:
         if not self._pack:
             return
         self._pack = file_explorer.get_package_for_key(self._pack.key,
-                                                      directory=self.sbe_paths.get_local_directory('root'),
+                                                      directory=self._file_handler('local'),
                                                       exclude_directory=exclude_directory)
 
     def set_options(self, **kwargs):

@@ -9,11 +9,11 @@ class SBEProcessingPaths:
 
     """
 
-    def __init__(self, sbe_paths=None):
+    def __init__(self, file_handler=None):
         """ Config root path is the root path och ctd_config repo """
         self._paths = {}
 
-        self.sbe_paths = sbe_paths
+        self._file_handler = file_handler
 
         self._platform = None
         self._new_file_stem = None
@@ -55,18 +55,18 @@ class SBEProcessingPaths:
         Files in the subfolders are specific for the corresponding "platform"
         """
         self._platform_paths = {}
-        for path in pathlib.Path(self.sbe_paths('config_dir'), 'SBE', 'processing_psa').iterdir():
+        for path in pathlib.Path(self._file_handler('config', 'root'), 'SBE', 'processing_psa').iterdir():
             if path.is_file():
                 continue
             self._platform_paths[path.name.lower()] = path
 
     def update_paths(self):
-        if self.sbe_paths('working_dir'):
-            # print("= self.sbe_paths('working_dir')", self.sbe_paths('working_dir'))
-            self._paths['file_setup'] = pathlib.Path(self.sbe_paths('working_dir'), 'ctdmodule.txt')
-            self._paths['file_batch'] = pathlib.Path(self.sbe_paths('working_dir'), 'SBE_batch.bat')
+        if self._file_handler('local', 'temp'):
+            # print("= self._file_handler('local', 'temp')", self._file_handler('local', 'temp'))
+            self._paths['file_setup'] = pathlib.Path(self._file_handler('local', 'temp'), 'ctdmodule.txt')
+            self._paths['file_batch'] = pathlib.Path(self._file_handler('local', 'temp'), 'SBE_batch.bat')
 
-        if self.sbe_paths('config_dir'):
+        if self._file_handler('config', 'root'):
             self._save_platform_paths()
 
         if self._new_file_stem:
@@ -111,10 +111,11 @@ class SBEProcessingPaths:
 
     def _build_raw_file_paths_with_new_file_stem(self):
         """ Builds the raw file paths from working directory and raw file stem """
-        print("self.sbe_paths('working_dir')", self.sbe_paths('working_dir'))
-        self._paths['config'] = pathlib.Path(self.sbe_paths('working_dir'), f'{self._new_file_stem}.XMLCON')  # Handle CON-files
-        self._paths['hex'] = pathlib.Path(self.sbe_paths('working_dir'), f'{self._new_file_stem}.hex')
-        self._paths['ros'] = pathlib.Path(self.sbe_paths('working_dir'), f'{self._new_file_stem}.ros')
+        self._paths['config'] = pathlib.Path(self._file_handler('local', 'temp'), f'{self._new_file_stem}.XMLCON')  #
+        # Handle
+        # CON-files
+        self._paths['hex'] = pathlib.Path(self._file_handler('local', 'temp'), f'{self._new_file_stem}.hex')
+        self._paths['ros'] = pathlib.Path(self._file_handler('local', 'temp'), f'{self._new_file_stem}.ros')
 
         for name in ['config', 'hex']:
             if not self._paths[name].exists():
@@ -122,9 +123,9 @@ class SBEProcessingPaths:
 
     def _build_cnv_file_paths_with_new_file_stem(self):
         """ Builds the cnv file paths from working directory and raw file stem """
-        self._paths['cnv'] = pathlib.Path(self.sbe_paths('working_dir'), f'{self._new_file_stem}.cnv')
-        self._paths['cnv_down'] = pathlib.Path(self.sbe_paths('working_dir'), f'd{self._new_file_stem}.cnv')
-        self._paths['cnv_up'] = pathlib.Path(self.sbe_paths('working_dir'), f'u{self._new_file_stem}.cnv')
+        self._paths['cnv'] = pathlib.Path(self._file_handler('local', 'temp'), f'{self._new_file_stem}.cnv')
+        self._paths['cnv_down'] = pathlib.Path(self._file_handler('local', 'temp'), f'd{self._new_file_stem}.cnv')
+        self._paths['cnv_up'] = pathlib.Path(self._file_handler('local', 'temp'), f'u{self._new_file_stem}.cnv')
 
     def _build_psa_file_paths(self):
         """
@@ -168,7 +169,7 @@ class SBEProcessingPaths:
         self._paths['psa_loopedit'] = path
 
     def set_config_suffix(self, suffix):
-        self._paths['config'] = pathlib.Path(self.sbe_paths('working_dir'), f'{self._new_file_stem}{suffix}')
+        self._paths['config'] = pathlib.Path(self._file_handler('local', 'temp'), f'{self._new_file_stem}{suffix}')
 
     def get_psa_paths(self):
         return [value for key, value in self._paths.items() if key.startswith('psa_')]
@@ -196,7 +197,7 @@ class SBEProcessingPaths:
                 break
 
     def load_psa_config_zip(self, zip_path):
-        target_dir = pathlib.Path(self.sbe_paths.get_local_directory('temp'), zip_path.stem)
+        target_dir = pathlib.Path(self._file_handler('local', 'temp'), zip_path.stem)
         from zipfile import ZipFile
         with ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(target_dir)
