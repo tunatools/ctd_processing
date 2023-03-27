@@ -105,7 +105,7 @@ def reprocess_sbe_file(path,
 
 def create_standard_format_for_packages(packs,
                                         file_handler=None,
-                                        config_root_directory=None,
+                                        # config_root_directory=None,
                                         overwrite=False,
                                         sharkweb_btl_row_file=None,
                                         old_key=False, 
@@ -133,7 +133,7 @@ def create_standard_format_for_packages(packs,
             else:
                 meta.update(webmeta)
         post = SBEPostProcessing(pack, file_handler=file_handler, overwrite=overwrite, old_key=old_key, **meta)
-        post.set_config_root_directory(config_root_directory)
+        # post.set_config_root_directory(config_root_directory)
         post.create_all_files()
         new_packs.append(post.pack)
     return new_packs

@@ -255,9 +255,9 @@ class SBEPostProcessing:
 
         if file_handler:
             self._file_handler = file_handler
-        elif target_root_directory:
-            self._file_handler = get_seabird_file_handler()
-            self._file_handler.set_root_dir('local', target_root_directory)
+        # elif target_root_directory:
+        #     self._file_handler = get_seabird_file_handler()
+        #     self._file_handler.set_root_dir('local', target_root_directory)
         else:
             raise AttributeError
 
@@ -267,8 +267,8 @@ class SBEPostProcessing:
     def pack(self):
         return self._pack
 
-    def set_config_root_directory(self, config_root_directory):
-        self._file_handler.set_root_dir('config', config_root_directory)
+    # def set_config_root_directory(self, config_root_directory):
+    #     self._file_handler.set_root_dir('config', config_root_directory)
 
     def create_all_files(self):
         self.create_sensorinfo_files()
