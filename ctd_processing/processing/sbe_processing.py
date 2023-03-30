@@ -1,23 +1,25 @@
+import logging
 import os
 import pathlib
 import shutil
 
 import file_explorer
+try:
+    import svepa
+except ImportError:
+    pass
 from file_explorer import psa
 from file_explorer.file_handler.seabird_ctd import get_seabird_file_handler, SBEFileHandler
-from file_explorer.seabird import edit_cnv
-import svepa
 
+from ctd_processing import asvp_file
 from ctd_processing import delivery_note
 from ctd_processing import metadata
 from ctd_processing import modify_cnv
 from ctd_processing import sensor_info
 from ctd_processing import standard_format
-from ctd_processing import asvp_file
 from ctd_processing.processing.sbe_batch_file import SBEBatchFile
 from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
 from ctd_processing.processing.sbe_setup_file import SBESetupFile
-import logging
 
 logger = logging.getLogger(__name__)
 
