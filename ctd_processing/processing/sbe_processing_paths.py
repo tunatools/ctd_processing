@@ -18,6 +18,7 @@ class SBEProcessingPaths:
         self._platform = None
         self._new_file_stem = None
         self._loopedit_paths = []
+        self._platform_paths = {}
         self._psa_names = ['datcnv',
                            'filter',
                            'alignctd',
@@ -61,12 +62,12 @@ class SBEProcessingPaths:
             self._platform_paths[path.name.lower()] = path
 
     def update_paths(self):
-        if self._file_handler('local', 'temp'):
+        if self._file_handler.root_dir_is_set('local') and self._file_handler('local', 'temp'):
             # print("= self._file_handler('local', 'temp')", self._file_handler('local', 'temp'))
             self._paths['file_setup'] = pathlib.Path(self._file_handler('local', 'temp'), 'ctdmodule.txt')
             self._paths['file_batch'] = pathlib.Path(self._file_handler('local', 'temp'), 'SBE_batch.bat')
 
-        if self._file_handler('config', 'root'):
+        if self._file_handler.root_dir_is_set('config') and self._file_handler('config', 'root'):
             self._save_platform_paths()
 
         if self._new_file_stem:
