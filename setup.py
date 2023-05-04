@@ -14,7 +14,14 @@ root_path = pathlib.Path(__file__).parent.resolve()
 requirements = []
 with open(pathlib.Path(root_path, 'requirements.txt')) as fh:
     for line in fh:
-        requirements.append(line.strip())
+        repo = line.strip()
+        if not repo:
+            continue
+        if repo.startswith('git'):
+            repo_name = repo.split('.git')[0].split('/')[-1]
+            repo = f"{repo_name} @ {repo}"
+        requirements.append(repo)
+
 
 with open(pathlib.Path(root_path, 'README.md')) as fid:
     README = fid.read()
@@ -27,7 +34,6 @@ for root, dirs, files in os.walk(root_path, topdown=False):
         if not path.suffix in ['.txt', '.json', '.yaml']:
             continue
         include_files.append(str(path))
-
 
 setuptools.setup(
     name='ctd_processing',
@@ -48,3 +54,5 @@ setuptools.setup(
     python_requires='>=3.6',
     install_requires=requirements,
 )
+
+
