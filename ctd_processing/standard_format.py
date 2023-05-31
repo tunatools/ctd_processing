@@ -158,7 +158,7 @@ class old_CreateStandardFormat:
         self._export_directory = pathlib.Path(data_path)
 
     def _copy_standard_format_files_to_local(self):
-        target_dir = self.paths.get_local_directory('nsf', create=True)
+        target_dir = self.paths.get_local_directory('data', create=True)
         cnv_file_stems = [path.stem for path in self._cnv_files]
 
         for source_path in self._export_directory.iterdir():
@@ -226,7 +226,7 @@ class CreateStandardFormat:
 
         source_dir = pathlib.Path(data_path)
         source_path = pathlib.Path(source_dir, f'{stem}.txt')
-        target_dir = self._file_handler('local', 'nsf')
+        target_dir = self._file_handler('local', 'data')
         target_path = pathlib.Path(target_dir, f'{self._pack.key}.txt')
         if target_path.exists() and not self._kwargs.get('overwrite'):
             return
@@ -331,7 +331,7 @@ class temp_CreateStandardFormat:
         self._export_directory = pathlib.Path(data_path)
 
     def _copy_standard_format_files_to_local(self):
-        target_dir = self.paths.get_local_directory('nsf', create=True)
+        target_dir = self.paths.get_local_directory('data', create=True)
         cnv_file_stems = [path.stem for path in self._cnv_files]
 
         for source_path in self._export_directory.iterdir():

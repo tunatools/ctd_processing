@@ -144,7 +144,7 @@ class SBEProcessing:
 
     def _copy_processed_files_to_local(self):
         self._copy_raw_files_to_local()
-        self._copy_cnv_files_to_local()
+        # self._copy_cnv_files_to_local()
         self._copy_zip_file_to_local()
         self._copy_plot_files_to_local()
 
@@ -299,10 +299,10 @@ class SBEPostProcessing:
     def create_standard_format_file(self):
         obj = standard_format.CreateStandardFormat(file_handler=self._file_handler, **self._kwargs)
         obj.create_from_package(self._pack)
-        file_explorer.update_package_with_files_in_directory(self._pack, self._file_handler('local', 'nsf'),
+        file_explorer.update_package_with_files_in_directory(self._pack, self._file_handler('local', 'data'),
                                                              **self._kwargs)
         self._add_svepa_info()
-        file_explorer.update_package_with_files_in_directory(self._pack, self._file_handler('local', 'nsf'),
+        file_explorer.update_package_with_files_in_directory(self._pack, self._file_handler('local', 'data'),
                                                              replace=True, **self._kwargs)
 
     def _add_svepa_info(self):
