@@ -26,15 +26,15 @@ class SBESetupFile:
         lines['bottlesum'] = self._get_bottle_sum_line()
         lines['split'] = f'split /p{self._proc_paths("psa_split")} /i{self._proc_paths("cnv")} /o%1'
 
-        station = self._package("station").replace(" ", "_").replace("/", "_")
-        lines['plot1'] = f'seaplot /p{self._proc_paths("psa_1-seaplot")} /i{self._proc_paths("cnv_down")} /a_' \
-                         f'{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
-        lines['plot2'] = f'seaplot /p{self._proc_paths("psa_2-seaplot")} /i{self._proc_paths("cnv_down")} ' \
-                         f'/a_TS_diff_{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
-        lines['plot3'] = f'seaplot /p{self._proc_paths("psa_3-seaplot")} /i{self._proc_paths("cnv_down")} ' \
-                         f'/a_oxygen_diff_{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
-        lines['plot4'] = f'seaplot /p{self._proc_paths("psa_4-seaplot")} /i{self._proc_paths("cnv_down")} ' \
-                         f'/a_fluor_turb_par_{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
+        # station = self._package("station").replace(" ", "_").replace("/", "_")
+        # lines['plot1'] = f'seaplot /p{self._proc_paths("psa_1-seaplot")} /i{self._proc_paths("cnv_down")} /a_' \
+        #                  f'{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
+        # lines['plot2'] = f'seaplot /p{self._proc_paths("psa_2-seaplot")} /i{self._proc_paths("cnv_down")} ' \
+        #                  f'/a_TS_diff_{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
+        # lines['plot3'] = f'seaplot /p{self._proc_paths("psa_3-seaplot")} /i{self._proc_paths("cnv_down")} ' \
+        #                  f'/a_oxygen_diff_{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
+        # lines['plot4'] = f'seaplot /p{self._proc_paths("psa_4-seaplot")} /i{self._proc_paths("cnv_down")} ' \
+        #                  f'/a_fluor_turb_par_{station} /o{self._file_handler("local", "temp")} /f{self._package.key}'
 
         return list(lines.values())
 
