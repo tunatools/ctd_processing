@@ -114,9 +114,9 @@ class SBEProcessing:
         self._package = file_explorer.rename_package(self._package, overwrite=True, old_key=self._old_key)
         self._processing_paths.set_raw_file_path(self._package['hex'])
         self._processing_paths.set_config_suffix(self._package('config_file_suffix'))
-        self._setup_file = SBESetupFile(file_handler=self._file_handler,
-                                        processing_paths=self._processing_paths,
-                                        instrument_files=self._package)
+        self._setup_file = SBESetupFile(processing_paths=self._processing_paths,
+                                        instrument_files=self._package,
+                                        config_file=r'C:\mw\git\ctd_processing\sbe_setup.yaml')
         self._batch_file = SBEBatchFile(file_handler=self._file_handler,
                                         processing_paths=self._processing_paths)
         self._confirmed = True

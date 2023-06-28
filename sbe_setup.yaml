@@ -1,0 +1,43 @@
+datcnv:
+  path_or_name: datcnv
+  input_file_suffix: hex
+  uses_xmlcon: true
+
+filter:
+  path_or_name: filter
+  input_file_suffix: cnv
+
+alignctd:
+  path_or_name: alignctd
+  input_file_suffix: cnv
+  uses_xmlcon: true
+
+celltm:
+  path_or_name: celltm
+  input_file_suffix: cnv
+  uses_xmlcon: true
+
+loopedit:
+  path_or_name: loopedit
+  input_file_suffix: cnv
+  uses_xmlcon: true
+
+derive:
+  path_or_name: derive
+  input_file_suffix: cnv
+  uses_xmlcon: true
+
+binavg:
+  path_or_name: binavg
+  input_file_suffix: cnv
+  uses_xmlcon: true
+
+bottlesum:
+  path_or_name: bottlesum
+  input_file_suffix: ros
+  uses_xmlcon: true
+
+split:
+  path_or_name: split
+  input_file_suffix: cnv
+
