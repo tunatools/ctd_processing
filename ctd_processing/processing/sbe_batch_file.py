@@ -10,7 +10,7 @@ class SBEBatchFile:
 
     def create_file(self):
         with open(self._processing_paths('file_batch'), 'w') as fid:
-            fid.write(f"sbebatch.exe {self._processing_paths('file_setup')} {self._file_handler('local', 'temp')}")
+            fid.write(f'''sbebatch.exe "{self._processing_paths('file_setup')}" "{self._file_handler('local', 'temp')}"''')
 
     def run_file(self):
         if not self._processing_paths('file_batch').exists():

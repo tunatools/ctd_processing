@@ -31,7 +31,7 @@ class SBESetupFile:
         for key, data in config.items():
             psa_file_path = pathlib.Path(data['path_or_name'])
             if not psa_file_path.is_absolute():
-                psa_file_path = self._proc_paths(f'pas_{data["path_or_name"]}')
+                psa_file_path = self._proc_paths(f'psa_{data["path_or_name"]}')
 
             line = f"{key} /p{psa_file_path} /i{self._proc_paths(data['input_file_suffix'])}"
             if data.get('uses_xmlcon'):
