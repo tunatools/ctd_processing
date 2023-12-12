@@ -408,8 +408,12 @@ class ModifyCnv(CnvFile):
                 format_str = '%d-%b-%y'
             else:
                 format_str = '%d-%b-%Y'
-            date_str = '-'.join(parts)
-        return datetime.datetime.strptime(date_str, format_str)
+        date_str = '-'.join(parts)
+        try:
+            return datetime.datetime.strptime(date_str, format_str)
+        except ValueError:
+            format_str = '%Y-%m-%d'
+            return datetime.datetime.strptime(date_str, format_str)
 
     def _get_comment_for_channel(self, channel):
         channel_str = f'Channel="{channel}"'
