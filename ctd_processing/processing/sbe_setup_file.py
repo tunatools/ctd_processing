@@ -29,6 +29,8 @@ class SBESetupFile:
             config = yaml.safe_load(fid)
         lines = []
         for key, data in config.items():
+            if key == "bottlesum" and not any([i.suffix == 'bl' for i in self._package._files]):
+                continue
             psa_file_path = pathlib.Path(data['path_or_name'])
             if not psa_file_path.is_absolute():
                 psa_file_path = self._proc_paths(f'psa_{data["path_or_name"]}')
