@@ -98,7 +98,11 @@ class CreateSensorInfoFile:
                     if col == 'INSTRUMENT_ID':
                         value = file('instrument_id')
                     elif col == 'INSTRUMENT_PROD':
-                        value = pressure_instrument_info.get('INSTRUMENT_PROD', '')
+                        try:
+                            value = pressure_instrument_info.get('INSTRUMENT_PROD', '')
+                        except AttributeError:
+                            raise ImportError("We didn't find your sensor. Please add it in the Excelsheet!")
+
                     elif col == 'INSTRUMENT_MOD':
                         value = pressure_instrument_info.get('INSTRUMENT_MOD', '')
                     elif col == 'INSTRUMENT_SERIE':
